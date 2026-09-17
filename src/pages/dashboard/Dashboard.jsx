@@ -11,11 +11,11 @@ import {
   Clock as FaClock
 } from "lucide-react";
 
-import Header from "../../components/Header/Header";
 
 import { getDashboard } from "../../services/dashboard.service";
 
 import "./dashboard.css";
+import Header from "../../components/header/Header";
 
 
 const Dashboard = () => {
