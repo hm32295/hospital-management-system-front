@@ -22,7 +22,7 @@ import Batches from "../pages/batches/Batches";
 import AddBatches from "../pages/batches/AddBatches";
 import SingleBatches from "../pages/batches/SingleBatches";
 import EditBatches from "../pages/batches/EditBatches";
-import StockTransaction from "../pages/stockTransactions/stockTransactions";
+import StockTransaction from "../pages/stockTransactions/StockTransactions";
 import SingleStockTransaction from "../pages/stockTransactions/SingleStockTransactions";
 import Users from "../pages/users/Users";
 import EditUser from "../pages/users/EditUser";
@@ -62,7 +62,7 @@ import IncomePage from "../pages/income/IncomePage";
 import ExpensesReportPage from "../pages/expenses/ExpensesReportPage";
 import CashTransactionDetailsPage from "../pages/income/CashTransactionDetailsPage";
 import AddStockTransaction from "../pages/stockTransactions/AddStockTransactions";
-import Purchases from "../pages/purchases/purchases";
+import Purchases from "../pages/purchases/Purchases";
 
 const AppRoutes = () => {
   return (
