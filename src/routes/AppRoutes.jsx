@@ -22,13 +22,11 @@ import Batches from "../pages/batches/Batches";
 import AddBatches from "../pages/batches/AddBatches";
 import SingleBatches from "../pages/batches/SingleBatches";
 import EditBatches from "../pages/batches/EditBatches";
-import AddStockTransactions from "../pages/stockTransactions/AddStockTransactions";
 import StockTransaction from "../pages/stockTransactions/stockTransactions";
 import SingleStockTransaction from "../pages/stockTransactions/SingleStockTransactions";
 import Users from "../pages/users/Users";
 import EditUser from "../pages/users/EditUser";
 import SingleUser from "../pages/users/SingleUsers";
-import Purchases from "../pages/purchases/purchases";
 import SinglePurchases from "../pages/purchases/SinglePurchases";
 import AddPurchases from "../pages/purchases/AddPurchases";
 import AddDispensed from "../pages/dispensed/AddDispensed";
@@ -63,6 +61,8 @@ import DoctorSettlementPage from "../pages/doctorSettlement/DoctorSettlementPage
 import IncomePage from "../pages/income/IncomePage";
 import ExpensesReportPage from "../pages/expenses/ExpensesReportPage";
 import CashTransactionDetailsPage from "../pages/income/CashTransactionDetailsPage";
+import AddStockTransaction from "../pages/stockTransactions/AddStockTransactions";
+import Purchases from "../pages/purchases/purchases";
 
 const AppRoutes = () => {
   return (
@@ -99,7 +99,7 @@ const AppRoutes = () => {
                 {/* Stock transaction */}
                 <Route path="/stock-transaction"    element={<StockTransaction />} />
                 <Route path="/stock-transaction/:id"element={<SingleStockTransaction />} />
-                <Route path="/add-stock-transaction"element={<AddStockTransactions />} />
+                <Route path="/add-stock-transaction"element={<AddStockTransaction />} />
                 {/*Users  */}
                 <Route path="/users"                element={<Users />} />
                 <Route path="/users/:id"            element={<SingleUser />} />
