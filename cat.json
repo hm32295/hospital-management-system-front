@@ -1,0 +1,406 @@
+{
+  "description": "Therapeutic medicine categories suitable for organizing a pharmacy management system in Egypt. Categories are application-oriented and not an official exhaustive classification issued by the Egyptian Drug Authority.",
+  "source_note": "The Egyptian Drug Authority publishes the Egyptian Drug Formulary by therapeutic chapters and maintains national medicine lists. This application dataset organizes common pharmacy categories into practical groups for software use.",
+  "categories": [
+    {
+      "name": "Alimentary Tract & Metabolism",
+      "description": "Medicines affecting the digestive system and metabolism."
+    },
+    {
+      "name": "Antacids & Acid Suppressants",
+      "description": "Medicines used to relieve excess stomach acid, heartburn, reflux, and related symptoms."
+    },
+    {
+      "name": "Antiulcer Medicines",
+      "description": "Medicines used in the treatment and prevention of peptic ulcers."
+    },
+    {
+      "name": "Antiemetics",
+      "description": "Medicines used to prevent or relieve nausea and vomiting."
+    },
+    {
+      "name": "Antidiarrheals",
+      "description": "Medicines used to relieve diarrhea and related intestinal symptoms."
+    },
+    {
+      "name": "Laxatives",
+      "description": "Medicines used to relieve constipation and facilitate bowel movements."
+    },
+    {
+      "name": "Antispasmodics",
+      "description": "Medicines used to relieve spasms and cramping of the gastrointestinal tract."
+    },
+    {
+      "name": "Antiflatulents",
+      "description": "Medicines used to relieve abdominal bloating and excessive intestinal gas."
+    },
+    {
+      "name": "Digestive Enzymes",
+      "description": "Preparations containing enzymes used to support digestion in selected conditions."
+    },
+    {
+      "name": "Hepatobiliary Medicines",
+      "description": "Medicines used for selected disorders of the liver, bile ducts, and gallbladder."
+    },
+    {
+      "name": "Antidiabetic Medicines",
+      "description": "Medicines used to control blood glucose in diabetes mellitus."
+    },
+    {
+      "name": "Insulins",
+      "description": "Insulin preparations used to control blood glucose in diabetes."
+    },
+    {
+      "name": "Vitamins & Minerals",
+      "description": "Vitamin and mineral preparations used to prevent or treat nutritional deficiencies."
+    },
+    {
+      "name": "Blood & Blood Forming Organs",
+      "description": "Medicines affecting blood formation, coagulation, and related disorders."
+    },
+    {
+      "name": "Anticoagulants",
+      "description": "Medicines used to reduce blood clot formation."
+    },
+    {
+      "name": "Antiplatelet Medicines",
+      "description": "Medicines that reduce platelet aggregation and help prevent arterial clot formation."
+    },
+    {
+      "name": "Hemostatics",
+      "description": "Medicines used to help control or prevent bleeding in specific clinical situations."
+    },
+    {
+      "name": "Antianemic Medicines",
+      "description": "Medicines and supplements used to prevent or treat anemia and nutritional deficiencies."
+    },
+    {
+      "name": "Cardiovascular System",
+      "description": "Medicines used to treat conditions affecting the heart and blood vessels."
+    },
+    {
+      "name": "Antihypertensives",
+      "description": "Medicines used to lower and control high blood pressure."
+    },
+    {
+      "name": "Antianginal Medicines",
+      "description": "Medicines used to prevent or relieve symptoms of angina pectoris."
+    },
+    {
+      "name": "Antiarrhythmic Medicines",
+      "description": "Medicines used to manage abnormal heart rhythms."
+    },
+    {
+      "name": "Heart Failure Medicines",
+      "description": "Medicines used as part of the treatment of heart failure."
+    },
+    {
+      "name": "Lipid-Lowering Medicines",
+      "description": "Medicines used to reduce elevated cholesterol and other blood lipids."
+    },
+    {
+      "name": "Diuretics",
+      "description": "Medicines that increase urine production and are used in selected cardiovascular and fluid-retention conditions."
+    },
+    {
+      "name": "Dermatological Medicines",
+      "description": "Medicines and preparations used to treat disorders of the skin."
+    },
+    {
+      "name": "Topical Anti-infectives",
+      "description": "Medicines applied to the skin to treat or prevent selected infections."
+    },
+    {
+      "name": "Topical Corticosteroids",
+      "description": "Topical corticosteroid preparations used to reduce inflammation and itching in selected skin conditions."
+    },
+    {
+      "name": "Emollients & Skin Protectives",
+      "description": "Preparations used to moisturize, protect, and support the skin barrier."
+    },
+    {
+      "name": "Acne Medicines",
+      "description": "Medicines and topical preparations used in the management of acne."
+    },
+    {
+      "name": "Antifungal Medicines",
+      "description": "Medicines used to treat fungal infections."
+    },
+    {
+      "name": "Antiviral Medicines",
+      "description": "Medicines used to treat selected viral infections."
+    },
+    {
+      "name": "Antibiotics",
+      "description": "Antibacterial medicines used to treat susceptible bacterial infections."
+    },
+    {
+      "name": "Antimicrobial Medicines",
+      "description": "Medicines used to treat infections caused by microorganisms, including selected antibacterial and other antimicrobial agents."
+    },
+    {
+      "name": "Antiseptics & Disinfectants",
+      "description": "Products used to reduce or eliminate microorganisms on skin, wounds, or appropriate surfaces."
+    },
+    {
+      "name": "Genitourinary System",
+      "description": "Medicines used for disorders of the urinary and reproductive systems."
+    },
+    {
+      "name": "Urinary Tract Medicines",
+      "description": "Medicines used in selected urinary tract conditions and symptoms."
+    },
+    {
+      "name": "Urological Medicines",
+      "description": "Medicines used to manage selected urological disorders."
+    },
+    {
+      "name": "Gynecological Medicines",
+      "description": "Medicines used for selected gynecological conditions."
+    },
+    {
+      "name": "Hormonal Contraceptives",
+      "description": "Hormonal medicines used for contraception."
+    },
+    {
+      "name": "Respiratory System",
+      "description": "Medicines used to treat diseases and symptoms affecting the respiratory system."
+    },
+    {
+      "name": "Bronchodilators",
+      "description": "Medicines that relax airway muscles and improve airflow in selected respiratory conditions."
+    },
+    {
+      "name": "Asthma Medicines",
+      "description": "Medicines used to control or relieve symptoms of asthma."
+    },
+    {
+      "name": "COPD Medicines",
+      "description": "Medicines used in the management of chronic obstructive pulmonary disease."
+    },
+    {
+      "name": "Cough & Cold Medicines",
+      "description": "Medicines used for symptomatic relief of cough, common cold, and related upper respiratory symptoms."
+    },
+    {
+      "name": "Mucolytics & Expectorants",
+      "description": "Medicines used to loosen mucus and facilitate clearance of respiratory secretions."
+    },
+    {
+      "name": "Nasal Medicines",
+      "description": "Medicines and preparations used for nasal congestion, rhinitis, and related conditions."
+    },
+    {
+      "name": "Nervous System",
+      "description": "Medicines used to treat disorders affecting the central and peripheral nervous systems."
+    },
+    {
+      "name": "Analgesics",
+      "description": "Medicines used to relieve pain."
+    },
+    {
+      "name": "Antipyretics",
+      "description": "Medicines used to reduce fever."
+    },
+    {
+      "name": "NSAIDs",
+      "description": "Non-steroidal anti-inflammatory medicines used for pain, inflammation, and fever in appropriate conditions."
+    },
+    {
+      "name": "Opioid Analgesics",
+      "description": "Opioid medicines used for moderate to severe pain under appropriate medical supervision."
+    },
+    {
+      "name": "Antiepileptic Medicines",
+      "description": "Medicines used to control and prevent epileptic seizures."
+    },
+    {
+      "name": "Antidepressants",
+      "description": "Medicines used to treat depressive disorders and selected other conditions."
+    },
+    {
+      "name": "Antipsychotics",
+      "description": "Medicines used in the treatment of psychotic disorders and selected psychiatric conditions."
+    },
+    {
+      "name": "Anxiolytics",
+      "description": "Medicines used to manage anxiety and related conditions."
+    },
+    {
+      "name": "Sedatives & Hypnotics",
+      "description": "Medicines used for sedation or management of selected sleep disorders."
+    },
+    {
+      "name": "Antiparkinson Medicines",
+      "description": "Medicines used to manage symptoms of Parkinson's disease."
+    },
+    {
+      "name": "Muscle Relaxants",
+      "description": "Medicines used to reduce muscle spasm in selected conditions."
+    },
+    {
+      "name": "Migraine Medicines",
+      "description": "Medicines used for the acute treatment or prevention of migraine."
+    },
+    {
+      "name": "Eye Medicines",
+      "description": "Medicines and preparations used to treat selected eye diseases and symptoms."
+    },
+    {
+      "name": "Ophthalmic Anti-infectives",
+      "description": "Eye preparations used to treat selected bacterial or other infectious eye conditions."
+    },
+    {
+      "name": "Ophthalmic Anti-inflammatory Medicines",
+      "description": "Eye preparations used to reduce inflammation in selected ocular conditions."
+    },
+    {
+      "name": "Artificial Tears & Lubricants",
+      "description": "Ophthalmic preparations used to relieve dryness and irritation of the eyes."
+    },
+    {
+      "name": "Ear Medicines",
+      "description": "Medicines and preparations used for selected ear conditions."
+    },
+    {
+      "name": "ENT Medicines",
+      "description": "Medicines used for selected ear, nose, and throat conditions."
+    },
+    {
+      "name": "Antihistamines",
+      "description": "Medicines used to relieve allergy symptoms such as itching, sneezing, and runny nose."
+    },
+    {
+      "name": "Allergy Medicines",
+      "description": "Medicines used to manage allergic conditions and their symptoms."
+    },
+    {
+      "name": "Corticosteroids",
+      "description": "Corticosteroid medicines used to reduce inflammation and modify immune responses in selected conditions."
+    },
+    {
+      "name": "Immunosuppressants",
+      "description": "Medicines that suppress immune activity and are used in selected autoimmune and transplant-related conditions."
+    },
+    {
+      "name": "Antineoplastic Medicines",
+      "description": "Medicines used in the treatment of cancer."
+    },
+    {
+      "name": "Targeted Cancer Therapies",
+      "description": "Medicines designed to act on specific molecular targets involved in cancer."
+    },
+    {
+      "name": "Hormonal Anticancer Medicines",
+      "description": "Hormonal medicines used in the treatment of selected hormone-sensitive cancers."
+    },
+    {
+      "name": "Endocrine System Medicines",
+      "description": "Medicines used for disorders of endocrine glands and hormone regulation."
+    },
+    {
+      "name": "Thyroid Medicines",
+      "description": "Medicines used to treat hypothyroidism, hyperthyroidism, and selected thyroid disorders."
+    },
+    {
+      "name": "Corticosteroid Systemic Medicines",
+      "description": "Systemic corticosteroids used for selected inflammatory, allergic, autoimmune, and other conditions."
+    },
+    {
+      "name": "Musculoskeletal System",
+      "description": "Medicines used for disorders of bones, joints, muscles, and connective tissues."
+    },
+    {
+      "name": "Anti-rheumatic Medicines",
+      "description": "Medicines used in the management of inflammatory and rheumatic diseases."
+    },
+    {
+      "name": "Gout Medicines",
+      "description": "Medicines used to treat acute gout attacks or reduce uric acid levels."
+    },
+    {
+      "name": "Osteoporosis Medicines",
+      "description": "Medicines used to prevent or treat loss of bone density and osteoporosis."
+    },
+    {
+      "name": "Antiprotozoal Medicines",
+      "description": "Medicines used to treat selected infections caused by protozoa."
+    },
+    {
+      "name": "Anthelmintics",
+      "description": "Medicines used to treat infections caused by parasitic worms."
+    },
+    {
+      "name": "Antimalarial Medicines",
+      "description": "Medicines used to prevent or treat malaria."
+    },
+    {
+      "name": "Antiretroviral Medicines",
+      "description": "Medicines used in combination regimens for the treatment of HIV infection."
+    },
+    {
+      "name": "Vaccines & Immunological Products",
+      "description": "Vaccines and selected immunological products used for prevention or management of specific diseases."
+    },
+    {
+      "name": "Local Anesthetics",
+      "description": "Medicines used to produce localized loss of sensation during selected procedures."
+    },
+    {
+      "name": "General Anesthetics",
+      "description": "Medicines used to produce general anesthesia during surgical and other procedures."
+    },
+    {
+      "name": "Emergency Medicines",
+      "description": "Medicines commonly used in emergency and acute-care situations."
+    },
+    {
+      "name": "Critical Care Medicines",
+      "description": "Medicines used in intensive and critical care settings."
+    },
+    {
+      "name": "Medical Gases",
+      "description": "Gases used for medical treatment, respiratory support, anesthesia, or diagnostic purposes."
+    },
+    {
+      "name": "Smoking Cessation Medicines",
+      "description": "Medicines and therapeutic products used to support smoking cessation."
+    },
+    {
+      "name": "Nutritional Preparations",
+      "description": "Oral or specialized nutritional products used to support nutritional needs."
+    },
+    {
+      "name": "Oral & Dental Care",
+      "description": "Medicines and preparations used for selected oral, dental, and gum conditions."
+    },
+    {
+      "name": "Mouth & Throat Preparations",
+      "description": "Preparations used to relieve symptoms and treat selected conditions of the mouth and throat."
+    },
+    {
+      "name": "Pediatric Medicines",
+      "description": "Medicines and formulations intended or commonly used for pediatric patients."
+    },
+    {
+      "name": "Geriatric Medicines",
+      "description": "Medicines and preparations commonly considered in the care of older adults."
+    },
+    {
+      "name": "Obstetric Medicines",
+      "description": "Medicines used in selected conditions related to pregnancy, labor, and the postpartum period."
+    },
+    {
+      "name": "Smoking & Nicotine Dependence",
+      "description": "Therapeutic products used in programs for nicotine dependence and smoking cessation."
+    },
+    {
+      "name": "Diagnostic Agents",
+      "description": "Medicinal or pharmaceutical agents used to support specific diagnostic procedures."
+    },
+    {
+      "name": "Contrast Media",
+      "description": "Agents used to enhance medical imaging examinations."
+    }
+  ]
+}

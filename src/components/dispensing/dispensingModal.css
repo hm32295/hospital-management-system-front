@@ -1,0 +1,257 @@
+.dispensing-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1055;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.dispensing-modal {
+  width: 100%;
+  max-width: 620px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.dispensing-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.dispensing-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dispensing-modal-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #eef5ff;
+  color: #0d6efd;
+}
+
+.dispensing-modal-title h5 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #212529;
+}
+
+.dispensing-modal-title span {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.dispensing-modal-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: #f8f9fa;
+  color: #6c757d;
+  transition: 0.2s;
+}
+
+.dispensing-modal-close:hover:not(:disabled) {
+  background: #e9ecef;
+  color: #212529;
+}
+
+.dispensing-modal-body {
+  padding: 22px;
+}
+
+.dispensing-summary {
+  padding: 16px;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #f8f9fa;
+}
+
+.dispensing-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 7px 0;
+}
+
+.dispensing-summary-row span {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.dispensing-summary-row strong {
+  color: #212529;
+  font-size: 14px;
+}
+
+.dispensing-paid {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #dee2e6;
+  color: #198754;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dispensing-items {
+  margin-top: 20px;
+}
+
+.dispensing-items-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dispensing-items-title span {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dispensing-items-title strong {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.dispensing-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+}
+
+.dispensing-item-info {
+  min-width: 0;
+}
+
+.dispensing-item-info strong {
+  display: block;
+  font-size: 14px;
+  color: #212529;
+}
+
+.dispensing-item-info span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.dispensing-item-info small {
+  display: block;
+  margin-top: 4px;
+  color: #8a8f98;
+  font-size: 11px;
+}
+
+.dispensing-item-quantity {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 7px;
+  background: #f1f3f5;
+  color: #212529;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dispensing-input-group {
+  margin-top: 20px;
+}
+
+.dispensing-input-group label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.dispensing-input-group textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 11px 13px;
+  border: 1px solid #ced4da;
+  border-radius: 9px;
+  outline: none;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.dispensing-input-group textarea:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.dispensing-input-group small {
+  display: block;
+  margin-top: 5px;
+  color: #dc3545;
+  font-size: 12px;
+}
+
+.dispensing-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e9ecef;
+}
+
+.dispensing-modal-footer button {
+  min-width: 130px;
+}
+
+@media (max-width: 576px) {
+  .dispensing-modal-overlay {
+    padding: 12px;
+  }
+
+  .dispensing-modal {
+    max-height: calc(100vh - 24px);
+    border-radius: 13px;
+  }
+
+  .dispensing-modal-header,
+  .dispensing-modal-body {
+    padding: 16px;
+  }
+
+  .dispensing-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .dispensing-modal-footer button {
+    width: 100%;
+  }
+}

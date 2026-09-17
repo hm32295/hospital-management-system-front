@@ -1,0 +1,68 @@
+
+.stock-card-clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stock-card-clickable:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12) !important;
+}
+
+.stock-management-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.stock-management-item:hover {
+  border-color: #ced4da;
+  transform: translateY(-2px);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
+}
+
+.stock-management-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.stock-management-content {
+  flex: 1;
+}
+
+.stock-status-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 6px;
+}
+
+.stock-status-row:hover {
+  background-color: #f8f9fa;
+}
+
+.spin {
+  animation: stock-spin 1s linear infinite;
+}
+
+@keyframes stock-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

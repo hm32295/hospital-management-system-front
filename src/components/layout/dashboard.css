@@ -1,0 +1,372 @@
+/* ========================================
+   Dashboard Layout
+======================================== */
+
+.dashboard-layout {
+  min-height: 100vh;
+  background-color: #f5f7fb;
+}
+
+
+/* ========================================
+   Sidebar
+======================================== */
+
+.sidebar {
+  width: 260px;
+  height: 100vh;
+
+  background-color: #ffffff;
+  border-right: 1px solid #e9ecef;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  z-index: 1100;
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+
+  overflow-y: auto;
+}
+
+
+/* ========================================
+   Sidebar Header
+======================================== */
+
+.sidebar-header {
+  height: 80px;
+
+  padding: 18px 20px;
+
+  border-bottom: 1px solid #e9ecef;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-header h4 {
+  color: #212529;
+}
+
+.sidebar-header small {
+  color: #6c757d;
+}
+
+
+/* ========================================
+   Sidebar Navigation
+======================================== */
+
+.sidebar-nav {
+  padding: 20px 12px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px 15px;
+  margin-bottom: 6px;
+
+  border-radius: 10px;
+
+  color: #495057;
+  text-decoration: none;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-link:hover {
+  background-color: #f1f5ff;
+  color: #0d6efd;
+}
+
+.sidebar-link.active {
+  background-color: #0d6efd;
+  color: #ffffff;
+}
+
+
+/* ========================================
+   Sidebar Close Button
+======================================== */
+
+.sidebar-close-btn {
+  display: none;
+
+  border: none;
+  background: transparent;
+
+  padding: 5px;
+
+  color: #495057;
+
+  cursor: pointer;
+}
+
+
+/* ========================================
+   Main
+======================================== */
+
+.dashboard-main {
+  min-height: 100vh;
+
+  margin-left: 260px;
+}
+
+
+/* ========================================
+   Navbar
+======================================== */
+
+.navbar-custom {
+  height: 80px;
+
+  background-color: #ffffff;
+
+  border-bottom: 1px solid #e9ecef;
+
+  padding: 0 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  position: sticky;
+  top: 0;
+
+  z-index: 900;
+}
+
+
+/* ========================================
+   Sidebar Toggle
+======================================== */
+
+.sidebar-toggle-btn {
+  display: none;
+
+  border: none;
+  background: transparent;
+
+  padding: 6px;
+
+  border-radius: 8px;
+
+  color: #343a40;
+
+  cursor: pointer;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: #f1f3f5;
+}
+
+
+/* ========================================
+   Navbar Icons
+======================================== */
+
+.navbar-icon-btn {
+  width: 40px;
+  height: 40px;
+
+  border: none;
+  background: transparent;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #495057;
+
+  cursor: pointer;
+}
+
+.navbar-icon-btn:hover {
+  background-color: #f1f3f5;
+}
+
+
+/* ========================================
+   Navbar User
+======================================== */
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-user-info {
+  text-align: right;
+}
+
+.navbar-avatar {
+  width: 40px;
+  height: 40px;
+
+  border-radius: 50%;
+
+  background-color: #0d6efd;
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 600;
+}
+
+
+/* ========================================
+   Logout
+======================================== */
+
+.navbar-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+/* ========================================
+   Content
+======================================== */
+
+.dashboard-content {
+  padding: 30px;
+}
+
+
+/* ========================================
+   Overlay
+======================================== */
+
+.sidebar-overlay {
+  display: none;
+}
+
+
+/* ========================================
+   Tablet / Mobile
+======================================== */
+
+@media (max-width: 991.98px) {
+
+  /* Sidebar */
+
+  .sidebar {
+    transform: translateX(-100%);
+
+    box-shadow: none;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Close Button */
+
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Main */
+
+  .dashboard-main {
+    margin-left: 0;
+  }
+
+  /* Navbar */
+
+  .navbar-custom {
+    padding: 0 20px;
+  }
+
+  /* Toggle Button */
+
+  .sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Overlay */
+
+  .sidebar-overlay {
+    display: block;
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    background-color: rgba(0, 0, 0, 0.45);
+
+    z-index: 1050;
+  }
+
+}
+
+
+/* ========================================
+   Small Mobile
+======================================== */
+
+@media (max-width: 575.98px) {
+
+  .navbar-custom {
+    height: 70px;
+    padding: 0 15px;
+  }
+
+  .dashboard-content {
+    padding: 20px 15px;
+  }
+
+  .navbar-user-info {
+    display: none;
+  }
+
+  .navbar-logout-btn span {
+    display: none;
+  }
+
+  .navbar-logout-btn {
+    width: 38px;
+    height: 38px;
+
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbar-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+}

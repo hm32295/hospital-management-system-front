@@ -1,0 +1,266 @@
+.medicine-scan-button {
+  border: 0;
+  background: #0d6efd;
+  color: #fff;
+
+  min-height: 44px;
+
+  padding: 0 18px;
+
+  border-radius: 8px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  transition: 0.2s ease;
+}
+
+.medicine-scan-button:hover {
+  background: #0b5ed7;
+}
+
+/* ================= OVERLAY ================= */
+
+.medicine-scanner-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  background: rgba(0, 0, 0, 0.65);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+}
+
+/* ================= MODAL ================= */
+
+.medicine-scanner-modal {
+  width: 100%;
+  max-width: 520px;
+
+  background: #fff;
+
+  border-radius: 16px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+/* ================= HEADER ================= */
+
+.medicine-scanner-header {
+  min-height: 70px;
+
+  padding: 14px 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid #e9ecef;
+}
+
+.medicine-scanner-title {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+}
+
+.medicine-scanner-icon {
+  width: 42px;
+  height: 42px;
+
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eaf2ff;
+  color: #0d6efd;
+}
+
+.medicine-scanner-title h5 {
+  margin: 0;
+
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.medicine-scanner-title span {
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 12px;
+
+  color: #6c757d;
+}
+
+.medicine-scanner-close {
+  width: 36px;
+  height: 36px;
+
+  border: 0;
+
+  border-radius: 8px;
+
+  background: #f8f9fa;
+
+  color: #6c757d;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.medicine-scanner-close:hover {
+  background: #e9ecef;
+  color: #212529;
+}
+
+/* ================= BODY ================= */
+
+.medicine-scanner-body {
+  padding: 20px;
+}
+
+.scanner-camera-wrapper {
+  width: 100%;
+
+  border-radius: 12px;
+
+  overflow: hidden;
+
+  background: #000;
+}
+
+/* html5-qrcode */
+
+.medicine-qr-reader {
+  width: 100%;
+}
+
+.medicine-qr-reader video {
+  width: 100% !important;
+  height: auto !important;
+
+  display: block;
+}
+
+.medicine-qr-reader img {
+  display: none !important;
+}
+
+.medicine-qr-reader__scan_region {
+  min-height: 300px;
+}
+
+/* Hide unnecessary library UI */
+
+#medicine-qr-reader__dashboard {
+  display: none !important;
+}
+
+.scanner-help {
+  margin: 14px 0 0;
+
+  text-align: center;
+
+  color: #6c757d;
+
+  font-size: 13px;
+}
+
+.scanner-error {
+  margin-top: 14px;
+
+  padding: 11px 13px;
+
+  border-radius: 8px;
+
+  background: #fff1f1;
+
+  color: #dc3545;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  font-size: 13px;
+}
+
+/* ================= FOOTER ================= */
+
+.medicine-scanner-footer {
+  padding: 14px 18px;
+
+  border-top: 1px solid #e9ecef;
+
+  display: flex;
+  justify-content: flex-end;
+}
+
+.medicine-scanner-footer button {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 576px) {
+
+  .medicine-scanner-overlay {
+    padding: 10px;
+  }
+
+  .medicine-scanner-modal {
+    border-radius: 13px;
+  }
+
+  .medicine-scanner-body {
+    padding: 12px;
+  }
+
+  .medicine-scanner-header {
+    padding: 12px;
+  }
+
+  .medicine-scanner-title h5 {
+    font-size: 15px;
+  }
+
+  .medicine-scanner-title span {
+    font-size: 11px;
+  }
+
+  .medicine-qr-reader__scan_region {
+    min-height: 250px;
+  }
+
+  .medicine-scanner-footer {
+    padding: 12px;
+  }
+
+  .medicine-scanner-footer button {
+    width: 100%;
+    justify-content: center;
+  }
+}

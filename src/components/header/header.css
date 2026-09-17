@@ -1,0 +1,46 @@
+.page-header {
+  width: 100%;
+}
+
+.page-header-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #212529;
+}
+
+.page-header-description {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+.page-header-back {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+
+.page-header-action {
+  flex-shrink: 0;
+}
+
+/* Mobile */
+
+@media (max-width: 767.98px) {
+  .page-header-title {
+    font-size: 1.4rem;
+  }
+
+  .page-header-description {
+    font-size: 0.875rem;
+  }
+
+  .page-header-action {
+    width: 100%;
+  }
+
+  .page-header-action > * {
+    width: 100%;
+  }
+}

@@ -1,0 +1,33 @@
+.form-control,
+.form-select {
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
+}
+
+.form-control::placeholder {
+  color: #adb5bd;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 7px;
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+}
+
+.invalid-feedback {
+  font-size: 0.8rem;
+  margin-top: 5px;
+}

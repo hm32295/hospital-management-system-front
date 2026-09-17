@@ -1,0 +1,185 @@
+.admin-data-page {
+  width: 100%;
+}
+
+/* =========================
+   Header
+========================= */
+
+.admin-data-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.admin-data-title {
+  margin: 0;
+
+  font-size: 1.75rem;
+  font-weight: 700;
+
+  color: #212529;
+}
+
+.admin-data-subtitle {
+  margin: 5px 0 0;
+
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+/* =========================
+   Filters
+========================= */
+
+.admin-data-filters {
+  padding: 20px;
+
+  margin-bottom: 20px;
+
+  background: #fff;
+
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+}
+
+/* =========================
+   Table
+========================= */
+
+.admin-data-table-wrapper {
+  background: #fff;
+
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+
+  overflow: hidden;
+}
+
+.admin-data-table {
+  min-width: 850px;
+}
+
+.admin-data-table thead th {
+  padding: 15px 16px;
+
+  background: #f8f9fa;
+
+  color: #495057;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  border-bottom: 1px solid #dee2e6;
+}
+
+.admin-data-table tbody td {
+  padding: 15px 16px;
+
+  font-size: 14px;
+
+  vertical-align: middle;
+
+  white-space: nowrap;
+}
+
+.admin-data-table tbody tr {
+  transition: 0.15s;
+}
+
+.admin-data-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* =========================
+   State
+========================= */
+
+.admin-data-state {
+  height: 220px;
+
+  text-align: center;
+  vertical-align: middle;
+
+  color: #6c757d;
+}
+
+/* =========================
+   Pagination
+========================= */
+
+.admin-data-pagination {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 16px;
+
+  margin-top: 15px;
+
+  background: #fff;
+
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+}
+
+.pagination-page {
+  min-width: 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 600;
+}
+
+/* =========================
+   Mobile
+========================= */
+
+@media (max-width: 767.98px) {
+
+  .admin-data-header {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+  .admin-data-header .btn {
+    width: 100%;
+
+    justify-content: center;
+  }
+
+  .admin-data-title {
+    font-size: 1.4rem;
+  }
+
+  .admin-data-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .admin-data-filters {
+    padding: 15px;
+  }
+
+  .admin-data-pagination {
+    flex-direction: column;
+    align-items: stretch;
+
+    text-align: center;
+  }
+
+  .admin-data-pagination > div:last-child {
+    justify-content: center;
+  }
+
+}

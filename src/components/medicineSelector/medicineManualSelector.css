@@ -1,0 +1,270 @@
+.manual-medicine-selector {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.manual-selector-header {
+  margin-bottom: 15px;
+}
+
+.manual-selector-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.manual-selector-title svg {
+  color: #0d6efd;
+}
+
+.manual-selector-title h5 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.manual-selector-title span {
+  display: block;
+  margin-top: 3px;
+  color: #6c757d;
+  font-size: 13px;
+}
+
+.manual-search-wrapper {
+  position: relative;
+}
+
+.manual-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  pointer-events: none;
+}
+
+.manual-search-input {
+  min-height: 45px;
+  padding-left: 43px;
+  padding-right: 42px;
+}
+
+.manual-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 30px;
+  height: 30px;
+
+  border: 0;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #6c757d;
+  border-radius: 6px;
+}
+
+.manual-clear-btn:hover {
+  background: #f1f3f5;
+  color: #dc3545;
+}
+
+/* ================= RESULTS ================= */
+
+.manual-search-results {
+  margin-top: 8px;
+
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+
+  background: #fff;
+
+  max-height: 280px;
+  overflow-y: auto;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+}
+
+.manual-result-item {
+  width: 100%;
+
+  padding: 13px 15px;
+
+  border: 0;
+  border-bottom: 1px solid #f1f3f5;
+
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  text-align: left;
+
+  transition: 0.2s;
+}
+
+.manual-result-item:last-child {
+  border-bottom: 0;
+}
+
+.manual-result-item:hover {
+  background: #f8f9fa;
+}
+
+.manual-result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.manual-result-info strong {
+  font-size: 14px;
+  color: #212529;
+}
+
+.manual-result-info span {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.manual-result-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.manual-result-meta span {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* ================= NO RESULTS ================= */
+
+.manual-no-results {
+  min-height: 130px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  color: #6c757d;
+}
+
+.manual-no-results svg {
+  opacity: 0.5;
+}
+
+/* ================= SELECTED ================= */
+
+.manual-selected-medicine {
+  margin-top: 12px;
+
+  padding: 14px;
+
+  border: 1px solid #dbe4ff;
+  border-radius: 10px;
+
+  background: #f8faff;
+
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.manual-selected-info {
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.manual-selected-icon {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: #e7f0ff;
+  color: #0d6efd;
+}
+
+.manual-selected-info div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.manual-selected-info strong {
+  font-size: 14px;
+}
+
+.manual-selected-info span {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.manual-selected-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.manual-selected-price span {
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.manual-selected-price strong {
+  font-size: 14px;
+}
+
+.manual-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+
+  .manual-result-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .manual-result-meta {
+    align-items: flex-start;
+  }
+
+  .manual-selected-medicine {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .manual-selected-price {
+    align-items: flex-start;
+  }
+
+  .manual-add-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

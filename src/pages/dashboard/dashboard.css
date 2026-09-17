@@ -1,0 +1,204 @@
+.dashboard-page {
+  padding: 24px;
+}
+
+/* ==============================
+   Dashboard Header
+============================== */
+
+.dashboard-header {
+  margin-bottom: 24px;
+}
+
+.dashboard-header h2 {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.dashboard-header p {
+  margin: 0;
+  color: #6c757d;
+}
+
+
+/* ==============================
+   Statistic Cards
+============================== */
+
+.dashboard-card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fff;
+  height: 100%;
+  transition: 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+}
+
+.dashboard-card-body {
+  padding: 20px;
+}
+
+.dashboard-card-title {
+  color: #6c757d;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.dashboard-card-value {
+  font-size: 25px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.dashboard-card-subtitle {
+  color: #6c757d;
+  font-size: 13px;
+}
+
+
+/* ==============================
+   Section
+============================== */
+
+.dashboard-section {
+  margin-top: 24px;
+}
+
+.dashboard-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+
+/* ==============================
+   Cash Drawer
+============================== */
+
+.cash-drawer-box {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  background: #fff;
+}
+
+.cash-drawer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.cash-drawer-status.open {
+  color: #198754;
+}
+
+.cash-drawer-status.closed {
+  color: #dc3545;
+}
+
+.cash-drawer-value {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+
+/* ==============================
+   Inventory
+============================== */
+
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.inventory-item:last-child {
+  border-bottom: none;
+}
+
+.inventory-label {
+  color: #495057;
+}
+
+.inventory-value {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+
+/* ==============================
+   Tables
+============================== */
+
+.dashboard-table {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+}
+
+.dashboard-table table {
+  margin-bottom: 0;
+}
+
+.dashboard-table th {
+  font-size: 13px;
+  color: #6c757d;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dashboard-table td {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+
+/* ==============================
+   Empty State
+============================== */
+
+.dashboard-empty {
+  padding: 35px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+
+/* ==============================
+   Loading
+============================== */
+
+.dashboard-loading {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* ==============================
+   Responsive
+============================== */
+
+@media (max-width: 768px) {
+  .dashboard-page {
+    padding: 15px;
+  }
+
+  .dashboard-card-value {
+    font-size: 22px;
+  }
+
+  .dashboard-section-title {
+    font-size: 17px;
+  }
+}
