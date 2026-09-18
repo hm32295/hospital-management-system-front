@@ -32,3 +32,8 @@ export const getDoctorSettlement = async (id) => {
 
   return response.data;
 };
+
+export const getDoctorAccount = async (doctorId) => {
+  const response = await api.get(`/doctor-settlements/doctor/${doctorId}/account`);
+  return response.data;
+};

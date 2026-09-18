@@ -16,20 +16,37 @@
   width: 260px;
   height: 100vh;
 
-  background-color: #ffffff;
-  border-right: 1px solid #e9ecef;
-
   position: fixed;
   top: 0;
   left: 0;
 
   z-index: 1100;
 
+  background-color: #ffffff;
+  border-right: 1px solid #e9ecef;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
 
-  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ced4da transparent;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #ced4da;
+  border-radius: 10px;
 }
 
 
@@ -42,19 +59,28 @@
 
   padding: 18px 20px;
 
-  border-bottom: 1px solid #e9ecef;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  border-bottom: 1px solid #edf0f3;
+
+  position: sticky;
+  top: 0;
+
+  z-index: 2;
+
+  background-color: #ffffff;
 }
 
 .sidebar-header h4 {
   color: #212529;
+  letter-spacing: -0.3px;
 }
 
 .sidebar-header small {
-  color: #6c757d;
+  color: #8a94a6;
+  font-size: 12px;
 }
 
 
@@ -63,37 +89,102 @@
 ======================================== */
 
 .sidebar-nav {
-  padding: 20px 12px;
+  padding: 18px 12px 25px;
 }
 
+
+/* ========================================
+   Sidebar Section
+======================================== */
+
+.sidebar-section {
+  margin-bottom: 22px;
+}
+
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+.sidebar-section-title {
+  padding: 0 12px;
+  margin-bottom: 8px;
+
+  color: #9aa3b2;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+
+/* ========================================
+   Sidebar Link
+======================================== */
+
 .sidebar-link {
+  min-height: 46px;
+
   display: flex;
   align-items: center;
   gap: 12px;
 
-  padding: 12px 15px;
-  margin-bottom: 6px;
+  padding: 11px 13px;
+  margin-bottom: 4px;
 
-  border-radius: 10px;
+  border-radius: 9px;
 
-  color: #495057;
+  color: #596273;
+
   text-decoration: none;
 
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
+
+  position: relative;
 
   transition:
     background-color 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.sidebar-link svg {
+  flex-shrink: 0;
+
+  color: #7b8494;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .sidebar-link:hover {
-  background-color: #f1f5ff;
+  background-color: #f4f7ff;
+  color: #0d6efd;
+
+  transform: translateX(2px);
+}
+
+.sidebar-link:hover svg {
   color: #0d6efd;
 }
 
+
+/* ========================================
+   Sidebar Active
+======================================== */
+
 .sidebar-link.active {
   background-color: #0d6efd;
+  color: #ffffff;
+
+  box-shadow:
+    0 4px 10px rgba(13, 110, 253, 0.18);
+}
+
+.sidebar-link.active svg {
   color: #ffffff;
 }
 
@@ -103,16 +194,31 @@
 ======================================== */
 
 .sidebar-close-btn {
+  width: 34px;
+  height: 34px;
+
   display: none;
 
+  align-items: center;
+  justify-content: center;
+
   border: none;
-  background: transparent;
+  border-radius: 8px;
 
-  padding: 5px;
+  background-color: transparent;
 
-  color: #495057;
+  color: #6c757d;
 
   cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+  background-color: #f1f3f5;
+  color: #212529;
 }
 
 
@@ -134,15 +240,15 @@
 .navbar-custom {
   height: 80px;
 
-  background-color: #ffffff;
-
-  border-bottom: 1px solid #e9ecef;
-
   padding: 0 30px;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  background-color: #ffffff;
+
+  border-bottom: 1px solid #e9ecef;
 
   position: sticky;
   top: 0;
@@ -152,53 +258,154 @@
 
 
 /* ========================================
-   Sidebar Toggle
+   Navbar Left
 ======================================== */
 
-.sidebar-toggle-btn {
-  display: none;
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 
-  border: none;
-  background: transparent;
-
-  padding: 6px;
-
-  border-radius: 8px;
-
-  color: #343a40;
-
-  cursor: pointer;
+  min-width: 0;
 }
 
-.sidebar-toggle-btn:hover {
-  background-color: #f1f3f5;
+.navbar-page-info {
+  min-width: 0;
+}
+
+.navbar-page-title {
+  margin: 0;
+
+  color: #212529;
+
+  font-size: 17px;
+  font-weight: 600;
+
+  line-height: 1.3;
+}
+
+.navbar-page-subtitle {
+  display: block;
+
+  margin-top: 2px;
+
+  color: #9aa3b2;
+
+  font-size: 11px;
 }
 
 
 /* ========================================
-   Navbar Icons
+   Sidebar Toggle
+======================================== */
+
+.sidebar-toggle-btn {
+  width: 40px;
+  height: 40px;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 9px;
+
+  background-color: transparent;
+
+  color: #343a40;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: #f1f3f5;
+  color: #0d6efd;
+}
+
+
+/* ========================================
+   Navbar Right
+======================================== */
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+
+/* ========================================
+   Navbar Icon
 ======================================== */
 
 .navbar-icon-btn {
   width: 40px;
   height: 40px;
 
-  border: none;
-  background: transparent;
-
-  border-radius: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
 
-  color: #495057;
+  border: none;
+  border-radius: 10px;
+
+  background-color: transparent;
+
+  color: #596273;
 
   cursor: pointer;
+
+  position: relative;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .navbar-icon-btn:hover {
   background-color: #f1f3f5;
+  color: #0d6efd;
+}
+
+
+/* ========================================
+   Notification
+======================================== */
+
+.navbar-notification-btn {
+  position: relative;
+}
+
+.notification-dot {
+  width: 7px;
+  height: 7px;
+
+  position: absolute;
+  top: 7px;
+  right: 7px;
+
+  border-radius: 50%;
+
+  background-color: #dc3545;
+
+  border: 2px solid #ffffff;
+}
+
+
+/* ========================================
+   Navbar Divider
+======================================== */
+
+.navbar-divider {
+  width: 1px;
+  height: 30px;
+
+  background-color: #e9ecef;
 }
 
 
@@ -214,22 +421,41 @@
 
 .navbar-user-info {
   text-align: right;
+  line-height: 1.25;
+}
+
+.navbar-user-name {
+  color: #212529;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.navbar-user-role {
+  margin-top: 3px;
+
+  color: #8a94a6;
+
+  font-size: 11px;
 }
 
 .navbar-avatar {
   width: 40px;
   height: 40px;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
   border-radius: 50%;
 
   background-color: #0d6efd;
   color: #ffffff;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 
@@ -238,9 +464,37 @@
 ======================================== */
 
 .navbar-logout-btn {
+  min-height: 40px;
+
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 0 12px;
+
+  border: 1px solid #f1b0b7;
+  border-radius: 9px;
+
+  background-color: #ffffff;
+
+  color: #dc3545;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.navbar-logout-btn:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #ffffff;
 }
 
 
@@ -263,12 +517,10 @@
 
 
 /* ========================================
-   Tablet / Mobile
+   Tablet
 ======================================== */
 
 @media (max-width: 991.98px) {
-
-  /* Sidebar */
 
   .sidebar {
     transform: translateX(-100%);
@@ -279,70 +531,56 @@
   .sidebar.sidebar-open {
     transform: translateX(0);
 
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.15);
+    box-shadow:
+      10px 0 35px rgba(0, 0, 0, 0.15);
   }
-
-  /* Close Button */
 
   .sidebar-close-btn {
     display: flex;
-    align-items: center;
-    justify-content: center;
   }
-
-  /* Main */
 
   .dashboard-main {
     margin-left: 0;
   }
 
-  /* Navbar */
-
   .navbar-custom {
     padding: 0 20px;
   }
 
-  /* Toggle Button */
-
   .sidebar-toggle-btn {
     display: flex;
-    align-items: center;
-    justify-content: center;
   }
-
-  /* Overlay */
 
   .sidebar-overlay {
     display: block;
 
     position: fixed;
 
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
 
-    background-color: rgba(0, 0, 0, 0.45);
+    background-color: rgba(15, 23, 42, 0.45);
 
     z-index: 1050;
   }
-
 }
 
 
 /* ========================================
-   Small Mobile
+   Small Tablet
 ======================================== */
 
-@media (max-width: 575.98px) {
+@media (max-width: 767.98px) {
 
-  .navbar-custom {
-    height: 70px;
-    padding: 0 15px;
+  .navbar-page-subtitle {
+    display: none;
   }
 
-  .dashboard-content {
-    padding: 20px 15px;
+  .navbar-right {
+    gap: 8px;
+  }
+
+  .navbar-divider {
+    display: none;
   }
 
   .navbar-user-info {
@@ -354,14 +592,36 @@
   }
 
   .navbar-logout-btn {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
 
     padding: 0;
+  }
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .dashboard-content {
+    padding: 24px 20px;
+  }
+}
+
+
+/* ========================================
+   Mobile
+======================================== */
+
+@media (max-width: 575.98px) {
+
+  .navbar-custom {
+    height: 70px;
+
+    padding: 0 15px;
+  }
+
+  .navbar-page-title {
+    font-size: 16px;
+  }
+
+  .navbar-right {
+    gap: 4px;
   }
 
   .navbar-avatar {
@@ -369,4 +629,41 @@
     height: 38px;
   }
 
+  .navbar-icon-btn,
+  .navbar-logout-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dashboard-content {
+    padding: 20px 15px;
+  }
+
+  .sidebar {
+    width: min(280px, 85vw);
+  }
+}
+
+
+/* ========================================
+   Very Small Mobile
+======================================== */
+
+@media (max-width: 380px) {
+
+  .navbar-page-title {
+    font-size: 15px;
+  }
+
+  .navbar-icon-btn {
+    display: none;
+  }
+
+  .navbar-custom {
+    padding: 0 12px;
+  }
+
+  .dashboard-content {
+    padding: 18px 12px;
+  }
 }

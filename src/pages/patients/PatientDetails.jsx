@@ -14,9 +14,18 @@ import {
   Pill,
   ShoppingCart,
   Wallet,
+  ReceiptText,
+  CircleDollarSign,
+  X,
+  Banknote,
 } from "lucide-react";
 
 import { getPatientDetails } from "../../services/patients.service";
+import {
+  createPayment,
+  createVisitPayment,
+  createOperationPayment,
+} from "../../services/payment.service";
 
 const PatientDetails = () => {
   const { id } = useParams();
@@ -25,47 +34,47 @@ const PatientDetails = () => {
 
   const [patient, setPatient] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [account, setAccount] = useState(null);
+
   const [visits, setVisits] = useState([]);
+  const [operations, setOperations] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [sales, setSales] = useState([]);
   const [payments, setPayments] = useState([]);
 
   const [loading, setLoading] = useState(true);
+
   const [activeTab, setActiveTab] = useState("visits");
+
+  const [paymentTarget, setPaymentTarget] = useState(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentNotes, setPaymentNotes] = useState("");
+  const [paymentSubmitting, setPaymentSubmitting] =
+    useState(false);
 
   const fetchPatientDetails = async () => {
     try {
       setLoading(true);
 
-      const response =
-        await getPatientDetails(id);
+      const response = await getPatientDetails(id);
 
-      if (!response.success) {
-        throw new Error(
-          response.message ||
-            "Failed to load patient details"
-        );
-      }
+      setPatient(response.patient || null);
+      setSummary(response.summary || null);
+      setAccount(response.account || null);
 
-      setPatient(response.patient);
-      setSummary(response.summary);
       setVisits(response.visits || []);
-      setPrescriptions(
-        response.prescriptions || []
-      );
+      setOperations(response.operations || []);
+      setPrescriptions(response.prescriptions || []);
       setSales(response.sales || []);
       setPayments(response.payments || []);
     } catch (error) {
       enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
+        error?.response?.data?.message ||
           "Failed to load patient details",
         {
           variant: "error",
         }
       );
-
-      navigate("/patients");
     } finally {
       setLoading(false);
     }
@@ -78,484 +87,398 @@ const PatientDetails = () => {
   const formatDate = (date) => {
     if (!date) return "-";
 
-    return new Date(date).toLocaleDateString(
-      "en-GB"
+    return new Date(date).toLocaleDateString("en-GB");
+  };
+
+  const formatMoney = (amount) => {
+    return `${Number(amount || 0).toLocaleString()} EGP`;
+  };
+
+  const getVisitRemaining = (visit) => {
+    if (visit.paymentStatus === "paid") {
+      return 0;
+    }
+
+    return Number(visit.consultationFee || 0);
+  };
+
+  const getOperationRemaining = (operation) => {
+    if (
+      operation.remainingAmount !== undefined &&
+      operation.remainingAmount !== null
+    ) {
+      return Number(operation.remainingAmount);
+    }
+
+    return Math.max(
+      Number(operation.totalAmount || 0) -
+        Number(operation.paidAmount || 0),
+      0
     );
   };
 
-  const formatDateTime = (date) => {
-    if (!date) return "-";
+  const getSaleRemaining = (sale) => {
+    if (
+      sale.remainingAmount !== undefined &&
+      sale.remainingAmount !== null
+    ) {
+      return Number(sale.remainingAmount);
+    }
 
-    return new Date(date).toLocaleString(
-      "en-GB",
-      {
-        dateStyle: "short",
-        timeStyle: "short",
-      }
+    return Math.max(
+      Number(sale.totalAmount || 0) -
+        Number(sale.paidAmount || 0),
+      0
     );
   };
 
-  const formatMoney = (value) => {
-    return `${Number(value || 0).toLocaleString(
-      "en-EG",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+  const openPaymentModal = (type, item) => {
+    let remaining = 0;
+
+    if (type === "visit") {
+      remaining = getVisitRemaining(item);
+    }
+
+    if (type === "operation") {
+      remaining = getOperationRemaining(item);
+    }
+
+    if (type === "sale") {
+      remaining = getSaleRemaining(item);
+    }
+
+    if (remaining <= 0) {
+      enqueueSnackbar("There is no remaining amount", {
+        variant: "info",
+      });
+      return;
+    }
+
+    setPaymentTarget({
+      type,
+      item,
+      remaining,
+    });
+
+    setPaymentAmount(String(remaining));
+    setPaymentNotes("");
+  };
+
+  const closePaymentModal = () => {
+    if (paymentSubmitting) return;
+
+    setPaymentTarget(null);
+    setPaymentAmount("");
+    setPaymentNotes("");
+  };
+
+  const handlePayment = async (e) => {
+    e.preventDefault();
+
+    if (!paymentTarget) return;
+
+    const amount = Number(paymentAmount);
+
+    if (!amount || amount <= 0) {
+      enqueueSnackbar("Enter a valid payment amount", {
+        variant: "error",
+      });
+      return;
+    }
+
+    if (amount > paymentTarget.remaining) {
+      enqueueSnackbar(
+        `Payment cannot exceed ${formatMoney(
+          paymentTarget.remaining
+        )}`,
+        {
+          variant: "error",
+        }
+      );
+      return;
+    }
+
+    try {
+      setPaymentSubmitting(true);
+
+      const { type, item } = paymentTarget;
+
+      if (type === "visit") {
+        await createVisitPayment(item._id, {
+          amount,
+          notes: paymentNotes,
+        });
       }
-    )} EGP`;
-  };
 
-  const getVisitStatusClass = (status) => {
-    switch (status) {
-      case "completed":
-        return "text-bg-success";
+      if (type === "operation") {
+        await createOperationPayment({
+          operation: item._id,
+          amount,
+          notes: paymentNotes,
+        });
+      }
 
-      case "waiting":
-        return "text-bg-warning";
+      if (type === "sale") {
+        await createPayment({
+          sale: item._id,
+          amount,
+          notes: paymentNotes,
+        });
+      }
 
-      case "in_consultation":
-        return "text-bg-primary";
+      enqueueSnackbar("Payment completed successfully", {
+        variant: "success",
+      });
 
-      case "cancelled":
-        return "text-bg-danger";
+      closePaymentModal();
 
-      default:
-        return "text-bg-secondary";
-    }
-  };
-
-  const getPaymentStatusClass = (status) => {
-    switch (status) {
-      case "paid":
-      case "completed":
-        return "text-bg-success";
-
-      case "pending":
-      case "partial":
-        return "text-bg-warning";
-
-      case "cancelled":
-        return "text-bg-danger";
-
-      default:
-        return "text-bg-secondary";
-    }
-  };
-
-  const getPrescriptionStatusClass = (
-    status
-  ) => {
-    switch (status) {
-      case "Dispensed":
-        return "text-bg-success";
-
-      case "Partially Dispensed":
-        return "text-bg-warning";
-
-      case "Pending":
-        return "text-bg-primary";
-
-      case "Cancelled":
-        return "text-bg-danger";
-
-      default:
-        return "text-bg-secondary";
+      await fetchPatientDetails();
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          "Payment failed",
+        {
+          variant: "error",
+        }
+      );
+    } finally {
+      setPaymentSubmitting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="container-fluid py-5">
-        <div className="text-center">
-          Loading patient details...
+      <div className="d-flex justify-content-center align-items-center py-5">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">
+            Loading...
+          </span>
         </div>
       </div>
     );
   }
 
   if (!patient) {
-    return null;
+    return (
+      <div className="container-fluid">
+        <div className="alert alert-danger">
+          Patient not found
+        </div>
+      </div>
+    );
   }
 
-  const totalCharges =
-    Number(summary?.visitTotal || 0) +
-    Number(summary?.salesTotal || 0);
+  const totalCharges = Number(
+    account?.charges?.total || 0
+  );
 
   const totalPaid = Number(
-    summary?.totalPaid || 0
+    account?.payments?.total || 0
   );
 
-  const totalRemaining = Math.max(
-    totalCharges - totalPaid,
-    0
+  const totalDiscounts = Number(
+    account?.discounts?.total || 0
   );
+
+  const balance = Number(account?.balance || 0);
 
   return (
-    <div className="container-fluid py-4">
-
-      {/* Header */}
-
-      <div className="d-flex align-items-center gap-3 mb-4">
-
+    <div className="container-fluid py-3">
+      <div className="d-flex align-items-center justify-content-between mb-4">
         <button
           type="button"
-          className="btn btn-light border"
-          onClick={() =>
-            navigate("/patients")
-          }
+          className="btn btn-outline-secondary d-flex align-items-center gap-2"
+          onClick={() => navigate("/patients")}
         >
           <ArrowLeft size={18} />
+          Back
         </button>
 
-        <div>
-          <h3 className="mb-1">
-            Patient Details
-          </h3>
+        <h4 className="mb-0">Patient Details</h4>
 
-          <p className="text-muted mb-0">
-            Patient medical and financial history
-          </p>
-        </div>
-
+        <div />
       </div>
 
-      {/* Patient Information */}
-
       <div className="card border-0 shadow-sm mb-4">
-
-        <div className="card-body p-4">
-
-          <div className="row g-4">
-
-            {/* Patient Identity */}
-
-            <div className="col-lg-4">
-
+        <div className="card-body">
+          <div className="row g-4 align-items-center">
+            <div className="col-md-3">
               <div className="d-flex align-items-center gap-3">
-
                 <div
-                  className="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center"
+                  className="rounded-circle bg-light d-flex align-items-center justify-content-center"
                   style={{
-                    width: 64,
-                    height: 64,
+                    width: 65,
+                    height: 65,
                   }}
                 >
                   <UserRound size={30} />
                 </div>
 
                 <div>
-                  <h4 className="mb-1">
+                  <h5 className="mb-1">
                     {patient.name}
-                  </h4>
+                  </h5>
 
-                  <span className="badge text-bg-success">
-                    Active
+                  <span
+                    className={`badge ${
+                      patient.isActive
+                        ? "bg-success"
+                        : "bg-secondary"
+                    }`}
+                  >
+                    {patient.isActive
+                      ? "Active"
+                      : "Inactive"}
                   </span>
                 </div>
-
               </div>
-
             </div>
 
-            {/* Contact */}
-
-            <div className="col-lg-4">
-
-              <div className="d-flex flex-column gap-2">
-
-                <div className="d-flex align-items-center gap-2">
-                  <Phone size={16} />
-                  <span>
-                    {patient.phone || "-"}
-                  </span>
-                </div>
-
-                <div className="d-flex align-items-center gap-2">
-                  <Mail size={16} />
-                  <span>
-                    {patient.email || "-"}
-                  </span>
-                </div>
-
-                <div className="d-flex align-items-center gap-2">
-                  <MapPin size={16} />
-                  <span>
-                    {patient.address || "-"}
-                  </span>
-                </div>
-
+            <div className="col-md-3">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <Phone size={17} />
+                <span>
+                  {patient.phone || "-"}
+                </span>
               </div>
 
+              <div className="d-flex align-items-center gap-2">
+                <Mail size={17} />
+                <span>
+                  {patient.email || "-"}
+                </span>
+              </div>
             </div>
 
-            {/* Personal Info */}
-
-            <div className="col-lg-4">
-
-              <div className="d-flex flex-column gap-2">
-
-                <div className="d-flex align-items-center gap-2">
-                  <CreditCard size={16} />
-                  <span>
-                    {patient.nationalId || "-"}
-                  </span>
-                </div>
-
-                <div className="d-flex align-items-center gap-2">
-                  <CalendarDays size={16} />
-
-                  <span>
-                    {formatDate(
-                      patient.dateOfBirth
-                    )}
-                  </span>
-                </div>
-
-                <div className="d-flex align-items-center gap-2">
-                  <UserRound size={16} />
-
-                  <span className="text-capitalize">
-                    {patient.gender || "-"}
-                  </span>
-                </div>
-
+            <div className="col-md-3">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <MapPin size={17} />
+                <span>
+                  {patient.address || "-"}
+                </span>
               </div>
 
+              <div className="d-flex align-items-center gap-2">
+                <CalendarDays size={17} />
+                <span>
+                  {formatDate(patient.dateOfBirth)}
+                </span>
+              </div>
             </div>
 
+            <div className="col-md-3">
+              <div className="small text-muted mb-1">
+                National ID
+              </div>
+
+              <div className="fw-semibold">
+                {patient.nationalId || "-"}
+              </div>
+
+              <div className="small text-muted mt-2 mb-1">
+                Gender
+              </div>
+
+              <div className="fw-semibold text-capitalize">
+                {patient.gender || "-"}
+              </div>
+            </div>
           </div>
-
         </div>
-
       </div>
 
-      {/* Summary Cards */}
-
       <div className="row g-3 mb-4">
-
-        <div className="col-md-6 col-xl-3">
-
+        <div className="col-md-3">
           <div className="card border-0 shadow-sm h-100">
-
             <div className="card-body">
-
-              <div className="d-flex justify-content-between align-items-start">
-
+              <div className="d-flex justify-content-between">
                 <div>
-                  <div className="text-muted small mb-1">
+                  <div className="text-muted small">
                     Total Charges
                   </div>
 
-                  <h4 className="mb-0">
-                    {formatMoney(
-                      totalCharges
-                    )}
+                  <h4 className="mt-2 mb-0">
+                    {formatMoney(totalCharges)}
                   </h4>
                 </div>
 
-                <div className="text-primary">
-                  <CreditCard size={24} />
-                </div>
-
+                <ReceiptText size={28} />
               </div>
-
             </div>
-
           </div>
-
         </div>
 
-        <div className="col-md-6 col-xl-3">
-
+        <div className="col-md-3">
           <div className="card border-0 shadow-sm h-100">
-
             <div className="card-body">
-
-              <div className="d-flex justify-content-between align-items-start">
-
+              <div className="d-flex justify-content-between">
                 <div>
-                  <div className="text-muted small mb-1">
+                  <div className="text-muted small">
                     Total Paid
                   </div>
 
-                  <h4 className="mb-0 text-success">
-                    {formatMoney(
-                      totalPaid
-                    )}
+                  <h4 className="mt-2 mb-0 text-success">
+                    {formatMoney(totalPaid)}
                   </h4>
                 </div>
 
-                <div className="text-success">
-                  <Wallet size={24} />
-                </div>
-
+                <CreditCard size={28} />
               </div>
-
             </div>
-
           </div>
-
         </div>
 
-        <div className="col-md-6 col-xl-3">
-
+        <div className="col-md-3">
           <div className="card border-0 shadow-sm h-100">
-
             <div className="card-body">
-
-              <div className="d-flex justify-content-between align-items-start">
-
+              <div className="d-flex justify-content-between">
                 <div>
-                  <div className="text-muted small mb-1">
-                    Remaining
+                  <div className="text-muted small">
+                    Discounts
                   </div>
 
-                  <h4 className="mb-0 text-danger">
-                    {formatMoney(
-                      totalRemaining
-                    )}
+                  <h4 className="mt-2 mb-0">
+                    {formatMoney(totalDiscounts)}
                   </h4>
                 </div>
 
-                <div className="text-danger">
-                  <CreditCard size={24} />
-                </div>
-
+                <CircleDollarSign size={28} />
               </div>
-
             </div>
-
           </div>
-
         </div>
 
-        <div className="col-md-6 col-xl-3">
-
+        <div className="col-md-3">
           <div className="card border-0 shadow-sm h-100">
-
             <div className="card-body">
-
-              <div className="d-flex justify-content-between align-items-start">
-
+              <div className="d-flex justify-content-between">
                 <div>
-                  <div className="text-muted small mb-1">
-                    Visits
+                  <div className="text-muted small">
+                    Balance
                   </div>
 
-                  <h4 className="mb-0">
-                    {summary?.visitsCount ||
-                      0}
+                  <h4
+                    className={`mt-2 mb-0 ${
+                      balance > 0
+                        ? "text-danger"
+                        : "text-success"
+                    }`}
+                  >
+                    {formatMoney(balance)}
                   </h4>
                 </div>
 
-                <div className="text-primary">
-                  <Stethoscope size={24} />
-                </div>
-
+                <Wallet size={28} />
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
-      {/* Secondary Summary */}
-
-      <div className="row g-3 mb-4">
-
-        <div className="col-md-4">
-
-          <div className="card border-0 shadow-sm">
-
-            <div className="card-body d-flex align-items-center gap-3">
-
-              <Stethoscope size={22} />
-
-              <div>
-                <div className="text-muted small">
-                  Visits
-                </div>
-
-                <strong>
-                  {summary?.visitsCount ||
-                    0}
-                </strong>
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div className="col-md-4">
-
-          <div className="card border-0 shadow-sm">
-
-            <div className="card-body d-flex align-items-center gap-3">
-
-              <Pill size={22} />
-
-              <div>
-                <div className="text-muted small">
-                  Prescriptions
-                </div>
-
-                <strong>
-                  {summary
-                    ?.prescriptionsCount ||
-                    0}
-                </strong>
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div className="col-md-4">
-
-          <div className="card border-0 shadow-sm">
-
-            <div className="card-body d-flex align-items-center gap-3">
-
-              <ShoppingCart size={22} />
-
-              <div>
-                <div className="text-muted small">
-                  Medicine Sales
-                </div>
-
-                <strong>
-                  {summary?.salesCount ||
-                    0}
-                </strong>
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* History */}
 
       <div className="card border-0 shadow-sm">
-
-        <div className="card-body p-4">
-
-          {/* Tabs */}
-
-          <ul className="nav nav-tabs mb-4">
-
+        <div className="card-header bg-white border-0 pt-3">
+          <ul className="nav nav-tabs">
             <li className="nav-item">
-
               <button
                 type="button"
                 className={`nav-link ${
@@ -567,34 +490,46 @@ const PatientDetails = () => {
                   setActiveTab("visits")
                 }
               >
+                <Stethoscope size={16} className="me-1" />
                 Visits
               </button>
-
             </li>
 
             <li className="nav-item">
-
               <button
                 type="button"
                 className={`nav-link ${
-                  activeTab ===
-                  "prescriptions"
+                  activeTab === "operations"
                     ? "active"
                     : ""
                 }`}
                 onClick={() =>
-                  setActiveTab(
-                    "prescriptions"
-                  )
+                  setActiveTab("operations")
                 }
               >
-                Prescriptions
+                <ReceiptText size={16} className="me-1" />
+                Operations
               </button>
-
             </li>
 
             <li className="nav-item">
+              <button
+                type="button"
+                className={`nav-link ${
+                  activeTab === "prescriptions"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setActiveTab("prescriptions")
+                }
+              >
+                <Pill size={16} className="me-1" />
+                Prescriptions
+              </button>
+            </li>
 
+            <li className="nav-item">
               <button
                 type="button"
                 className={`nav-link ${
@@ -606,100 +541,109 @@ const PatientDetails = () => {
                   setActiveTab("sales")
                 }
               >
+                <ShoppingCart
+                  size={16}
+                  className="me-1"
+                />
                 Sales
               </button>
-
             </li>
 
             <li className="nav-item">
-
               <button
                 type="button"
                 className={`nav-link ${
-                  activeTab ===
-                  "payments"
+                  activeTab === "payments"
                     ? "active"
                     : ""
                 }`}
                 onClick={() =>
-                  setActiveTab(
-                    "payments"
-                  )
+                  setActiveTab("payments")
                 }
               >
+                <CreditCard
+                  size={16}
+                  className="me-1"
+                />
                 Payments
               </button>
-
             </li>
 
+            <li className="nav-item">
+              <button
+                type="button"
+                className={`nav-link ${
+                  activeTab === "account"
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setActiveTab("account")
+                }
+              >
+                <Wallet
+                  size={16}
+                  className="me-1"
+                />
+                Account
+              </button>
+            </li>
           </ul>
+        </div>
 
-          {/* Visits */}
-
+        <div className="card-body">
           {activeTab === "visits" && (
+            <div className="table-responsive">
+              <table className="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Specialty</th>
+                    <th>Doctor</th>
+                    <th>Type</th>
+                    <th>Fee</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
 
-            visits.length === 0 ? (
-
-              <div className="text-center text-muted py-5">
-                No visits found
-              </div>
-
-            ) : (
-
-              <div className="table-responsive">
-
-                <table className="table align-middle">
-
-                  <thead>
+                <tbody>
+                  {visits.length === 0 ? (
                     <tr>
-                      <th>Date</th>
-                      <th>Specialty</th>
-                      <th>Doctor</th>
-                      <th>Type</th>
-                      <th>Fee</th>
-                      <th>Payment</th>
-                      <th>Status</th>
+                      <td
+                        colSpan="8"
+                        className="text-center py-4"
+                      >
+                        No visits found
+                      </td>
                     </tr>
-                  </thead>
+                  ) : (
+                    visits.map((visit) => {
+                      const remaining =
+                        getVisitRemaining(visit);
 
-                  <tbody>
-
-                    {visits.map(
-                      (visit) => (
-
-                        <tr
-                          key={
-                            visit._id
-                          }
-                        >
-
+                      return (
+                        <tr key={visit._id}>
                           <td>
-                            {formatDateTime(
+                            {formatDate(
                               visit.createdAt
                             )}
                           </td>
 
                           <td>
-                            {
-                              visit
-                                .specialty
-                                ?.name
-                            }
-                          </td>
-
-                          <td>
-                            {visit.doctor
-                              ?.name ||
+                            {visit.specialty?.name ||
                               "-"}
                           </td>
 
                           <td>
-                            <span className="text-capitalize">
-                              {visit.visitType.replace(
-                                "_",
-                                " "
-                              )}
-                            </span>
+                            {visit.doctor?.name ||
+                              "-"}
+                          </td>
+
+                          <td className="text-capitalize">
+                            {visit.visitType ||
+                              "-"}
                           </td>
 
                           <td>
@@ -710,244 +654,274 @@ const PatientDetails = () => {
 
                           <td>
                             <span
-                              className={`badge ${getPaymentStatusClass(
-                                visit.paymentStatus
-                              )}`}
+                              className={`badge ${
+                                visit.paymentStatus ===
+                                "paid"
+                                  ? "bg-success"
+                                  : "bg-warning text-dark"
+                              }`}
+                            >
+                              {visit.paymentStatus}
+                            </span>
+                          </td>
+
+                          <td>
+                            <span className="text-capitalize">
+                              {visit.status}
+                            </span>
+                          </td>
+
+                          <td>
+                            {remaining > 0 ? (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                                onClick={() =>
+                                  openPaymentModal(
+                                    "visit",
+                                    visit
+                                  )
+                                }
+                              >
+                                <Banknote size={15} />
+                                Pay
+                              </button>
+                            ) : (
+                              <span className="text-success small">
+                                Paid
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "operations" && (
+            <div className="table-responsive">
+              <table className="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Operation</th>
+                    <th>Doctor</th>
+                    <th>Total</th>
+                    <th>Paid</th>
+                    <th>Remaining</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {operations.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="8"
+                        className="text-center py-4"
+                      >
+                        No operations found
+                      </td>
+                    </tr>
+                  ) : (
+                    operations.map((operation) => {
+                      const remaining =
+                        getOperationRemaining(
+                          operation
+                        );
+
+                      return (
+                        <tr key={operation._id}>
+                          <td>
+                            {formatDate(
+                              operation.operationDate ||
+                                operation.createdAt
+                            )}
+                          </td>
+
+                          <td>
+                            {operation.operationName ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            {operation.doctor?.name ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            {formatMoney(
+                              operation.totalAmount
+                            )}
+                          </td>
+
+                          <td>
+                            {formatMoney(
+                              operation.paidAmount
+                            )}
+                          </td>
+
+                          <td>
+                            {formatMoney(remaining)}
+                          </td>
+
+                          <td>
+                            <span
+                              className={`badge ${
+                                operation.paymentStatus ===
+                                "paid"
+                                  ? "bg-success"
+                                  : operation.paymentStatus ===
+                                    "partial"
+                                  ? "bg-warning text-dark"
+                                  : "bg-danger"
+                              }`}
                             >
                               {
-                                visit.paymentStatus
+                                operation.paymentStatus
                               }
                             </span>
                           </td>
 
                           <td>
-                            <span
-                              className={`badge ${getVisitStatusClass(
-                                visit.status
-                              )}`}
-                            >
-                              {visit.status.replace(
-                                "_",
-                                " "
-                              )}
-                            </span>
+                            {remaining > 0 &&
+                            operation.status !==
+                              "cancelled" ? (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                                onClick={() =>
+                                  openPaymentModal(
+                                    "operation",
+                                    operation
+                                  )
+                                }
+                              >
+                                <Banknote size={15} />
+                                Pay
+                              </button>
+                            ) : (
+                              <span
+                                className={
+                                  operation.status ===
+                                  "cancelled"
+                                    ? "text-danger small"
+                                    : "text-success small"
+                                }
+                              >
+                                {operation.status ===
+                                "cancelled"
+                                  ? "Cancelled"
+                                  : "Paid"}
+                              </span>
+                            )}
                           </td>
-
                         </tr>
-
-                      )
-                    )}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            )
-
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
 
-          {/* Prescriptions */}
+          {activeTab === "prescriptions" && (
+            <div className="table-responsive">
+              <table className="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Doctor</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
 
-          {activeTab ===
-            "prescriptions" && (
-
-            prescriptions.length ===
-            0 ? (
-
-              <div className="text-center text-muted py-5">
-                No prescriptions found
-              </div>
-
-            ) : (
-
-              <div className="table-responsive">
-
-                <table className="table align-middle">
-
-                  <thead>
+                <tbody>
+                  {prescriptions.length === 0 ? (
                     <tr>
-                      <th>Date</th>
-                      <th>Medicines</th>
-                      <th>Status</th>
-                      <th>Notes</th>
+                      <td
+                        colSpan="3"
+                        className="text-center py-4"
+                      >
+                        No prescriptions found
+                      </td>
                     </tr>
-                  </thead>
-
-                  <tbody>
-
-                    {prescriptions.map(
+                  ) : (
+                    prescriptions.map(
                       (prescription) => (
-
                         <tr
-                          key={
-                            prescription._id
-                          }
+                          key={prescription._id}
                         >
-
                           <td>
-                            {formatDateTime(
+                            {formatDate(
                               prescription.createdAt
                             )}
                           </td>
 
                           <td>
-
-                            <div className="d-flex flex-column gap-1">
-
-                              {prescription.items?.map(
-                                (
-                                  item
-                                ) => (
-
-                                  <div
-                                    key={
-                                      item._id
-                                    }
-                                  >
-
-                                    <strong>
-                                      {
-                                        item
-                                          .medicine
-                                          ?.name
-                                      }
-                                    </strong>
-
-                                    <span className="text-muted ms-2">
-                                      ×{" "}
-                                      {
-                                        item.quantity
-                                      }
-                                    </span>
-
-                                  </div>
-
-                                )
-                              )}
-
-                            </div>
-
+                            {prescription.doctor
+                              ?.name || "-"}
                           </td>
 
                           <td>
-
-                            <span
-                              className={`badge ${getPrescriptionStatusClass(
-                                prescription.status
-                              )}`}
-                            >
-                              {
-                                prescription.status
-                              }
-                            </span>
-
-                          </td>
-
-                          <td>
-                            {prescription.notes ||
+                            {prescription.status ||
                               "-"}
                           </td>
-
                         </tr>
-
                       )
-                    )}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            )
-
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
 
-          {/* Sales */}
-
           {activeTab === "sales" && (
+            <div className="table-responsive">
+              <table className="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Medicines</th>
+                    <th>Subtotal</th>
+                    <th>Discount</th>
+                    <th>Total</th>
+                    <th>Paid</th>
+                    <th>Remaining</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
 
-            sales.length === 0 ? (
-
-              <div className="text-center text-muted py-5">
-                No sales found
-              </div>
-
-            ) : (
-
-              <div className="table-responsive">
-
-                <table className="table align-middle">
-
-                  <thead>
-
+                <tbody>
+                  {sales.length === 0 ? (
                     <tr>
-                      <th>Date</th>
-                      <th>Medicines</th>
-                      <th>Subtotal</th>
-                      <th>Discount</th>
-                      <th>Total</th>
-                      <th>Paid</th>
-                      <th>Remaining</th>
-                      <th>Status</th>
+                      <td
+                        colSpan="9"
+                        className="text-center py-4"
+                      >
+                        No sales found
+                      </td>
                     </tr>
+                  ) : (
+                    sales.map((sale) => {
+                      const remaining =
+                        getSaleRemaining(sale);
 
-                  </thead>
-
-                  <tbody>
-
-                    {sales.map(
-                      (sale) => (
-
-                        <tr
-                          key={
-                            sale._id
-                          }
-                        >
-
+                      return (
+                        <tr key={sale._id}>
                           <td>
-                            {formatDateTime(
+                            {formatDate(
                               sale.createdAt
                             )}
                           </td>
 
                           <td>
-
-                            <div className="d-flex flex-column gap-1">
-
-                              {sale.items?.map(
-                                (
-                                  item,
-                                  index
-                                ) => (
-
-                                  <div
-                                    key={
-                                      `${sale._id}-${index}`
-                                    }
-                                  >
-                                    {
-                                      item
-                                        .medicine
-                                        ?.name
-                                    }
-
-                                    <span className="text-muted ms-2">
-                                      ×{" "}
-                                      {
-                                        item.quantity
-                                      }
-                                    </span>
-
-                                  </div>
-
-                                )
-                              )}
-
-                            </div>
-
+                            {sale.items?.length || 0}
                           </td>
 
                           <td>
@@ -962,163 +936,404 @@ const PatientDetails = () => {
                             )}
                           </td>
 
-                          <td className="fw-semibold">
+                          <td>
                             {formatMoney(
                               sale.totalAmount
                             )}
                           </td>
 
-                          <td className="text-success">
+                          <td>
                             {formatMoney(
                               sale.paidAmount
                             )}
                           </td>
 
-                          <td className="text-danger">
-                            {formatMoney(
-                              sale.remainingAmount
-                            )}
+                          <td>
+                            {formatMoney(remaining)}
                           </td>
 
                           <td>
-
                             <span
-                              className={`badge ${getPaymentStatusClass(
-                                sale.paymentStatus
-                              )}`}
+                              className={`badge ${
+                                sale.paymentStatus ===
+                                "paid"
+                                  ? "bg-success"
+                                  : sale.paymentStatus ===
+                                    "partial"
+                                  ? "bg-warning text-dark"
+                                  : "bg-danger"
+                              }`}
                             >
-                              {
-                                sale.paymentStatus
-                              }
+                              {sale.paymentStatus}
                             </span>
-
                           </td>
 
-                        </tr>
-
-                      )
-                    )}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            )
-
-          )}
-
-          {/* Payments */}
-
-          {activeTab ===
-            "payments" && (
-
-            payments.length === 0 ? (
-
-              <div className="text-center text-muted py-5">
-                No payments found
-              </div>
-
-            ) : (
-
-              <div className="table-responsive">
-
-                <table className="table align-middle">
-
-                  <thead>
-
-                    <tr>
-                      <th>Date</th>
-                      <th>Type</th>
-                      <th>Amount</th>
-                      <th>Received By</th>
-                      <th>Status</th>
-                      <th>Notes</th>
-                    </tr>
-
-                  </thead>
-
-                  <tbody>
-
-                    {payments.map(
-                      (payment) => {
-
-                        const paymentType =
-                          payment.sale
-                            ? "Medicine Sale"
-                            : payment.visit
-                            ? "Visit"
-                            : "-";
-
-                        return (
-                          <tr
-                            key={
-                              payment._id
-                            }
-                          >
-
-                            <td>
-                              {formatDateTime(
-                                payment.createdAt
-                              )}
-                            </td>
-
-                            <td>
-                              {paymentType}
-                            </td>
-
-                            <td className="fw-semibold text-success">
-                              {formatMoney(
-                                payment.amount
-                              )}
-                            </td>
-
-                            <td>
-                              {payment
-                                .receivedBy
-                                ?.name ||
-                                "-"}
-                            </td>
-
-                            <td>
-
-                              <span
-                                className={`badge ${getPaymentStatusClass(
-                                  payment.status
-                                )}`}
-                              >
-                                {
-                                  payment.status
+                          <td>
+                            {remaining > 0 &&
+                            sale.status !==
+                              "cancelled" ? (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                                onClick={() =>
+                                  openPaymentModal(
+                                    "sale",
+                                    sale
+                                  )
                                 }
+                              >
+                                <Banknote size={15} />
+                                Pay
+                              </button>
+                            ) : (
+                              <span
+                                className={
+                                  sale.status ===
+                                  "cancelled"
+                                    ? "text-danger small"
+                                    : "text-success small"
+                                }
+                              >
+                                {sale.status ===
+                                "cancelled"
+                                  ? "Cancelled"
+                                  : "Paid"}
                               </span>
-
-                            </td>
-
-                            <td>
-                              {payment.notes ||
-                                "-"}
-                            </td>
-
-                          </tr>
-                        );
-                      }
-                    )}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            )
-
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
 
-        </div>
+          {activeTab === "payments" && (
+            <div className="table-responsive">
+              <table className="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Received By</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
 
+                <tbody>
+                  {payments.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="text-center py-4"
+                      >
+                        No payments found
+                      </td>
+                    </tr>
+                  ) : (
+                    payments.map((payment) => (
+                      <tr key={payment._id}>
+                        <td>
+                          {formatDate(
+                            payment.createdAt
+                          )}
+                        </td>
+
+                        <td className="text-capitalize">
+                          {payment.type || "-"}
+                        </td>
+
+                        <td>
+                          {formatMoney(
+                            payment.amount
+                          )}
+                        </td>
+
+                        <td>
+                          {payment.receivedBy?.name ||
+                            "-"}
+                        </td>
+
+                        <td>
+                          <span
+                            className={`badge ${
+                              payment.status ===
+                              "completed"
+                                ? "bg-success"
+                                : "bg-danger"
+                            }`}
+                          >
+                            {payment.status}
+                          </span>
+                        </td>
+
+                        <td>
+                          {payment.notes || "-"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "account" && (
+            <div>
+              <div className="row g-3 mb-4">
+                <div className="col-md-4">
+                  <div className="border rounded p-3 h-100">
+                    <div className="text-muted small">
+                      Visit Charges
+                    </div>
+
+                    <h5 className="mt-2 mb-0">
+                      {formatMoney(
+                        account?.charges?.visits
+                      )}
+                    </h5>
+                  </div>
+                </div>
+
+                <div className="col-md-4">
+                  <div className="border rounded p-3 h-100">
+                    <div className="text-muted small">
+                      Operation Charges
+                    </div>
+
+                    <h5 className="mt-2 mb-0">
+                      {formatMoney(
+                        account?.charges?.operations
+                      )}
+                    </h5>
+                  </div>
+                </div>
+
+                <div className="col-md-4">
+                  <div className="border rounded p-3 h-100">
+                    <div className="text-muted small">
+                      Sales Charges
+                    </div>
+
+                    <h5 className="mt-2 mb-0">
+                      {formatMoney(
+                        account?.charges?.sales
+                      )}
+                    </h5>
+                  </div>
+                </div>
+              </div>
+
+              <div className="row g-3 mb-4">
+                <div className="col-md-4">
+                  <div className="border rounded p-3 h-100">
+                    <div className="text-muted small">
+                      Visit Payments
+                    </div>
+
+                    <h5 className="mt-2 mb-0 text-success">
+                      {formatMoney(
+                        account?.payments?.visits
+                      )}
+                    </h5>
+                  </div>
+                </div>
+
+                <div className="col-md-4">
+                  <div className="border rounded p-3 h-100">
+                    <div className="text-muted small">
+                      Operation Payments
+                    </div>
+
+                    <h5 className="mt-2 mb-0 text-success">
+                      {formatMoney(
+                        account?.payments?.operations
+                      )}
+                    </h5>
+                  </div>
+                </div>
+
+                <div className="col-md-4">
+                  <div className="border rounded p-3 h-100">
+                    <div className="text-muted small">
+                      Sales Payments
+                    </div>
+
+                    <h5 className="mt-2 mb-0 text-success">
+                      {formatMoney(
+                        account?.payments?.sales
+                      )}
+                    </h5>
+                  </div>
+                </div>
+              </div>
+
+              <div className="alert alert-light border d-flex justify-content-between align-items-center">
+                <div>
+                  <div className="fw-semibold">
+                    Patient Balance
+                  </div>
+
+                  <div className="small text-muted">
+                    Total charges minus completed
+                    payments and applicable discounts.
+                  </div>
+                </div>
+
+                <div
+                  className={`fs-4 fw-bold ${
+                    balance > 0
+                      ? "text-danger"
+                      : "text-success"
+                  }`}
+                >
+                  {formatMoney(balance)}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
+      {paymentTarget && (
+        <div
+          className="modal d-block"
+          tabIndex="-1"
+          style={{
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  Patient Payment
+                </h5>
+
+                <button
+                  type="button"
+                  className="btn btn-link text-dark p-0"
+                  onClick={closePaymentModal}
+                  disabled={paymentSubmitting}
+                >
+                  <X size={22} />
+                </button>
+              </div>
+
+              <form onSubmit={handlePayment}>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label">
+                      Payment Type
+                    </label>
+
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={paymentTarget.type}
+                      readOnly
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">
+                      Remaining Amount
+                    </label>
+
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={formatMoney(
+                        paymentTarget.remaining
+                      )}
+                      readOnly
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">
+                      Payment Amount
+                    </label>
+
+                    <input
+                      type="number"
+                      className="form-control"
+                      min="0.01"
+                      max={paymentTarget.remaining}
+                      step="0.01"
+                      value={paymentAmount}
+                      onChange={(e) =>
+                        setPaymentAmount(
+                          e.target.value
+                        )
+                      }
+                      readOnly={
+                        paymentTarget.type ===
+                        "visit"
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">
+                      Notes
+                    </label>
+
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      value={paymentNotes}
+                      onChange={(e) =>
+                        setPaymentNotes(
+                          e.target.value
+                        )
+                      }
+                      placeholder="Optional notes"
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={closePaymentModal}
+                    disabled={paymentSubmitting}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary d-flex align-items-center gap-2"
+                    disabled={paymentSubmitting}
+                  >
+                    {paymentSubmitting ? (
+                      <>
+                        <span
+                          className="spinner-border spinner-border-sm"
+                          role="status"
+                        />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Banknote size={17} />
+                        Confirm Payment
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
