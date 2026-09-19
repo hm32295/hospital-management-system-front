@@ -83,535 +83,164 @@ import DoctorSettlementPage from "../pages/doctorSettlement/DoctorSettlementPage
 import IncomePage from "../pages/income/IncomePage";
 import ExpensesReportPage from "../pages/expenses/ExpensesReportPage";
 import CashTransactionDetailsPage from "../pages/income/CashTransactionDetailsPage";
+import DoctorDetails from "../pages/doctors/DoctorDetails";
+import EditDoctor from "../pages/doctors/EditDoctor";
+import AddDoctor from "../pages/doctors/AddDoctor";
+import AddPatient from "../pages/patients/AddPatient";
+import EditPatient from "../pages/patients/EditPatient";
+import NotFound from "../pages/notFound/NotFound";
 
 const AppRoutes = () => {
   return (
-    <BrowserRouter>
-      <Routes>
+  <BrowserRouter>
+ <Routes>
 
-        {/* ==================== Public ==================== */}
+                {/* ==================== Public ==================== */}
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
+                <Route path="/login" element={<Login />}/>
 
-        {/* ==================== Protected ==================== */}
+                {/* ==================== Protected ==================== */}
 
         <Route element={<ProtectedRoute />}>
-
           <Route element={<DashboardLayout />}>
+              {/* ==================== Dashboard ==================== */}
+              <Route element={<RoleRoute
+                allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.NURSE, ROLES.PHARMACIST, ROLES.RECEPTIONIST,
+                ROLES.LAB_TECHNICIAN, ROLES.PATIENT,]} />} >
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/" element={<Dashboard />} />
+              </Route>
+              {/* ==================== Reception ==================== */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.RECEPTIONIST,]} />}>
+                <Route path="/reception" element={<Reception />} />
+              </Route>
+ {/* ==================== Patients ==================== */}
+            {/* Patients */}
+            <Route element={<RoleRoute
+              allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTIONIST,]} />}>
+              <Route path="/patients" element={<Patients />}/>
+              <Route path="/patients/add" element={<AddPatient />}/>
+              <Route  path="/patients/edit/:id" element={<EditPatient />}/>
+              <Route path="/patients/:id" element={<PatientDetails />}/>
+            </Route>
+  {/* ==================== Doctors ==================== */}
 
-            {/* ==================== Dashboard ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                    ROLES.DOCTOR,
-                    ROLES.NURSE,
-                    ROLES.PHARMACIST,
-                    ROLES.RECEPTIONIST,
-                    ROLES.LAB_TECHNICIAN,
-                    ROLES.PATIENT,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/dashboard"
-                element={<Dashboard />}
-              />
-
-              <Route
-                path="/"
-                element={<Dashboard />}
-              />
+            <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.RECEPTIONIST,]} />}>
+              <Route path="/doctors" element={<Doctors />}/>
             </Route>
 
-            {/* ==================== Reception ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                    ROLES.RECEPTIONIST,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/reception"
-                element={<Reception />}
-              />
+            <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
+              <Route path="/doctors/add" element={<AddDoctor />}/>
+              <Route path="/doctors/edit/:id" element={<EditDoctor />}/>
+              <Route path="/doctors/:id" element={<DoctorDetails />}/>
             </Route>
+ {/* ==================== Specialties ==================== */}
 
-            {/* ==================== Patients ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                    ROLES.DOCTOR,
-                    ROLES.NURSE,
-                    ROLES.RECEPTIONIST,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/patients"
-                element={<Patients />}
-              />
-
-              <Route
-                path="/patients/:id"
-                element={<PatientDetails />}
-              />
+            <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN,]} />} >
+              <Route path="/specialties" element={<Specialties />} />
             </Route>
-
-            {/* ==================== Doctors ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                    ROLES.RECEPTIONIST,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/doctors"
-                element={<Doctors />}
-              />
-            </Route>
-
-            {/* ==================== Specialties ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/specialties"
-                element={<Specialties />}
-              />
-            </Route>
-
             {/* ==================== Visits ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                    ROLES.DOCTOR,
-                    ROLES.NURSE,
-                    ROLES.RECEPTIONIST,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/visits"
-                element={<Visits />}
-              />
-
-              <Route
-                path="/visits/:id"
-                element={<VisitDetails />}
-              />
+            
+            <Route element={<RoleRoute
+              allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.NURSE, ROLES.RECEPTIONIST,]} />} >
+              <Route path="/visits" element={<Visits />} />
+              <Route path="/visits/:id" element={<VisitDetails />} />
             </Route>
-
-            {/* ==================== Doctor Consultation ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                    ROLES.DOCTOR,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/visits/:id/consultation"
-                element={<DoctorConsultation />}
-              />
+ {/* ==================== Doctor Consultation ==================== */}
+            <Route element={<RoleRoute
+              allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR,]} />} >
+              <Route path="/visits/:id/consultation" element={<DoctorConsultation />} />
             </Route>
-
-            {/* ==================== Operations ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                    ROLES.DOCTOR,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/operations"
-                element={<OperationsPage />}
-              />
-
-              <Route
-                path="/operations/add"
-                element={<OperationForm />}
-              />
-
-              <Route
-                path="/operations/edit/:id"
-                element={<OperationForm />}
-              />
-
-              <Route
-                path="/operations/:id"
-                element={<OperationDetails />}
-              />
-
-              <Route
-                path="/operations/:id/payment"
-                element={<OperationPaymentPage />}
-              />
-
-              <Route
-                path="/operations/:id/settlement"
-                element={<DoctorSettlementPage />}
-              />
+ {/* ==================== Operations ==================== */}
+            <Route element={<RoleRoute
+              allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR,]} />} >
+              <Route path="/operations" element={<OperationsPage />} />
+              <Route  path="/operations/add"  element={<OperationForm />}   />
+              <Route  path="/operations/edit/:id"  element={<OperationForm />}   />
+              <Route  path="/operations/:id"  element={<OperationDetails />}   />
+              <Route  path="/operations/:id/payment"  element={<OperationPaymentPage />}   />
+              <Route path="/operations/:id/settlement" element={<DoctorSettlementPage />} />
             </Route>
-
-            {/* ==================== Pharmacy ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                    ROLES.PHARMACIST,
-                  ]}
-                />
-              }
-            >
-
+ {/* ==================== Pharmacy ==================== */}
+            <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.PHARMACIST,]} />} >
               {/* Medicines */}
-
-              <Route
-                path="/medicines"
-                element={<Medicines />}
-              />
-
-              <Route
-                path="/add-medicine"
-                element={<AddMedicine />}
-              />
-
-              <Route
-                path="/medicines/:id"
-                element={<MedicinesSingle />}
-              />
-
-              <Route
-                path="/medicines/edit/:id"
-                element={<EditMedicine />}
-              />
-
+              <Route  path="/medicines"  element={<Medicines />}   />
+              <Route  path="/add-medicine"  element={<AddMedicine />}   />
+              <Route  path="/medicines/:id"  element={<MedicinesSingle />}   />
+              <Route  path="/medicines/edit/:id"  element={<EditMedicine />}   />
               {/* Categories */}
-
-              <Route
-                path="/categories"
-                element={<Categories />}
-              />
-
-              <Route
-                path="/add-categories"
-                element={<AddCategory />}
-              />
-
-              <Route
-                path="/categories/edit/:id"
-                element={<EditCategory />}
-              />
-
-              <Route
-                path="/categories/:id"
-                element={<SingleCategory />}
-              />
-
+              <Route  path="/categories"  element={<Categories />}   />
+              <Route  path="/add-categories"  element={<AddCategory />}   />
+              <Route  path="/categories/edit/:id"  element={<EditCategory />}   />
+              <Route  path="/categories/:id"  element={<SingleCategory />}   />
               {/* Suppliers */}
-
-              <Route
-                path="/Suppliers"
-                element={<Supplier />}
-              />
-
-              <Route
-                path="/Suppliers/:id"
-                element={<SingleSupplier />}
-              />
-
-              <Route
-                path="/Suppliers/edit/:id"
-                element={<EditSupplier />}
-              />
-
-              <Route
-                path="/add-Suppliers"
-                element={<AddSupplier />}
-              />
-
+              <Route  path="/Suppliers"  element={<Supplier />}   />
+              <Route  path="/Suppliers/:id"  element={<SingleSupplier />}   />
+              <Route  path="/Suppliers/edit/:id"  element={<EditSupplier />}   />
+              <Route  path="/add-Suppliers"  element={<AddSupplier />}   />
               {/* Batches */}
-
-              <Route
-                path="/batches"
-                element={<Batches />}
-              />
-
-              <Route
-                path="/add-batches"
-                element={<AddBatches />}
-              />
-
-              <Route
-                path="/batches/:id"
-                element={<SingleBatches />}
-              />
-
-              <Route
-                path="/batches/edit/:id"
-                element={<EditBatches />}
-              />
-
+              <Route  path="/batches"  element={<Batches />}   />
+              <Route  path="/add-batches"  element={<AddBatches />}   />
+              <Route  path="/batches/:id"  element={<SingleBatches />}   />
+              <Route  path="/batches/edit/:id"  element={<EditBatches />}   />
               {/* Sales */}
-
-              <Route
-                path="/sales"
-                element={<Sales />}
-              />
-
+              <Route  path="/sales"  element={<Sales />}   />
               {/* Dispensing */}
-
-              <Route
-                path="/dispenses"
-                element={<Dispensed />}
-              />
-
-              <Route
-                path="/add-dispense"
-                element={<AddDispensed />}
-              />
-
-              <Route
-                path="/dispenses/:id"
-                element={<SingleDispensed />}
-              />
-
+              <Route  path="/dispenses"  element={<Dispensed />}   />
+              <Route  path="/add-dispense"  element={<AddDispensed />}   />
+              <Route  path="/dispenses/:id"  element={<SingleDispensed />}   />
               {/* Purchases */}
-
-              <Route
-                path="/purchases"
-                element={<Purchases />}
-              />
-
-              <Route
-                path="/purchases/:id"
-                element={<SinglePurchases />}
-              />
-
-              <Route
-                path="/add-purchases"
-                element={<AddPurchases />}
-              />
-
+              <Route  path="/purchases"  element={<Purchases />}   />
+              <Route  path="/purchases/:id"  element={<SinglePurchases />}   />
+              <Route  path="/add-purchases"  element={<AddPurchases />}   />
               {/* Stock */}
-
-              <Route
-                path="/Stock"
-                element={<Stock />}
-              />
-
-              <Route
-                path="/expiry-batches"
-                element={<ExpiryBatches />}
-              />
-
-              <Route
-                path="/expiry-batches/:id"
-                element={<ExpiryBatches />}
-              />
-
-              <Route
-                path="/low-stock/"
-                element={<LowStock />}
-              />
-
-              <Route
-                path="/low-stock/:id"
-                element={<LowStock />}
-              />
-
-              <Route
-                path="/expired-batches/"
-                element={<ExpiredBatches />}
-              />
-
-              <Route
-                path="/expired-batches/:id"
-                element={<ExpiredBatches />}
-              />
-
+              <Route  path="/Stock"  element={<Stock />}   />
+              <Route  path="/expiry-batches"  element={<ExpiryBatches />}   />
+              <Route  path="/expiry-batches/:id"  element={<ExpiryBatches />}   />
+              <Route  path="/low-stock/"  element={<LowStock />}   />
+              <Route  path="/low-stock/:id"  element={<LowStock />}   />
+              <Route  path="/expired-batches/"  element={<ExpiredBatches />}   />
+              <Route  path="/expired-batches/:id"  element={<ExpiredBatches />}   />
               {/* Stock Transactions */}
-
-              <Route
-                path="/stock-transaction"
-                element={<StockTransaction />}
-              />
-
-              <Route
-                path="/stock-transaction/:id"
-                element={<SingleStockTransaction />}
-              />
-
-              <Route
-                path="/add-stock-transaction"
-                element={<AddStockTransaction />}
-              />
-
+              <Route  path="/stock-transaction"  element={<StockTransaction />}   />
+              <Route  path="/stock-transaction/:id"  element={<SingleStockTransaction />}   />
+              <Route path="/add-stock-transaction" element={<AddStockTransaction />} />
             </Route>
-
-            {/* ==================== Cash Drawers ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                    ROLES.PHARMACIST,
-                    ROLES.RECEPTIONIST,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/cash-drawers"
-                element={<CashDrawers />}
-              />
-
-              <Route
-                path="/cash-drawers/open"
-                element={<AddCashDrawer />}
-              />
-
-              <Route
-                path="/cash-drawers/current"
-                element={<CurrentCashDrawer />}
-              />
-
-              <Route
-                path="/cash-drawers/:id"
-                element={<CashDrawerDetails />}
-              />
-
-              <Route
-                path="/cash-drawers/:id/close"
-                element={<CloseCashDrawer />}
-              />
+ {/* ==================== Cash Drawers ==================== */}
+            <Route element={<RoleRoute
+              allowedRoles={[ROLES.ADMIN, ROLES.PHARMACIST, ROLES.RECEPTIONIST,]} />} >
+              <Route path="/cash-drawers" element={<CashDrawers />} />
+              <Route  path="/cash-drawers/open"  element={<AddCashDrawer />}   />
+              <Route  path="/cash-drawers/current"  element={<CurrentCashDrawer />}   />
+              <Route  path="/cash-drawers/:id"  element={<CashDrawerDetails />}   />
+              <Route path="/cash-drawers/:id/close" element={<CloseCashDrawer />} />
             </Route>
-
-            {/* ==================== Finance ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/income"
-                element={<IncomePage />}
-              />
-
-              <Route
-                path="/expenses"
-                element={<Expenses />}
-              />
-
-              <Route
-                path="/expenses/add"
-                element={<AddExpense />}
-              />
-
-              <Route
-                path="/expenses-report"
-                element={<ExpensesReportPage />}
-              />
-
-              <Route
-                path="/cash-transactions/:id"
-                element={<CashTransactionDetailsPage />}
-              />
+ {/* ==================== Finance ==================== */}
+            <Route element={<RoleRoute
+              allowedRoles={[ROLES.ADMIN,]} />} >
+              <Route path="/income" element={<IncomePage />} />
+              <Route  path="/expenses"  element={<Expenses />}   />
+              <Route  path="/expenses/add"  element={<AddExpense />}   />
+              <Route  path="/expenses-report"  element={<ExpensesReportPage />}   />
+              <Route path="/cash-transactions/:id" element={<CashTransactionDetailsPage />} />
             </Route>
-
-            {/* ==================== Users ==================== */}
-
-            <Route
-              element={
-                <RoleRoute
-                  allowedRoles={[
-                    ROLES.ADMIN,
-                  ]}
-                />
-              }
-            >
-              <Route
-                path="/users"
-                element={<Users />}
-              />
-
-              <Route
-                path="/users/:id"
-                element={<SingleUser />}
-              />
-
-              <Route
-                path="/users/edit/:id"
-                element={<EditUser />}
-              />
+ {/* ==================== Users ==================== */}
+            <Route element={<RoleRoute
+              allowedRoles={[ROLES.ADMIN,]} />} >
+              <Route path="/users" element={<Users />} />
+              <Route  path="/users/:id"  element={<SingleUser />}   />
+              <Route path="/users/edit/:id" element={<EditUser />} />
             </Route>
-
           </Route>
         </Route>
 
-        {/* ==================== Not Found ==================== */}
+   {/* ==================== Not Found ==================== */}
 
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to="/dashboard"
-              replace
-            />
-          }
-        />
+   <Route path="*" element={ <NotFound /> }
+   />
 
-      </Routes>
-    </BrowserRouter>
+ </Routes>
+  </BrowserRouter>
   );
 };
 
