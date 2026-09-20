@@ -50,7 +50,7 @@ const AddMedicine = () => {
 
   const formik = useFormik({
     initialValues: medicineInitialValues,
-    validationSchema: medicineSchema,
+    validationSchema: medicineSchema(t),
     onSubmit: async (values, { setSubmitting }) => {
       const medicines = [values];
 

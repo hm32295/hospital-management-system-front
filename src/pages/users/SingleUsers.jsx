@@ -1,34 +1,35 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import DetailsCard from "../../components/details/DetailsCard";
 import Header from "../../components/header/Header";
 import { getCurrentUser } from "../../services/auth.service";
-
+import { useTranslation } from "react-i18next";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const SingleUser = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
   const [user, setUser] = useState(null);
-
   const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState("");
-
-  // Get Medicine
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         setLoading(true);
-        setError("");
-        const response =await getCurrentUser(id);
-        setUser(  response.user );
 
+        const response = await getCurrentUser(id);
+
+        setUser(response.user);
       } catch (error) {
-        console.error(error);
-        setError(
-          error.response?.data?.message ||
-            "Failed to load user"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("users.loadFailed")
+          )
         );
       } finally {
         setLoading(false);
@@ -40,27 +41,22 @@ const SingleUser = () => {
     }
   }, [id]);
 
-  // Medicine Fields
-
   const userFields = [
     {
       key: "name",
-      label: "Name",
+      label: t("users.name"),
     },
-
     {
       key: "email",
-      label: "email",
+      label: t("users.email"),
     },
     {
       key: "role",
-      label: "role",
+      label: t("users.role"),
     },
-
     {
       key: "isActive",
-      label: "Status",
-
+      label: t("users.status"),
       render: (value) => (
         <span
           className={`badge ${
@@ -69,77 +65,53 @@ const SingleUser = () => {
               : "text-bg-danger"
           }`}
         >
-          {value ? "Active" : "Inactive"}
+          {value
+            ? t("users.active")
+            : t("users.inactive")}
         </span>
       ),
     },
-
     {
       key: "createdAt",
-      label: "Created At",
-
+      label: t("users.createdAt"),
       render: (value) =>
         value
-          ? new Date(
-              value
-            ).toLocaleString()
+          ? new Date(value).toLocaleString(
+              i18n.language === "ar"
+                ? "ar-EG"
+                : "en-GB"
+            )
           : "-",
     },
-
     {
       key: "updatedAt",
-      label: "Updated At",
-
+      label: t("users.updatedAt"),
       render: (value) =>
         value
-          ? new Date(
-              value
-            ).toLocaleString()
+          ? new Date(value).toLocaleString(
+              i18n.language === "ar"
+                ? "ar-EG"
+                : "en-GB"
+            )
           : "-",
     },
   ];
 
-  // Error
-
-  if (error) {
-    return (
-      <div className="container-fluid">
-
-        <div className="alert alert-danger">
-          {error}
-        </div>
-
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() =>
-            navigate("/users")
-          }
-        >
-          Back to users
-        </button>
-
-      </div>
-    );
-  }
-
-  // Render
-
   return (
     <div className="container-fluid">
-             
-      <Header buttonContent={'Back to Users'} buttonLink={'/users'} title={'user Details'}/>
-
-      {/* Details */}
+      <Header
+        buttonContent={t("users.backToUsers")}
+        buttonLink="/users"
+        title={t("users.userDetails")}
+      />
 
       <DetailsCard
-        title="user Information"
+        title={t("users.userInformation")}
         data={user}
         fields={userFields}
         loading={loading}
-        emptyMessage="user not found"
+        emptyMessage={t("users.notFound")}
       />
-
     </div>
   );
 };

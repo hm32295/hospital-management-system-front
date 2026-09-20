@@ -1,6 +1,6 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSnackbar } from "notistack";
 import {
   ArrowLeft,
   UserRound,
@@ -12,17 +12,20 @@ import {
   Loader2,
   CheckCircle2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { createVisitPayment } from "../../services/payment.service";
 import {
   getVisit,
   updateVisitStatus,
 } from "../../services/visit.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const VisitDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+  const { t, i18n } = useTranslation();
 
   const [visit, setVisit] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,19 +40,17 @@ const VisitDetails = () => {
 
       if (!response.success) {
         throw new Error(
-          response.message || "Failed to get visit"
+          response.message || t("visits.loadDetailsFailed")
         );
       }
 
       setVisit(response.visit);
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to get visit",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("visits.loadDetailsFailed")
+        )
       );
     } finally {
       setLoading(false);
@@ -76,26 +77,21 @@ const VisitDetails = () => {
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Failed to pay consultation fee"
+            t("visits.payConsultationFailed")
         );
       }
 
       setVisit(response.visit);
 
-      enqueueSnackbar(
-        "Consultation fee paid successfully",
-        {
-          variant: "success",
-        }
+      showSuccess(
+        t("visits.consultationPaidSuccess")
       );
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to pay consultation fee",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("visits.payConsultationFailed")
+        )
       );
     } finally {
       setPaying(false);
@@ -114,26 +110,19 @@ const VisitDetails = () => {
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Failed to update visit status"
+            t("visits.updateStatusFailed")
         );
       }
 
       setVisit(response.visit);
 
-      enqueueSnackbar(
-        "Visit status updated successfully",
-        {
-          variant: "success",
-        }
-      );
+      showSuccess(t("visits.statusUpdatedSuccess"));
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to update visit status",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("visits.updateStatusFailed")
+        )
       );
     } finally {
       setUpdating(false);
@@ -154,29 +143,32 @@ const VisitDetails = () => {
   const formatDate = (date) => {
     if (!date) return "-";
 
-    return new Date(date).toLocaleString("en-GB", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+    return new Date(date).toLocaleString(
+      i18n.language === "ar" ? "ar-EG" : "en-GB",
+      {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }
+    );
   };
 
   const getStatusBadge = (status) => {
     const statusMap = {
       waiting: {
         className: "bg-warning text-dark",
-        label: "Waiting",
+        label: t("visits.statuses.waiting"),
       },
       in_consultation: {
         className: "bg-primary",
-        label: "In Consultation",
+        label: t("visits.statuses.inConsultation"),
       },
       completed: {
         className: "bg-success",
-        label: "Completed",
+        label: t("visits.statuses.completed"),
       },
       cancelled: {
         className: "bg-danger",
-        label: "Cancelled",
+        label: t("visits.statuses.cancelled"),
       },
     };
 
@@ -196,15 +188,15 @@ const VisitDetails = () => {
     const statusMap = {
       pending: {
         className: "bg-warning text-dark",
-        label: "Pending",
+        label: t("visits.paymentStatuses.pending"),
       },
       paid: {
         className: "bg-success",
-        label: "Paid",
+        label: t("visits.paymentStatuses.paid"),
       },
       cancelled: {
         className: "bg-danger",
-        label: "Cancelled",
+        label: t("visits.paymentStatuses.cancelled"),
       },
     };
 
@@ -224,7 +216,7 @@ const VisitDetails = () => {
     return (
       <div className="container-fluid py-4">
         <div className="text-center py-5">
-          Loading visit...
+          {t("visits.loadingDetails")}
         </div>
       </div>
     );
@@ -234,7 +226,7 @@ const VisitDetails = () => {
     return (
       <div className="container-fluid py-4">
         <div className="alert alert-danger">
-          Visit not found
+          {t("visits.notFound")}
         </div>
       </div>
     );
@@ -249,10 +241,12 @@ const VisitDetails = () => {
     <div className="container-fluid py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h3 className="mb-1">Visit Details</h3>
+          <h3 className="mb-1">
+            {t("visits.visitDetails")}
+          </h3>
 
           <p className="text-muted mb-0">
-            View visit information and status
+            {t("visits.visitDetailsSubtitle")}
           </p>
         </div>
 
@@ -262,7 +256,7 @@ const VisitDetails = () => {
           onClick={() => navigate("/visits")}
         >
           <ArrowLeft size={18} className="me-1" />
-          Back
+          {t("common.back")}
         </button>
       </div>
 
@@ -272,7 +266,7 @@ const VisitDetails = () => {
             <div className="card-body p-4">
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <h5 className="mb-0">
-                  Visit Information
+                  {t("visits.visitInformation")}
                 </h5>
 
                 {getStatusBadge(visit.status)}
@@ -285,7 +279,7 @@ const VisitDetails = () => {
 
                     <div>
                       <small className="text-muted">
-                        Patient
+                        {t("visits.patient")}
                       </small>
 
                       <div className="fw-semibold">
@@ -307,7 +301,7 @@ const VisitDetails = () => {
 
                     <div>
                       <small className="text-muted">
-                        Specialty
+                        {t("visits.specialty")}
                       </small>
 
                       <div className="fw-semibold">
@@ -323,12 +317,12 @@ const VisitDetails = () => {
 
                     <div>
                       <small className="text-muted">
-                        Doctor
+                        {t("visits.doctor")}
                       </small>
 
                       <div className="fw-semibold">
                         {visit.doctor?.name ||
-                          "Any Doctor"}
+                          t("visits.anyDoctor")}
                       </div>
                     </div>
                   </div>
@@ -340,13 +334,13 @@ const VisitDetails = () => {
 
                     <div>
                       <small className="text-muted">
-                        Visit Type
+                        {t("visits.visitType")}
                       </small>
 
                       <div className="fw-semibold">
                         {visit.visitType === "first"
-                          ? "First Visit"
-                          : "Follow Up"}
+                          ? t("visits.visitTypes.first")
+                          : t("visits.visitTypes.followUp")}
                       </div>
                     </div>
                   </div>
@@ -358,11 +352,12 @@ const VisitDetails = () => {
 
                     <div>
                       <small className="text-muted">
-                        Consultation Fee
+                        {t("visits.consultationFee")}
                       </small>
 
                       <div className="fw-semibold">
-                        {visit.consultationFee} EGP
+                        {visit.consultationFee}{" "}
+                        {t("common.egp")}
                       </div>
                     </div>
                   </div>
@@ -374,7 +369,7 @@ const VisitDetails = () => {
 
                     <div>
                       <small className="text-muted">
-                        Created At
+                        {t("visits.createdAt")}
                       </small>
 
                       <div className="fw-semibold">
@@ -389,7 +384,7 @@ const VisitDetails = () => {
 
               <div>
                 <small className="text-muted">
-                  Payment Status
+                  {t("visits.paymentStatus")}
                 </small>
 
                 <div className="mt-2">
@@ -416,7 +411,7 @@ const VisitDetails = () => {
                                 "spin 1s linear infinite",
                             }}
                           />
-                          Processing...
+                          {t("visits.processing")}
                         </>
                       ) : (
                         <>
@@ -424,8 +419,9 @@ const VisitDetails = () => {
                             size={18}
                             className="me-2"
                           />
-                          Pay{" "}
-                          {visit.consultationFee} EGP
+                          {t("visits.pay")}{" "}
+                          {visit.consultationFee}{" "}
+                          {t("common.egp")}
                         </>
                       )}
                     </button>
@@ -437,7 +433,7 @@ const VisitDetails = () => {
                       size={20}
                       className="me-2"
                     />
-                    Consultation fee has been paid.
+                    {t("visits.consultationPaid")}
                   </div>
                 )}
               </div>
@@ -445,7 +441,7 @@ const VisitDetails = () => {
               {visit.completedAt && (
                 <div className="mt-4">
                   <small className="text-muted">
-                    Completed At
+                    {t("visits.completedAt")}
                   </small>
 
                   <div className="fw-semibold">
@@ -461,7 +457,7 @@ const VisitDetails = () => {
           <div className="card border-0 shadow-sm">
             <div className="card-body p-4">
               <h5 className="mb-4">
-                Visit Actions
+                {t("visits.visitActions")}
               </h5>
 
               {!isCancelled &&
@@ -478,8 +474,8 @@ const VisitDetails = () => {
                     }
                   >
                     {updating
-                      ? "Starting..."
-                      : "Start Consultation"}
+                      ? t("visits.starting")
+                      : t("visits.startConsultation")}
                   </button>
                 )}
 
@@ -496,7 +492,7 @@ const VisitDetails = () => {
                       size={18}
                       className="me-2"
                     />
-                    Open Consultation
+                    {t("visits.openConsultation")}
                   </button>
                 )}
 
@@ -513,8 +509,8 @@ const VisitDetails = () => {
                   }
                 >
                   {updating
-                    ? "Completing..."
-                    : "Complete Visit"}
+                    ? t("visits.completing")
+                    : t("visits.completeVisit")}
                 </button>
               )}
 
@@ -530,13 +526,13 @@ const VisitDetails = () => {
                       )
                     }
                   >
-                    Cancel Visit
+                    {t("visits.cancelVisit")}
                   </button>
                 )}
 
               {isCancelled && (
                 <div className="alert alert-danger mb-0">
-                  This visit has been cancelled.
+                  {t("visits.cancelledMessage")}
                 </div>
               )}
 
@@ -544,9 +540,7 @@ const VisitDetails = () => {
                 !isPaid && (
                   <div className="alert alert-warning mt-3 mb-0">
                     <small>
-                      Consultation must be paid
-                      before starting the
-                      consultation.
+                      {t("visits.paymentRequired")}
                     </small>
                   </div>
                 )}

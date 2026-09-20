@@ -1,14 +1,15 @@
 
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Home, SearchX } from "lucide-react";
 
 const NotFound = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
     <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light">
       <div className="text-center px-3">
-
         <div className="mb-4">
           <SearchX
             size={80}
@@ -25,12 +26,11 @@ const NotFound = () => {
         </h1>
 
         <h3 className="fw-semibold mb-3">
-          Page Not Found
+          {t("notFound.title")}
         </h3>
 
         <p className="text-muted mb-4">
-          The page you are looking for does not
-          exist or may have been moved.
+          {t("notFound.description")}
         </p>
 
         <div className="d-flex justify-content-center gap-2">
@@ -40,7 +40,7 @@ const NotFound = () => {
             onClick={() => navigate("/")}
           >
             <Home size={18} />
-            Go to dashboard
+            {t("notFound.goToDashboard")}
           </button>
 
           <button
@@ -49,10 +49,9 @@ const NotFound = () => {
             onClick={() => navigate(-1)}
           >
             <ArrowLeft size={18} />
-            Go Back
+            {t("notFound.goBack")}
           </button>
         </div>
-
       </div>
     </div>
   );

@@ -1,144 +1,183 @@
+
 import { useEffect, useState } from "react";
 import AdminDataPage from "../../components/table/AdminDataPage";
 import { deleteUser, getAllUsers } from "../../services/auth.service";
- ///search, isActive
+import { useTranslation } from "react-i18next";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
+
 const Users = () => {
+  const { t } = useTranslation();
+
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] =useState(false);
-  const [pagination, setPagination] = useState({limit: 10, page: 1, total: 0,});
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    limit: 10,
+    page: 1,
+    total: 0,
+  });
   const [filtersState, setFiltersState] = useState(null);
 
   const fetchUsers = async () => {
-       const params = filtersState ? { page: pagination.page, limit: pagination.limit, ...filtersState } :
-        {page: pagination.page, limit: pagination.limit}
-
+    const params = filtersState
+      ? {
+          page: pagination.page,
+          limit: pagination.limit,
+          ...filtersState,
+        }
+      : {
+          page: pagination.page,
+          limit: pagination.limit,
+        };
 
     setLoading(true);
+
     try {
       const response = await getAllUsers(params);
-      setUsers( response.users );
-      setPagination((prev) => ({...prev,...(response.pagination || {})}));
 
+      setUsers(response.users || []);
+
+      setPagination((prev) => ({
+        ...prev,
+        ...(response.pagination || {}),
+      }));
     } catch (error) {
-      console.error(error);
-
+      showError(
+        getApiErrorMessage(
+          error,
+          t("users.loadFailed")
+        )
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const fetchDeactivatedUser = async (id) => {
-    setLoading(true)
+    setLoading(true);
+
     try {
-      const response = await deleteUser(id)
-      console.log(response);
-      fetchUsers()
-      
+      await deleteUser(id);
+
+      showSuccess(t("users.deactivatedSuccess"));
+
+      await fetchUsers();
     } catch (error) {
-      console.log(error);
-      
+      showError(
+        getApiErrorMessage(
+          error,
+          t("users.deactivateFailed")
+        )
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     fetchUsers();
   }, [pagination.page]);
 
-
-
   const filters = [
     {
       name: "search",
-      label: "Search",
+      label: t("users.search"),
       type: "text",
-      placeholder: "Search batch...",
+      placeholder: t("users.searchPlaceholder"),
       value: filtersState?.search,
       col: "col-12 col-md-6 col-lg-4",
     },
     {
       name: "role",
-      label: "role",
+      label: t("users.role"),
       type: "select",
       value: filtersState?.role,
       col: "col-12 col-md-6 col-lg-4",
       options: [
-        { value: 'admin', label: 'admin' },
-        { value: 'patient', label: 'Patient' },
-        { value: 'doctor', label: 'doctor' },
-        { value: 'pharmacy', label: 'pharmacy' },
-      ]
+        {
+          value: "admin",
+          label: "admin",
+        },
+        {
+          value: "patient",
+          label: t("users.roles.patient"),
+        },
+        {
+          value: "doctor",
+          label: "doctor",
+        },
+        {
+          value: "pharmacy",
+          label: "pharmacy",
+        },
+      ],
     },
     {
       name: "isActive",
-      label: "is Active",
+      label: t("users.isActive"),
       type: "select",
-      placeholder: "expiry Status...",
       value: filtersState?.isActive,
       col: "col-12 col-md-6 col-lg-4",
       options: [
         {
-          value: 'undefined', 
-          label:'All'
+          value: "undefined",
+          label: t("users.all"),
         },
         {
-          value: true, 
-          label:'active'
+          value: true,
+          label: t("users.active"),
         },
-      
         {
-          value: false, 
-          label:'no active'
-        }
-      
-      ]
+          value: false,
+          label: t("users.inactive"),
+        },
+      ],
     },
-
-
-   
   ];
 
-  
   const handleFilter = (name, value) => {
-    if(value === 'undefined') value = undefined
-    setFiltersState((prev) => ({...prev,[name]: value }));
-    setPagination((prev) => ({...prev,page: 1,}));
+    if (value === "undefined") {
+      value = undefined;
+    }
+
+    setFiltersState((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setPagination((prev) => ({
+      ...prev,
+      page: 1,
+    }));
   };
-
-
 
   const columns = [
     {
       key: "name",
-      label: "name",
+      label: t("users.name"),
     },
-
     {
       key: "email",
-      label: "email",
+      label: t("users.email"),
     },
-
     {
       key: "role",
-      label: "role",
+      label: t("users.role"),
     },
-  
     {
       key: "isActive",
-      label: "Status",
-
-      render: (medicine) => (
+      label: t("users.status"),
+      render: (user) => (
         <span
           className={`badge ${
-            medicine.isActive
+            user.isActive
               ? "text-bg-success"
               : "text-bg-danger"
           }`}
         >
-          {medicine.isActive
-            ? "Active"
-            : "Inactive"}
+          {user.isActive
+            ? t("users.active")
+            : t("users.inactive")}
         </span>
       ),
     },
@@ -147,28 +186,26 @@ const Users = () => {
   const actions = [
     {
       type: "show",
-      label: "Show",
-      link: (users) => `/users/${users._id}`
+      label: t("common.view"),
+      link: (user) => `/users/${user._id}`,
     },
-
     {
       type: "edit",
-      label: "Edit",
+      label: t("common.edit"),
       link: (user) => `/users/edit/${user._id}`,
     },
-
     {
       type: "delete",
-      label: "Delete",
-      onClick: (user) =>  fetchDeactivatedUser(user._id)
-    }
-  ]
+      label: t("common.delete"),
+      onClick: (user) =>
+        fetchDeactivatedUser(user._id),
+    },
+  ];
 
- return (
-    
+  return (
     <AdminDataPage
-      title="Users"
-      subtitle="Manage your Users and inventory"
+      title={t("users.title")}
+      subtitle={t("users.subtitle")}
       loading={loading}
       columns={columns}
       data={users}
@@ -184,7 +221,7 @@ const Users = () => {
         }));
       }}
     />
-  )
+  );
 };
 
 export default Users;

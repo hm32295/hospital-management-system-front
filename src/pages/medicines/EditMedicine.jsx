@@ -72,7 +72,7 @@ const EditMedicine = () => {
       description: medicine?.description || "",
       isActive: medicine?.isActive ?? true,
     },
-    validationSchema: medicineSchema,
+    validationSchema: medicineSchema(t),
     onSubmit: async (values, { setSubmitting }) => {
       try {
         await updateMedicine(id, values);

@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from "react";
-import { useSnackbar } from "notistack";
 import {
   Edit,
   Trash2,
@@ -8,27 +7,25 @@ import {
   Search,
   X,
 } from "lucide-react";
-
+import { useTranslation } from "react-i18next";
 import {
   createSpecialty,
   getSpecialties,
   updateSpecialty,
   deactivateSpecialty,
 } from "../../services/specialty.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const Specialties = () => {
-  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const [specialties, setSpecialties] = useState([]);
   const [search, setSearch] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
   const [showForm, setShowForm] = useState(false);
-
-  const [editingSpecialty, setEditingSpecialty] =
-    useState(null);
+  const [editingSpecialty, setEditingSpecialty] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -47,12 +44,11 @@ const Specialties = () => {
 
       setSpecialties(response.specialties || []);
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          "Failed to load specialties",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("specialties.loadFailed")
+        )
       );
     } finally {
       setLoading(false);
@@ -90,10 +86,7 @@ const Specialties = () => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      enqueueSnackbar("Specialty name is required", {
-        variant: "error",
-      });
-
+      showError(t("specialties.nameRequired"));
       return;
     }
 
@@ -123,29 +116,24 @@ const Specialties = () => {
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Operation failed"
+            t("specialties.operationFailed")
         );
       }
 
-      enqueueSnackbar(
+      showSuccess(
         editingSpecialty
-          ? "Specialty updated successfully"
-          : "Specialty created successfully",
-        {
-          variant: "success",
-        }
+          ? t("specialties.updatedSuccess")
+          : t("specialties.createdSuccess")
       );
 
       resetForm();
       fetchSpecialties();
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Operation failed",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("specialties.operationFailed")
+        )
       );
     } finally {
       setSubmitting(false);
@@ -165,7 +153,7 @@ const Specialties = () => {
 
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
-      "Are you sure you want to deactivate this specialty?"
+      t("specialties.deactivateConfirmation")
     );
 
     if (!confirmed) return;
@@ -178,26 +166,21 @@ const Specialties = () => {
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Failed to deactivate specialty"
+            t("specialties.deactivateFailed")
         );
       }
 
-      enqueueSnackbar(
-        "Specialty deactivated successfully",
-        {
-          variant: "success",
-        }
+      showSuccess(
+        t("specialties.deactivatedSuccess")
       );
 
       fetchSpecialties();
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to deactivate specialty",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("specialties.deactivateFailed")
+        )
       );
     } finally {
       setLoading(false);
@@ -208,10 +191,12 @@ const Specialties = () => {
     <div className="container-fluid py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h3 className="mb-1">Specialties</h3>
+          <h3 className="mb-1">
+            {t("specialties.title")}
+          </h3>
 
           <p className="text-muted mb-0">
-            Manage medical specialties
+            {t("specialties.subtitle")}
           </p>
         </div>
 
@@ -230,7 +215,7 @@ const Specialties = () => {
           }}
         >
           <Plus size={18} />
-          Add Specialty
+          {t("specialties.addSpecialty")}
         </button>
       </div>
 
@@ -240,8 +225,8 @@ const Specialties = () => {
             <div className="d-flex justify-content-between align-items-center mb-4">
               <h5 className="mb-0">
                 {editingSpecialty
-                  ? "Edit Specialty"
-                  : "Add Specialty"}
+                  ? t("specialties.editSpecialty")
+                  : t("specialties.addSpecialty")}
               </h5>
 
               <button
@@ -257,7 +242,7 @@ const Specialties = () => {
               <div className="row">
                 <div className="col-md-6 mb-3">
                   <label className="form-label">
-                    Specialty Name
+                    {t("specialties.name")}
                     <span className="text-danger ms-1">
                       *
                     </span>
@@ -269,13 +254,15 @@ const Specialties = () => {
                     className="form-control"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Internal Medicine"
+                    placeholder={t(
+                      "specialties.namePlaceholder"
+                    )}
                   />
                 </div>
 
                 <div className="col-md-6 mb-3">
                   <label className="form-label">
-                    Description
+                    {t("specialties.description")}
                   </label>
 
                   <input
@@ -284,7 +271,9 @@ const Specialties = () => {
                     className="form-control"
                     value={formData.description}
                     onChange={handleChange}
-                    placeholder="Specialty description"
+                    placeholder={t(
+                      "specialties.descriptionPlaceholder"
+                    )}
                   />
                 </div>
               </div>
@@ -296,10 +285,10 @@ const Specialties = () => {
                   disabled={submitting}
                 >
                   {submitting
-                    ? "Saving..."
+                    ? t("specialties.saving")
                     : editingSpecialty
-                    ? "Update Specialty"
-                    : "Create Specialty"}
+                    ? t("specialties.updateSpecialty")
+                    : t("specialties.createSpecialty")}
                 </button>
 
                 <button
@@ -308,7 +297,7 @@ const Specialties = () => {
                   onClick={resetForm}
                   disabled={submitting}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </div>
             </form>
@@ -328,7 +317,9 @@ const Specialties = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search specialties..."
+                  placeholder={t(
+                    "specialties.searchPlaceholder"
+                  )}
                   value={search}
                   onChange={(e) =>
                     setSearch(e.target.value)
@@ -340,21 +331,23 @@ const Specialties = () => {
 
           {loading ? (
             <div className="text-center py-5">
-              Loading...
+              {t("common.loading")}
             </div>
           ) : specialties.length === 0 ? (
             <div className="text-center text-muted py-5">
-              No specialties found
+              {t("specialties.noSpecialtiesFound")}
             </div>
           ) : (
             <div className="table-responsive">
               <table className="table align-middle">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Description</th>
+                    <th>{t("specialties.name")}</th>
+                    <th>
+                      {t("specialties.description")}
+                    </th>
                     <th className="text-end">
-                      Actions
+                      {t("common.actions")}
                     </th>
                   </tr>
                 </thead>
@@ -378,6 +371,7 @@ const Specialties = () => {
                             onClick={() =>
                               handleEdit(specialty)
                             }
+                            title={t("common.edit")}
                           >
                             <Edit size={16} />
                           </button>
@@ -390,6 +384,7 @@ const Specialties = () => {
                                 specialty._id
                               )
                             }
+                            title={t("common.delete")}
                           >
                             <Trash2 size={16} />
                           </button>

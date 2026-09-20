@@ -13,35 +13,32 @@ import {
   CalendarClock,
   Ban,
 } from "lucide-react";
-
+import { useTranslation } from "react-i18next";
 import "./stock.css";
 import Header from "../../components/header/Header";
 import { getOverview } from "../../services/stock.service";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const Stock = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const fetchOverview = async () => {
     setLoading(true);
-    setError("");
 
     try {
       const response = await getOverview();
-
       setOverview(response.overview || null);
     } catch (error) {
-      console.error(
-        "Failed to load stock overview:",
-        error
-      );
-
-      setError(
-        error.response?.data?.message ||
-          "Failed to load stock overview"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("stock.loadOverviewFailed")
+        )
       );
     } finally {
       setLoading(false);
@@ -54,25 +51,25 @@ const Stock = () => {
 
   const cards = [
     {
-      title: "Total Medicines",
+      title: t("stock.totalMedicines"),
       value: overview?.totalMedicines || 0,
       icon: Package,
       className: "primary",
     },
     {
-      title: "Total Batches",
+      title: t("stock.totalBatches"),
       value: overview?.totalBatches || 0,
       icon: Layers3,
       className: "info",
     },
     {
-      title: "Total Quantity",
+      title: t("stock.totalQuantity"),
       value: overview?.totalQuantity || 0,
       icon: Boxes,
       className: "success",
     },
     {
-      title: "Low Stock",
+      title: t("stock.lowStock"),
       value: overview?.lowStockMedicines || 0,
       icon: TrendingDown,
       className: "warning",
@@ -80,7 +77,7 @@ const Stock = () => {
       clickable: true,
     },
     {
-      title: "Near Expiry",
+      title: t("stock.nearExpiry"),
       value: overview?.nearExpiryBatches || 0,
       icon: Clock3,
       className: "warning",
@@ -88,7 +85,7 @@ const Stock = () => {
       clickable: true,
     },
     {
-      title: "Expired",
+      title: t("stock.expired"),
       value: overview?.expiredBatches || 0,
       icon: AlertTriangle,
       className: "danger",
@@ -99,29 +96,29 @@ const Stock = () => {
 
   const stockLinks = [
     {
-      title: "Stock Transactions",
-      description: "View all stock IN and OUT transactions",
+      title: t("stock.stockTransactions"),
+      description: t("stock.stockTransactionsDescription"),
       icon: History,
       link: "/stock-transaction",
       className: "primary",
     },
     {
-      title: "Near Expiry",
-      description: "View batches that will expire soon",
+      title: t("stock.nearExpiry"),
+      description: t("stock.nearExpiryDescription"),
       icon: CalendarClock,
       link: "/expiry-batches",
       className: "warning",
     },
     {
-      title: "Expired Batches",
-      description: "View all expired medicine batches",
+      title: t("stock.expiredBatches"),
+      description: t("stock.expiredBatchesDescription"),
       icon: Ban,
       link: "/expired-batches",
       className: "danger",
     },
     {
-      title: "Low Stock",
-      description: "View medicines with low quantity",
+      title: t("stock.lowStock"),
+      description: t("stock.lowStockDescription"),
       icon: TrendingDown,
       link: "/low-stock",
       className: "warning",
@@ -130,20 +127,11 @@ const Stock = () => {
 
   return (
     <div className="stock-page">
-
       <Header
-        title="Stock"
-        description="Monitor medicines, batches and inventory status"
+        title={t("stock.title")}
+        description={t("stock.subtitle")}
       />
 
-      {/* Error */}
-      {error && (
-        <div className="alert alert-danger">
-          {error}
-        </div>
-      )}
-
-      {/* Refresh */}
       <div className="d-flex justify-content-end mb-4">
         <button
           type="button"
@@ -155,14 +143,13 @@ const Stock = () => {
             size={18}
             className={loading ? "spin" : ""}
           />
-
-          {loading ? "Refreshing..." : "Refresh"}
+          {loading
+            ? t("stock.refreshing")
+            : t("stock.refresh")}
         </button>
       </div>
 
-      {/* Overview Cards */}
       <div className="row g-4">
-
         {cards.map((card) => {
           const Icon = card.icon;
 
@@ -184,9 +171,7 @@ const Stock = () => {
                 }}
               >
                 <div className="card-body p-4">
-
                   <div className="d-flex justify-content-between align-items-start">
-
                     <div>
                       <div className="text-muted mb-2">
                         {card.title}
@@ -200,7 +185,7 @@ const Stock = () => {
 
                       {card.clickable && (
                         <div className="small text-primary mt-2">
-                          View details
+                          {t("stock.viewDetails")}
                         </div>
                       )}
                     </div>
@@ -213,38 +198,29 @@ const Stock = () => {
                         className={`text-${card.className}`}
                       />
                     </div>
-
                   </div>
-
                 </div>
               </div>
             </div>
           );
         })}
-
       </div>
 
-      {/* Stock Management */}
       <div className="card border-0 shadow-sm mt-4">
-
         <div className="card-body p-4">
-
           <div className="d-flex justify-content-between align-items-center mb-4">
-
             <div>
               <h5 className="mb-1">
-                Stock Management
+                {t("stock.stockManagement")}
               </h5>
 
               <p className="text-muted mb-0 small">
-                Access stock reports and inventory operations
+                {t("stock.stockManagementDescription")}
               </p>
             </div>
-
           </div>
 
           <div className="row g-3">
-
             {stockLinks.map((item) => {
               const Icon = item.icon;
 
@@ -256,11 +232,8 @@ const Stock = () => {
                   <button
                     type="button"
                     className="stock-management-item w-100"
-                    onClick={() =>
-                      navigate(item.link)
-                    }
+                    onClick={() => navigate(item.link)}
                   >
-
                     <div
                       className={`stock-management-icon bg-${item.className} bg-opacity-10`}
                     >
@@ -271,7 +244,6 @@ const Stock = () => {
                     </div>
 
                     <div className="stock-management-content text-start">
-
                       <div className="fw-semibold">
                         {item.title}
                       </div>
@@ -279,63 +251,45 @@ const Stock = () => {
                       <div className="text-muted small">
                         {item.description}
                       </div>
-
                     </div>
 
                     <ArrowRight
                       size={18}
                       className="text-muted ms-auto"
                     />
-
                   </button>
                 </div>
               );
             })}
-
           </div>
-
         </div>
-
       </div>
 
-      {/* Stock Status + Inventory Summary */}
       <div className="row g-4 mt-1">
-
-        {/* Stock Status */}
         <div className="col-12 col-lg-6">
-
           <div className="card border-0 shadow-sm h-100">
-
             <div className="card-body p-4">
-
               <h5 className="mb-3">
-                Stock Status
+                {t("stock.stockStatus")}
               </h5>
 
               <div
                 className="d-flex justify-content-between align-items-center py-3 border-bottom stock-status-row"
-                onClick={() =>
-                  navigate("/low-stock")
-                }
+                onClick={() => navigate("/low-stock")}
               >
-
                 <div className="d-flex align-items-center gap-2">
-
                   <TrendingDown
                     size={18}
                     className="text-warning"
                   />
-
                   <span>
-                    Low Stock Medicines
+                    {t("stock.lowStockMedicines")}
                   </span>
-
                 </div>
 
                 <strong>
                   {overview?.lowStockMedicines || 0}
                 </strong>
-
               </div>
 
               <div
@@ -344,24 +298,19 @@ const Stock = () => {
                   navigate("/expiry-batches")
                 }
               >
-
                 <div className="d-flex align-items-center gap-2">
-
                   <Clock3
                     size={18}
                     className="text-warning"
                   />
-
                   <span>
-                    Batches Near Expiry
+                    {t("stock.batchesNearExpiry")}
                   </span>
-
                 </div>
 
                 <strong>
                   {overview?.nearExpiryBatches || 0}
                 </strong>
-
               </div>
 
               <div
@@ -370,87 +319,64 @@ const Stock = () => {
                   navigate("/expired-batches")
                 }
               >
-
                 <div className="d-flex align-items-center gap-2">
-
                   <AlertTriangle
                     size={18}
                     className="text-danger"
                   />
-
                   <span>
-                    Expired Batches
+                    {t("stock.expiredBatches")}
                   </span>
-
                 </div>
 
                 <strong className="text-danger">
                   {overview?.expiredBatches || 0}
                 </strong>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
 
-        {/* Inventory Summary */}
         <div className="col-12 col-lg-6">
-
           <div className="card border-0 shadow-sm h-100">
-
             <div className="card-body p-4">
-
               <h5 className="mb-3">
-                Inventory Summary
+                {t("stock.inventorySummary")}
               </h5>
 
               <div className="d-flex justify-content-between align-items-center py-3 border-bottom">
-
                 <span>
-                  Active Medicines
+                  {t("stock.activeMedicines")}
                 </span>
 
                 <strong>
                   {overview?.totalMedicines || 0}
                 </strong>
-
               </div>
 
               <div className="d-flex justify-content-between align-items-center py-3 border-bottom">
-
                 <span>
-                  Active Batches
+                  {t("stock.activeBatches")}
                 </span>
 
                 <strong>
                   {overview?.totalBatches || 0}
                 </strong>
-
               </div>
 
               <div className="d-flex justify-content-between align-items-center py-3">
-
                 <span>
-                  Available Quantity
+                  {t("stock.availableQuantity")}
                 </span>
 
                 <strong className="text-success">
                   {overview?.totalQuantity || 0}
                 </strong>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 };

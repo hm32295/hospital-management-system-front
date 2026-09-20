@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   cancelPurchases,
   confirmPurchases,
@@ -7,8 +8,11 @@ import {
 } from "../../services/purchases.service";
 import { getSuppliers } from "../../services/supplier.service";
 import AdminDataPage from "../../components/table/AdminDataPage";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const Purchases = () => {
+  const { t } = useTranslation();
   const [purchases, setPurchases] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,12 +30,26 @@ const Purchases = () => {
     setLoading(true);
 
     try {
-      const params = {page: pagination.page, limit: pagination.limit, ...filtersState};
+      const params = {
+        page: pagination.page,
+        limit: pagination.limit,
+        ...filtersState,
+      };
+
       const response = await getPurchases(params);
+
       setPurchases(response.purchases || []);
-      setPagination((prev) => ({...prev,...response.pagination}));
+      setPagination((prev) => ({
+        ...prev,
+        ...response.pagination,
+      }));
     } catch (error) {
-      console.log(error);
+      showError(
+        getApiErrorMessage(
+          error,
+          t("purchases.loadFailed")
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -39,11 +57,22 @@ const Purchases = () => {
 
   const searchSuppliers = async (search = "") => {
     setSupplierLoading(true);
+
     try {
-      const response = await getSuppliers({search,page: 1,limit: 10});
+      const response = await getSuppliers({
+        search,
+        page: 1,
+        limit: 10,
+      });
+
       setSuppliers(response.suppliers || []);
     } catch (error) {
-      console.log(error);
+      showError(
+        getApiErrorMessage(
+          error,
+          t("purchases.searchSuppliersFailed")
+        )
+      );
     } finally {
       setSupplierLoading(false);
     }
@@ -54,17 +83,33 @@ const Purchases = () => {
   }, [pagination.page]);
 
   const handleFilter = (name, value) => {
-    setFiltersState((prev) => ({...prev,[name]: value || undefined}));
-    setPagination((prev) => ({...prev,page: 1}));
+    setFiltersState((prev) => ({
+      ...prev,
+      [name]: value || undefined,
+    }));
+
+    setPagination((prev) => ({
+      ...prev,
+      page: 1,
+    }));
   };
 
   const fetchConfirmPurchase = async (id) => {
     setLoading(true);
+
     try {
       await confirmPurchases(id);
+
+      showSuccess(t("purchases.confirmSuccess"));
+
       await fetchPurchases();
     } catch (error) {
-      console.log(error);
+      showError(
+        getApiErrorMessage(
+          error,
+          t("purchases.confirmFailed")
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -75,9 +120,17 @@ const Purchases = () => {
 
     try {
       await cancelPurchases(id);
+
+      showSuccess(t("purchases.cancelSuccess"));
+
       await fetchPurchases();
     } catch (error) {
-      console.log(error);
+      showError(
+        getApiErrorMessage(
+          error,
+          t("purchases.cancelFailed")
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -86,19 +139,19 @@ const Purchases = () => {
   const filters = [
     {
       name: "search",
-      label: "Search",
+      label: t("purchases.search"),
       type: "text",
-      placeholder: "Search invoice number...",
+      placeholder: t("purchases.searchInvoice"),
       value: filtersState.search,
       col: "col-12 col-md-6 col-lg-4",
     },
     {
       name: "supplier",
-      label: "Supplier",
+      label: t("purchases.supplier"),
       type: "searchSelect",
       placeholder: supplierLoading
-        ? "Loading suppliers..."
-        : "Search supplier...",
+        ? t("purchases.loadingSuppliers")
+        : t("purchases.searchSupplier"),
       value: filtersState.supplier,
       options: suppliers.map((supplier) => ({
         value: supplier._id,
@@ -113,25 +166,25 @@ const Purchases = () => {
     },
     {
       name: "status",
-      label: "Status",
+      label: t("purchases.status"),
       type: "select",
       value: filtersState.status,
       options: [
         {
           value: undefined,
-          label: "All",
+          label: t("purchases.all"),
         },
         {
           value: "Pending",
-          label: "Pending",
+          label: t("purchases.statuses.pending"),
         },
         {
           value: "Confirmed",
-          label: "Confirmed",
+          label: t("purchases.statuses.confirmed"),
         },
         {
           value: "Cancelled",
-          label: "Cancelled",
+          label: t("purchases.statuses.cancelled"),
         },
       ],
       col: "col-12 col-md-6 col-lg-3",
@@ -141,55 +194,54 @@ const Purchases = () => {
   const columns = [
     {
       key: "invoiceNumber",
-      label: "Invoice Number",
+      label: t("purchases.invoiceNumber"),
     },
     {
       key: "purchaseDate",
-      label: "Purchase Date",
+      label: t("purchases.purchaseDate"),
     },
     {
       key: "status",
-      label: "Status",
+      label: t("purchases.status"),
     },
     {
       key: "createdBy",
-      label: "Created By",
+      label: t("purchases.createdBy"),
       render: (user) => user?.createdBy?.name || "-",
     },
     {
       key: "supplier",
-      label: "Supplier",
+      label: t("purchases.supplier"),
       render: (supplier) => supplier?.supplier?.name || "-",
     },
   ];
 
-
-const actions = [
-  {
-    type: "show",
-    label: "Show",
-    link: (purchase) => `/purchases/${purchase._id}`,
-  },
-  {
-    type: "cancel",
-    label: "Cancel",
-    hide: (purchase) => purchase.status !== "Pending",
-    onClick: (purchase) => fetchCancelPurchase(purchase._id),
-  },
-  {
-    type: "confirm",
-    label: "Confirm",
-    hide: (purchase) => purchase.status !== "Pending",
-    onClick: (purchase) => fetchConfirmPurchase(purchase._id),
-  },
-];
-
-
+  const actions = [
+    {
+      type: "show",
+      label: t("purchases.show"),
+      link: (purchase) => `/purchases/${purchase._id}`,
+    },
+    {
+      type: "cancel",
+      label: t("common.cancel"),
+      hide: (purchase) => purchase.status !== "Pending",
+      onClick: (purchase) =>
+        fetchCancelPurchase(purchase._id),
+    },
+    {
+      type: "confirm",
+      label: t("common.confirm"),
+      hide: (purchase) => purchase.status !== "Pending",
+      onClick: (purchase) =>
+        fetchConfirmPurchase(purchase._id),
+    },
+  ];
 
   return (
     <AdminDataPage
-      title="Purchase"
-      subtitle="Manage your purchase and inventory"
+      title={t("purchases.title")}
+      subtitle={t("purchases.subtitle")}
       loading={loading}
       columns={columns}
       type="add"

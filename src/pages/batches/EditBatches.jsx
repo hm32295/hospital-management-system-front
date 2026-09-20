@@ -41,7 +41,7 @@ const EditBatches = () => {
         "",
       isActive: batchSingle?.isActive ?? true,
     },
-    validationSchema: batchesSchema,
+    validationSchema: batchesSchema(t),
     onSubmit: async (values, { setSubmitting }) => {
       try {
         const response = await updateBatch(id, values);

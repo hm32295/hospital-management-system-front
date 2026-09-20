@@ -19,12 +19,6 @@ const Medicines = () => {
     total: 0,
   });
 
-  const formatDate = (value) =>
-    value
-      ? new Date(value).toLocaleDateString(
-          i18n.language === "ar" ? "ar-EG" : "en-EG"
-        )
-      : "-";
 
   const fetchMedicines = async () => {
     setLoading(true);

@@ -1,15 +1,16 @@
-
 import { useEffect, useState } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import AdminDataPage from "../../components/table/AdminDataPage";
 import Header from "../../components/header/Header";
 
 import { getExpiredBatches } from "../../services/stock.service";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const ExpiredBatches = () => {
-  const navigate = useNavigate();
+  const { t,i18n  } = useTranslation();
 
   const [batches, setBatches] = useState([]);
 
@@ -21,42 +22,37 @@ const ExpiredBatches = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
- 
   const fetchExpiredBatches = async (page = 1) => {
     setLoading(true);
-    setError("");
 
     try {
       const response = await getExpiredBatches({
-        page, limit: pagination.limit,
+        page,
+        limit: pagination.limit,
       });
-
-      console.log("Expired batches:", response);
 
       setBatches(response.batches || []);
 
       setPagination(
         response.pagination || {
-          page: 1,limit: 10,total: 0,pages: 0,
+          page: 1,
+          limit: 10,
+          total: 0,
+          pages: 0,
         }
       );
     } catch (error) {
-      console.error(
-        "Failed to load expired batches:",
-        error
-      );
-
-      setError(
-        error.response?.data?.message ||
-          "Failed to load expired batches"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("stock.loadExpiredBatchesFailed")
+        )
       );
     } finally {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     fetchExpiredBatches();
@@ -65,49 +61,52 @@ const ExpiredBatches = () => {
   const columns = [
     {
       key: "medicine",
-      label: "Medicine",
-
-      render: (medicine) => (
-            medicine.medicine?.name || "-"
-        
-      ),
+      label: t("stock.medicine"),
+      render: (medicine) =>
+        medicine?.medicine?.name || "-",
     },
-
     {
       key: "batchNumber",
-      label: "Batch Number",
+      label: t("stock.batchNumber"),
     },
-
     {
       key: "quantity",
-      label: "Quantity",
+      label: t("stock.quantity"),
     },
-
     {
       key: "expiryDate",
-      label: "Expiry Date",
+      label: t("stock.expiryDate"),
+      render: (value) =>
+        value
+          ? new Date(value).toLocaleDateString(
+              i18n.language === "ar" ? "ar-EG" : "en-GB"
+            )
+          : "-",
     },
-
     {
       key: "sellingPrice",
-      label: "Selling Price",
-
+      label: t("stock.sellingPrice"),
+      render: (value) =>
+        value != null
+          ? `${Number(value).toLocaleString()} ${t(
+              "common.egp"
+            )}`
+          : "-",
     },
-
     {
       key: "isActive",
-      label: "Status",
-
-        render: (value) => (
-          
+      label: t("stock.status"),
+      render: (value) => (
         <span
           className={`badge ${
-            value.isActive
+            value
               ? "text-bg-success"
               : "text-bg-secondary"
           }`}
         >
-          {value ? "Active" : "Inactive"}
+          {value
+            ? t("stock.active")
+            : t("stock.inactive")}
         </span>
       ),
     },
@@ -116,90 +115,78 @@ const ExpiredBatches = () => {
   const actions = [
     {
       type: "show",
-      label: "Show",
-
+      label: t("common.view"),
       link: (batch) =>
         `/batches/${batch._id}`,
     },
   ];
 
+  const expiredBatchesText =
+    pagination.total === 1
+      ? t("stock.expiredBatchCount", {
+          count: pagination.total,
+        })
+      : t("stock.expiredBatchesCount", {
+          count: pagination.total,
+        });
+
   return (
     <div>
       <Header
-        title="Expired Batches"
-        description="View medicines that have passed their expiry date"
+        title={t("stock.expiredBatches")}
+        description={t("stock.expiredBatchesDescription")}
       />
 
-      {/* Error */}
-      {error && (
-        <div className="alert alert-danger">
-          {error}
-        </div>
-      )}
-
-      {/* Warning */}
       <div className="alert alert-danger d-flex align-items-center gap-2 mb-4">
         <AlertTriangle size={20} />
 
         <div>
-          <strong>Expired Stock Warning</strong>
+          <strong>
+            {t("stock.expiredStockWarning")}
+          </strong>
 
           <div className="small">
-            These batches have passed their expiry
-            date and should not be dispensed.
+            {t("stock.expiredStockWarningDescription")}
           </div>
         </div>
       </div>
 
-      {/* Header Actions */}
       <div className="d-flex justify-content-end mb-4">
         <button
           type="button"
           className="btn btn-light border d-flex align-items-center gap-2"
           onClick={() =>
-            fetchExpiredBatches(
-              pagination.page
-            )
+            fetchExpiredBatches(pagination.page)
           }
           disabled={loading}
         >
           <RefreshCw
             size={18}
-            className={
-              loading ? "spin" : ""
-            }
+            className={loading ? "spin" : ""}
           />
 
           {loading
-            ? "Refreshing..."
-            : "Refresh"}
+            ? t("stock.refreshing")
+            : t("stock.refresh")}
         </button>
       </div>
 
-      {/* Table */}
       <AdminDataPage
-        title="Expired Batches"
-        subtitle={`${pagination.total} expired batch${
-          pagination.total !== 1
-            ? "es"
-            : ""
-        }`}
+        title={t("stock.expiredBatches")}
+        subtitle={expiredBatchesText}
         loading={loading}
         columns={columns}
         actions={actions}
         data={batches}
       />
 
-      {/* Pagination */}
       {pagination.pages > 1 && (
         <div className="d-flex justify-content-center align-items-center gap-3 mt-4">
-
           <button
             type="button"
             className="btn btn-light border"
             disabled={
-              loading ||
-              pagination.page <= 1
+              loading || pagination.page <= 1
             }
             onClick={() =>
               fetchExpiredBatches(
@@ -207,18 +194,14 @@ const ExpiredBatches = () => {
               )
             }
           >
-            Previous
+            {t("stock.previous")}
           </button>
 
           <span>
-            Page{" "}
-            <strong>
-              {pagination.page}
-            </strong>{" "}
-            of{" "}
-            <strong>
-              {pagination.pages}
-            </strong>
+            {t("stock.page")}{" "}
+            <strong>{pagination.page}</strong>{" "}
+            {t("stock.of")}{" "}
+            <strong>{pagination.pages}</strong>
           </span>
 
           <button
@@ -226,8 +209,7 @@ const ExpiredBatches = () => {
             className="btn btn-light border"
             disabled={
               loading ||
-              pagination.page >=
-                pagination.pages
+              pagination.page >= pagination.pages
             }
             onClick={() =>
               fetchExpiredBatches(
@@ -235,9 +217,8 @@ const ExpiredBatches = () => {
               )
             }
           >
-            Next
+            {t("stock.next")}
           </button>
-
         </div>
       )}
     </div>

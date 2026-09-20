@@ -1,30 +1,35 @@
-import { useState } from "react";
+
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Header from "../../components/header/Header";
 import FormInput from "../../components/form/FormInput";
-import { supplierSchema } from "../../schemas/supplire.schema";
 import { supplierInitialValues } from "../../initialValues/supplier.initial";
 import { createSupplier } from "../../services/supplier.service";
-
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
+import { supplierSchema } from "../../schemas/supplire.schema";
 
 const AddSupplier = () => {
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState("");
+  const { t } = useTranslation();
 
   const formik = useFormik({
     initialValues: supplierInitialValues,
-    validationSchema: supplierSchema,
+    validationSchema: supplierSchema(t),
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        setServerError("");
         await createSupplier(values);
-        navigate("/suppliers");
 
+        showSuccess(t("suppliers.createdSuccess"));
+
+        navigate("/suppliers");
       } catch (error) {
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to create supplier"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("suppliers.createFailed")
+          )
         );
       } finally {
         setSubmitting(false);
@@ -35,106 +40,94 @@ const AddSupplier = () => {
   return (
     <div>
       <Header
-        title="Add Supplier"
-        description="Add a new Supplier to the pharmacy"
-        buttonContent={'back to suppliers'}
-        buttonLink={'/suppliers'}
+        title={t("suppliers.addSupplier")}
+        description={t("suppliers.addSupplierDescription")}
+        buttonContent={t("suppliers.backToSuppliers")}
+        buttonLink="/suppliers"
       />
-
-      {serverError && (
-        <div className="alert alert-danger">
-          {serverError}
-        </div>
-      )}
 
       <div className="card border-0 shadow-sm">
         <div className="card-body p-4">
-          <form
-            onSubmit={formik.handleSubmit}
-          >
+          <form onSubmit={formik.handleSubmit}>
             <div className="row g-4">
-             
               <div className="col-12 col-md-6">
                 <FormInput
                   formik={formik}
                   name="name"
-                  label="Supplier Name"
+                  label={t("suppliers.supplierName")}
                   type="text"
-                  placeholder="Enter Supplier name"
+                  placeholder={t(
+                    "suppliers.namePlaceholder"
+                  )}
                   required
                 />
-                </div>
-                          
+              </div>
+
               <div className="col-12 col-md-6">
                 <FormInput
                   formik={formik}
                   name="email"
-                  label="email"
+                  label={t("suppliers.email")}
                   type="email"
-                  placeholder="Enter Supplier email"
+                  placeholder={t(
+                    "suppliers.emailPlaceholder"
+                  )}
                   required
                 />
               </div>
+
               <div className="col-12 col-md-6">
                 <FormInput
                   formik={formik}
                   name="phone"
-                  label="Supplier phone"
+                  label={t("suppliers.phone")}
                   type="text"
-                  placeholder="Enter Supplier phone"
+                  placeholder={t(
+                    "suppliers.phonePlaceholder"
+                  )}
                   required
                 />
               </div>
+
               <div className="col-12 col-md-6">
                 <FormInput
                   formik={formik}
                   name="address"
-                  label="Supplier address"
+                  label={t("suppliers.address")}
                   type="text"
-                  placeholder="Enter Supplier address"
+                  placeholder={t(
+                    "suppliers.addressPlaceholder"
+                  )}
                   required
                 />
               </div>
-    
-
             </div>
 
-            {/* Buttons */}
-
             <div className="d-flex justify-content-end gap-2 mt-4">
-
               <button
                 type="button"
                 className="btn btn-light border"
                 onClick={() =>
                   navigate("/suppliers")
                 }
-                disabled={
-                  formik.isSubmitting
-                }
+                disabled={formik.isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={
-                  formik.isSubmitting
-                }
+                disabled={formik.isSubmitting}
               >
                 {formik.isSubmitting
-                  ? "Adding..."
-                  : "Add Supplier"}
+                  ? t("suppliers.adding")
+                  : t("suppliers.addSupplier")}
               </button>
-
             </div>
-
           </form>
-
         </div>
       </div>
-
     </div>
   );
 };

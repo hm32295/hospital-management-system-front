@@ -2,32 +2,39 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Clock3, RefreshCw } from "lucide-react";
-
+import { useTranslation } from "react-i18next";
 import AdminDataPage from "../../components/table/AdminDataPage";
 import Header from "../../components/header/Header";
-
 import "./stock.css";
 import { getExpiryBatches } from "../../services/stock.service";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const ExpiryBatches = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useTranslation();
+  const [searchParams, setSearchParams] =
+    useSearchParams();
 
   const [batches, setBatches] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0});
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 0,
+  });
 
   const [days, setDays] = useState(
     Number(searchParams.get("days")) || 30
   );
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const fetchExpiryBatches = async (
     page = pagination.page,
     selectedDays = days
   ) => {
     setLoading(true);
-    setError("");
 
     try {
       const response = await getExpiryBatches({
@@ -36,29 +43,27 @@ const ExpiryBatches = () => {
         limit: pagination.limit,
       });
 
-      console.log("Expiry batches:", response);
-
       setBatches(response.batches || []);
 
-      setPagination( response.pagination || {page: 1,limit: 10, total: 0,pages: 0,});
-    } catch (error) {
-      console.error(
-        "Failed to load expiry batches:",
-        error
+      setPagination(
+        response.pagination || {
+          page: 1,
+          limit: 10,
+          total: 0,
+          pages: 0,
+        }
       );
-
-      setError(
-        error.response?.data?.message ||
-          "Failed to load expiry batches"
+    } catch (error) {
+      showError(
+        getApiErrorMessage(
+          error,
+          t("stock.loadExpiryBatchesFailed")
+        )
       );
     } finally {
       setLoading(false);
     }
   };
-
-  // ==========================================
-  // Initial Load
-  // ==========================================
 
   useEffect(() => {
     fetchExpiryBatches(1, days);
@@ -66,48 +71,38 @@ const ExpiryBatches = () => {
 
   const handleDaysChange = (value) => {
     const newDays = Number(value);
+
     setDays(newDays);
-    setSearchParams({ days: newDays});
+    setSearchParams({ days: newDays });
     fetchExpiryBatches(1, newDays);
   };
 
   const columns = [
     {
       key: "medicine",
-      label: "Medicine",
-          render: (medicine) => ( 
-            medicine.medicine?.name || ''
-    
-      ),
+      label: t("stock.medicine"),
+      render: (medicine) =>
+        medicine.medicine?.name || "-",
     },
-
     {
       key: "batchNumber",
-      label: "Batch Number",
-
+      label: t("stock.batchNumber"),
     },
-
     {
       key: "quantity",
-      label: "Quantity",
-
+      label: t("stock.quantity"),
     },
-
     {
       key: "expiryDate",
-      label: "Expiry Date",
-
+      label: t("stock.expiryDate"),
     },
-
     {
       key: "sellingPrice",
-      label: "Selling Price",
+      label: t("stock.sellingPrice"),
     },
-
     {
       key: "isActive",
-      label: "Status",
-
+      label: t("stock.status"),
       render: (value) => (
         <span
           className={`badge ${
@@ -116,7 +111,9 @@ const ExpiryBatches = () => {
               : "text-bg-secondary"
           }`}
         >
-          {value ? "Active" : "Inactive"}
+          {value
+            ? t("stock.active")
+            : t("stock.inactive")}
         </span>
       ),
     },
@@ -125,35 +122,34 @@ const ExpiryBatches = () => {
   const actions = [
     {
       type: "show",
-      label: "Show",
-
+      label: t("common.view"),
       link: (batch) =>
         `/batches/${batch._id}`,
     },
   ];
 
+  const batchesText =
+    pagination.total === 1
+      ? t("stock.batchesExpiring", {
+          count: pagination.total,
+        })
+      : t("stock.batchesExpiringPlural", {
+          count: pagination.total,
+        });
+
   return (
     <div>
       <Header
-        title="Expiry Batches"
-        description="Monitor medicines that are approaching their expiry date"
+        title={t("stock.expiryBatches")}
+        description={t("stock.expiryBatchesSubtitle")}
       />
 
-      {/* Error */}
-      {error && (
-        <div className="alert alert-danger">
-          {error}
-        </div>
-      )}
-
-      {/* Filters */}
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-body">
           <div className="row align-items-end g-3">
-
             <div className="col-12 col-md-4">
               <label className="form-label fw-semibold">
-                Expiry Period
+                {t("stock.expiryPeriod")}
               </label>
 
               <select
@@ -164,33 +160,18 @@ const ExpiryBatches = () => {
                 }
                 disabled={loading}
               >
-                <option value={7}>
-                  Next 7 Days
-                </option>
-
-                <option value={15}>
-                  Next 15 Days
-                </option>
-
-                <option value={30}>
-                  Next 30 Days
-                </option>
-
-                <option value={60}>
-                  Next 60 Days
-                </option>
-
-                <option value={90}>
-                  Next 90 Days
-                </option>
-
-                <option value={180}>
-                  Next 180 Days
-                </option>
-
-                <option value={365}>
-                  Next 365 Days
-                </option>
+                {[7, 15, 30, 60, 90, 180, 365].map(
+                  (value) => (
+                    <option
+                      key={value}
+                      value={value}
+                    >
+                      {t("stock.nextDays", {
+                        days: value,
+                      })}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
@@ -198,60 +179,53 @@ const ExpiryBatches = () => {
               <button
                 type="button"
                 className="btn btn-light border d-flex align-items-center gap-2"
-                onClick={() => fetchExpiryBatches(pagination.page, days) }
+                onClick={() =>
+                  fetchExpiryBatches(
+                    pagination.page,
+                    days
+                  )
+                }
                 disabled={loading}
               >
                 <RefreshCw
                   size={18}
-                  className={
-                    loading ? "spin" : ""
-                  }
+                  className={loading ? "spin" : ""}
                 />
 
                 {loading
-                  ? "Refreshing..."
-                  : "Refresh"}
+                  ? t("stock.refreshing")
+                  : t("stock.refresh")}
               </button>
             </div>
 
             <div className="col-12 col-md-auto ms-md-auto">
               <div className="d-flex align-items-center gap-2 text-muted">
                 <Clock3 size={18} />
-
-                <span>
-                  {pagination.total} batch
-                  {pagination.total !== 1
-                    ? "es"
-                    : ""}{" "}
-                  expiring
-                </span>
+                <span>{batchesText}</span>
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
-      {/* Table */}
       <AdminDataPage
-        title="Expiry Batches"
-        subtitle={`Batches expiring within the next ${days} days`}
+        title={t("stock.expiryBatches")}
+        subtitle={t("stock.batchesExpiringWithin", {
+          days,
+        })}
         loading={loading}
         columns={columns}
         actions={actions}
         data={batches}
       />
 
-      {/* Pagination */}
       {pagination.pages > 1 && (
         <div className="d-flex justify-content-center align-items-center gap-2 mt-4">
-
           <button
             type="button"
             className="btn btn-light border"
             disabled={
-              loading ||
-              pagination.page <= 1
+              loading || pagination.page <= 1
             }
             onClick={() =>
               fetchExpiryBatches(
@@ -260,18 +234,14 @@ const ExpiryBatches = () => {
               )
             }
           >
-            Previous
+            {t("stock.previous")}
           </button>
 
           <span className="px-3">
-            Page{" "}
-            <strong>
-              {pagination.page}
-            </strong>{" "}
-            of{" "}
-            <strong>
-              {pagination.pages}
-            </strong>
+            {t("stock.page")}{" "}
+            <strong>{pagination.page}</strong>{" "}
+            {t("stock.of")}{" "}
+            <strong>{pagination.pages}</strong>
           </span>
 
           <button
@@ -279,8 +249,7 @@ const ExpiryBatches = () => {
             className="btn btn-light border"
             disabled={
               loading ||
-              pagination.page >=
-                pagination.pages
+              pagination.page >= pagination.pages
             }
             onClick={() =>
               fetchExpiryBatches(
@@ -289,9 +258,8 @@ const ExpiryBatches = () => {
               )
             }
           >
-            Next
+            {t("stock.next")}
           </button>
-
         </div>
       )}
     </div>

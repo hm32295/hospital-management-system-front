@@ -1,10 +1,11 @@
+
 import * as Yup from "yup";
 
-export const loginValidation = Yup.object({
-  email: Yup.string()
-    .email("Invalid email")
-    .required("Email is required"),
-
-  password: Yup.string()
-    .required("Password is required"),
-});
+export const loginValidation = (t) =>
+  Yup.object({
+    email: Yup.string()
+      .email(t("validation.invalidEmail"))
+      .required(t("validation.emailRequired")),
+    password: Yup.string()
+      .required(t("validation.passwordRequired")),
+  });

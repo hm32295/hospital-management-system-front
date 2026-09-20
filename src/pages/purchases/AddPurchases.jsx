@@ -1,6 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Header from "../../components/header/Header";
 import FormInput from "../../components/form/FormInput";
 import FormSearchSelect from "../../components/form/FormSearchSelect";
@@ -9,73 +11,102 @@ import { purchaseInitialValues } from "../../initialValues/purchases.initial";
 import { purchaseSchema } from "../../schemas/purchase.schema";
 import { createPurchases } from "../../services/purchases.service";
 import { getMedicines } from "../../services/medicines.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
+
 const AddPurchases = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState("");
+
   const [supplier, setSuppler] = useState([]);
   const [medicines, setMedicines] = useState([]);
   const [medicinesLoading, setMedicinesLoading] = useState(false);
 
   const searchMedicines = async (search = "") => {
     setMedicinesLoading(true);
+
     try {
-      const response = await getMedicines({ search, page: 1, limit: 10, });
+      const response = await getMedicines({
+        search,
+        page: 1,
+        limit: 10,
+      });
+
       setMedicines(response.medicines || []);
-    } catch (error) { console.log(error); }
-    finally { setMedicinesLoading(false); }
+    } catch (error) {
+      showError(
+        getApiErrorMessage(
+          error,
+          t("purchases.searchMedicinesFailed")
+        )
+      );
+    } finally {
+      setMedicinesLoading(false);
+    }
   };
+
   const fetchSupplier = async (search = "") => {
     try {
-      const response = await getSuppliers({search})
-      setSuppler(response.suppliers)
+      const response = await getSuppliers({ search });
+
+      setSuppler(response.suppliers || []);
     } catch (error) {
-      console.log(error);   
+      showError(
+        getApiErrorMessage(
+          error,
+          t("purchases.searchSuppliersFailed")
+        )
+      );
     }
-  }
+  };
+
   useEffect(() => {
-    fetchSupplier(" ")
-    searchMedicines(" ")
+    fetchSupplier(" ");
+    searchMedicines(" ");
   }, []);
+
   const formik = useFormik({
     initialValues: purchaseInitialValues,
-    validationSchema: purchaseSchema,
+    validationSchema: purchaseSchema(t),
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        setServerError("");
         await createPurchases(values);
+
+        showSuccess(t("purchases.createdSuccess"));
+
         navigate("/purchases");
       } catch (error) {
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to create purchase"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("purchases.createFailed")
+          )
         );
       } finally {
         setSubmitting(false);
       }
     },
   });
-  const supplierOptions =
-    supplier.map((supplier) => ({
-      value: supplier._id,
-      label: supplier.name,
-    }));
-  const medicinesOptions =
-    medicines.map((medicine) => ({
-      value: medicine._id,
-      label: medicine.name,
-    }));
+
+  const supplierOptions = supplier.map((supplier) => ({
+    value: supplier._id,
+    label: supplier.name,
+  }));
+
+  const medicinesOptions = medicines.map((medicine) => ({
+    value: medicine._id,
+    label: medicine.name,
+  }));
+
   return (
     <div>
       <Header
-        title="Add purchase"
-        description="Add a new purchase to the pharmacy"
-        buttonContent={'back to purchase'}
-        buttonLink={'/purchases'}
+        title={t("purchases.addPurchase")}
+        description={t("purchases.addPurchaseDescription")}
+        buttonContent={t("purchases.backToPurchases")}
+        buttonLink="/purchases"
       />
 
-      {serverError && (
-        <div className="alert alert-danger">{serverError}</div>
-      )}
       <div className="card border-0 shadow-sm">
         <div className="card-body p-4">
           <form onSubmit={formik.handleSubmit}>
@@ -84,122 +115,149 @@ const AddPurchases = () => {
                 <FormInput
                   formik={formik}
                   name="purchaseDate"
-                  label="purchase Date"
+                  label={t("purchases.purchaseDate")}
                   type="date"
-                  placeholder="Enter purchase Date"
+                  placeholder={t("purchases.purchaseDatePlaceholder")}
                   required
                 />
               </div>
+
               <div className="col-12 col-md-6">
                 <FormInput
                   formik={formik}
                   name="invoiceNumber"
-                  label="invoice Number"
+                  label={t("purchases.invoiceNumber")}
                   type="text"
-                  placeholder="Enter invoice Number"
+                  placeholder={t("purchases.invoiceNumberPlaceholder")}
                   required
                 />
               </div>
+
               <div className="col-12 col-md-6">
                 <FormSearchSelect
                   formik={formik}
                   name="supplier"
-                  label="supplier"
-                  placeholder= "Search supplier..."
+                  label={t("purchases.supplier")}
+                  placeholder={t("purchases.searchSupplier")}
                   options={supplierOptions}
                   serverSearch
                   onSearch={fetchSupplier}
                   required
                 />
               </div>
+
               <div className="col-12">
                 {formik.values.items.map((item, index) => (
-                  <div key={index} className="card border mb-4"  >
+                  <div
+                    key={index}
+                    className="card border mb-4"
+                  >
                     <div className="card-body">
                       <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h6 className="mb-0">Medicine #{index + 1} </h6>
+                        <h6 className="mb-0">
+                          {t("purchases.medicineNumber", {
+                            number: index + 1,
+                          })}
+                        </h6>
+
                         {formik.values.items.length > 1 && (
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-danger"
                             onClick={() => {
-                              const newItems = [...formik.values.items];
+                              const newItems = [
+                                ...formik.values.items,
+                              ];
+
                               newItems.splice(index, 1);
-                              formik.setFieldValue("items", newItems);
+
+                              formik.setFieldValue(
+                                "items",
+                                newItems
+                              );
                             }}
                           >
-                            Remove
+                            {t("purchases.remove")}
                           </button>
                         )}
                       </div>
+
                       <div className="row g-3">
-
-
-
-
-
-
-
                         <div className="col-12 col-md-6">
                           <FormSearchSelect
                             formik={formik}
                             name={`items[${index}].medicine`}
-                            label="Medicine"
-                            placeholder={medicinesLoading ? "Loading medicines..." : "Search medicine..."}
+                            label={t("purchases.medicine")}
+                            placeholder={
+                              medicinesLoading
+                                ? t("purchases.loadingMedicines")
+                                : t("purchases.searchMedicine")
+                            }
                             options={medicinesOptions}
                             serverSearch
                             onSearch={searchMedicines}
                             required
                           />
-
                         </div>
 
                         <div className="col-12 col-md-6">
                           <FormInput
                             formik={formik}
                             name={`items[${index}].batchNumber`}
-                            label="Batch Number"
+                            label={t("purchases.batchNumber")}
                             type="text"
-                            placeholder="Enter batch number"
+                            placeholder={t(
+                              "purchases.batchNumberPlaceholder"
+                            )}
                             required
                           />
                         </div>
+
                         <div className="col-12 col-md-6">
                           <FormInput
                             formik={formik}
                             name={`items[${index}].expiryDate`}
-                            label="Expiry Date"
+                            label={t("purchases.expiryDate")}
                             type="date"
                             required
                           />
                         </div>
+
                         <div className="col-12 col-md-6">
                           <FormInput
                             formik={formik}
                             name={`items[${index}].sellingPrice`}
-                            label="selling Price"
+                            label={t("purchases.sellingPrice")}
                             type="number"
-                            placeholder="Enter selling Price"
+                            placeholder={t(
+                              "purchases.sellingPricePlaceholder"
+                            )}
                             required
                           />
                         </div>
+
                         <div className="col-12 col-md-6">
                           <FormInput
                             formik={formik}
                             name={`items[${index}].quantity`}
-                            label="Quantity"
+                            label={t("purchases.quantity")}
                             type="number"
-                            placeholder="Enter quantity"
+                            placeholder={t(
+                              "purchases.quantityPlaceholder"
+                            )}
                             required
                           />
                         </div>
+
                         <div className="col-12 col-md-6">
                           <FormInput
                             formik={formik}
                             name={`items[${index}].purchasePrice`}
-                            label="Purchase Price"
+                            label={t("purchases.purchasePrice")}
                             type="number"
-                            placeholder="Enter purchase price"
+                            placeholder={t(
+                              "purchases.purchasePricePlaceholder"
+                            )}
                             required
                           />
                         </div>
@@ -207,6 +265,7 @@ const AddPurchases = () => {
                     </div>
                   </div>
                 ))}
+
                 <button
                   type="button"
                   className="btn btn-outline-primary"
@@ -223,26 +282,29 @@ const AddPurchases = () => {
                     ]);
                   }}
                 >
-                  + Add Medicine
+                  + {t("purchases.addMedicine")}
                 </button>
               </div>
             </div>
+
             <div className="d-flex justify-content-end gap-2 mt-4">
               <button
                 type="button"
                 className="btn btn-light border"
-                onClick={() =>navigate("/purchases")}
+                onClick={() => navigate("/purchases")}
                 disabled={formik.isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={ formik.isSubmitting}
+                disabled={formik.isSubmitting}
               >
-                {formik.isSubmitting? "Adding...": "Add purchase"}
+                {formik.isSubmitting
+                  ? t("purchases.adding")
+                  : t("purchases.addPurchase")}
               </button>
             </div>
           </form>

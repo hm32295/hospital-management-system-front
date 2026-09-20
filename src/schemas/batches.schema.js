@@ -1,18 +1,35 @@
 import * as Yup from "yup";
-export const batchesSchema = Yup.object({
-  medicine: Yup.string()
-    .required("medicine is required"),
-  batchNumber: Yup.string()
-    .required("batch Number is required")
-    .min(5, "batch Number must be at least 5 characters"),
-  expiryDate: Yup.string()
-    .required("expiry Date is required"),
-  purchasePrice: Yup.string()
-    .required("purchase Price Date is required"),
-  sellingPrice: Yup.string()
-  .required("selling Price Date is required"),
 
-  
+export const batchesSchema = (t) =>
+  Yup.object({
+    medicine: Yup.string().required(
+      t?.("validation.medicineRequired") ||
+        "medicine is required"
+    ),
 
-});
- 
+    batchNumber: Yup.string()
+      .required(
+        t?.("validation.batchNumberRequired") ||
+          "batch Number is required"
+      )
+      .min(
+        5,
+        t?.("validation.batchNumberMin") ||
+          "batch Number must be at least 5 characters"
+      ),
+
+    expiryDate: Yup.string().required(
+      t?.("validation.expiryDateRequired") ||
+        "expiry Date is required"
+    ),
+
+    purchasePrice: Yup.string().required(
+      t?.("validation.purchasePriceRequired") ||
+        "purchase Price Date is required"
+    ),
+
+    sellingPrice: Yup.string().required(
+      t?.("validation.sellingPriceRequired") ||
+        "selling Price Date is required"
+    ),
+  });

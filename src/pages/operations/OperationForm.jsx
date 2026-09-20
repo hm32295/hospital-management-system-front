@@ -68,7 +68,7 @@ const OperationForm = ({
           notes: operation.notes || "",
         }
       : operationInitialValues,
-    validationSchema: operationSchema,
+    validationSchema: operationSchema(t),
     enableReinitialize: true,
     onSubmit: async (values, { setSubmitting }) => {
       try {

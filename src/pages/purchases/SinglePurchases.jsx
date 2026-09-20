@@ -1,34 +1,37 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import DetailsCard from "../../components/details/DetailsCard";
 import Header from "../../components/header/Header";
 import { getPurchasesById } from "../../services/purchases.service";
 import AdminDataPage from "../../components/table/AdminDataPage";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const SinglePurchases = () => {
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [purchase, setPurchase] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchPurchase = async () => {
       try {
         setLoading(true);
-        setError("");
 
         const response = await getPurchasesById(id);
-console.log(response.purchase);
+        console.log(response.purchase);
 
-        setPurchase(response.purchase);
+        setPurchase(response.purchase || {});
       } catch (error) {
-        console.error(error);
-
-        setError(
-          error.response?.data?.message ||
-            "Failed to load purchase"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("purchases.loadDetailsFailed")
+          )
         );
       } finally {
         setLoading(false);
@@ -40,32 +43,54 @@ console.log(response.purchase);
     }
   }, [id]);
 
-  /*
-   * =========================
-   * Medicine Fields
-   * =========================
-   */
+  const locale = i18n.language === "ar" ? "ar-EG" : "en-EG";
+
+  const formatDate = (value) =>{
+    console.log(value);
+    
+    return value
+      ? new Date(value.expiryDate).toLocaleDateString(locale)
+      : "-";
+}
+  const formatDateTime = (value) =>
+    value
+      ? new Date(value).toLocaleString(locale)
+      : "-";
+
+  const formatMoney = (value) =>{
+    
+    
+  value !== undefined && value !== null
+    ? `${Number(value).toLocaleString(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} ${t("common.egp")}`
+    : "-";
+}
   const medicinesFields = [
     {
       key: "batchNumber",
-      label: "Batch Number",
+      label: t("purchases.batchNumber"),
     },
     {
       key: "expiryDate",
-      label: "Expiry Date",
+      label: t("purchases.expiryDate"),
+      render: (value) => formatDate(value),
     },
     {
       key: "purchasePrice",
-      label: "Purchase Price",
+      label: t("purchases.purchasePrice"),
+      render: (value) => (value?.purchasePrice),
     },
     {
       key: "quantity",
-      label: "Quantity",
+      label: t("purchases.quantity"),
     },
     {
       key: "medicine",
-      label: "Medicine",
-      render: (medicine) => medicine?.medicine?.name || "-",
+      label: t("purchases.medicine"),
+      render: (medicine) =>
+        medicine?.medicine?.name || "-",
       nav: (medicine) =>
         medicine?._id
           ? `/medicines/${medicine._id}`
@@ -73,35 +98,28 @@ console.log(response.purchase);
     },
   ];
 
-  /*
-   * =========================
-   * Purchase Fields
-   * =========================
-   */
   const purchaseFields = [
     {
       key: "invoiceNumber",
-      label: "Invoice Number",
+      label: t("purchases.invoiceNumber"),
     },
-
     {
       key: "purchaseDate",
-      label: "Purchase Date",
+      label: t("purchases.purchaseDate"),
+      render: (value) => formatDate(value),
     },
-
     {
       key: "createdBy",
-      label: "Created By",
+      label: t("purchases.createdBy"),
       render: (user) => user?.name || "-",
       nav: (user) =>
         user?._id
           ? `/users/${user._id}`
           : null,
     },
-
     {
       key: "supplier",
-      label: "Supplier",
+      label: t("purchases.supplier"),
       render: (supplier) =>
         supplier?.name || "-",
       nav: (supplier) =>
@@ -109,100 +127,87 @@ console.log(response.purchase);
           ? `/suppliers/${supplier._id}`
           : null,
     },
-
     {
       key: "status",
-      label: "Status",
-    },
+      label: t("purchases.status"),
+      render: (value) => {
+        const statusKey =
+          String(value || "").toLowerCase();
 
+        return t(
+          `purchases.statuses.${statusKey}`,
+          {
+            defaultValue: value || "-",
+          }
+        );
+      },
+    },
     {
       key: "totalAmount",
-      label: "Total Amount",
+      label: t("purchases.totalAmount"),
+      render: (value) => formatMoney(value),
     },
-
     {
       key: "createdAt",
-      label: "Created At",
-      render: (value) =>
-        value
-          ? new Date(value).toLocaleString()
-          : "-",
+      label: t("purchases.createdAt"),
+      render: (value) => formatDateTime(value),
     },
-
     {
       key: "updatedAt",
-      label: "Updated At",
-      render: (value) =>
-        value
-          ? new Date(value).toLocaleString()
-          : "-",
+      label: t("purchases.updatedAt"),
+      render: (value) => formatDateTime(value),
     },
   ];
 
-  /*
-   * =========================
-   * Error
-   * =========================
-   */
-  if (error) {
+  if (!loading && !purchase?._id) {
     return (
       <div className="container-fluid">
         <div className="alert alert-danger">
-          {error}
+          {t("purchases.notFound")}
         </div>
 
         <button
           type="button"
           className="btn btn-secondary"
-          onClick={() =>
-            navigate("/purchases")
-          }
+          onClick={() => navigate("/purchases")}
         >
-          Back to Purchases
+          {t("purchases.backToPurchases")}
         </button>
       </div>
     );
   }
 
-  /*
-   * =========================
-   * Render
-   * =========================
-   */
   return (
     <div className="container-fluid">
-
       <Header
-        buttonContent="Back to Purchases"
+        buttonContent={t("purchases.backToPurchases")}
         buttonLink="/purchases"
-        title="Purchase Details"
+        title={t("purchases.purchaseDetails")}
       />
 
-      {/* Purchase Information */}
-
       <DetailsCard
-        title="Purchase Information"
+        title={t("purchases.purchaseInformation")}
         data={purchase}
         fields={purchaseFields}
         loading={loading}
-        emptyMessage="Purchase not found"
+        emptyMessage={t("purchases.notFound")}
       />
 
-      {/* Medicines */}
-<div>Medicines</div>
-    <AdminDataPage
-      loading={loading}
-      columns={medicinesFields}
-      data={purchase.items}
-    />
+      <div>{t("purchases.medicines")}</div>
+
+      <AdminDataPage
+        loading={loading}
+        columns={medicinesFields}
+        data={purchase.items || []}
+      />
+
       {!loading &&
         (!purchase?.items ||
           purchase.items.length === 0) && (
           <div className="alert alert-info mt-4">
-            No medicines found for this purchase.
+            {t("purchases.noMedicinesFound")}
           </div>
         )}
-
     </div>
   );
 };

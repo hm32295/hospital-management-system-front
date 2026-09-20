@@ -1,11 +1,15 @@
+
 import { useEffect, useState } from "react";
-import { useSnackbar } from "notistack";
-import {Search, RefreshCw, Eye,} from "lucide-react";
-import {getVisits,updateVisitStatus,} from "../../services/visit.service";
 import { useNavigate } from "react-router-dom";
+import { Search, RefreshCw, Eye } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { getVisits, updateVisitStatus } from "../../services/visit.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const Visits = () => {
-  const { enqueueSnackbar } = useSnackbar();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
 
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -22,7 +26,6 @@ const Visits = () => {
     limit: 10,
   });
 
-    const navigate = useNavigate()
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -38,7 +41,7 @@ const Visits = () => {
 
       if (!response.success) {
         throw new Error(
-          response.message || "Failed to get visits"
+          response.message || t("visits.loadFailed")
         );
       }
 
@@ -52,20 +55,16 @@ const Visits = () => {
         }
       );
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to get visits",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("visits.loadFailed")
+        )
       );
     } finally {
       setLoading(false);
     }
-    };
-    
-
+  };
 
   useEffect(() => {
     fetchVisits();
@@ -101,7 +100,8 @@ const Visits = () => {
 
       if (!response.success) {
         throw new Error(
-          response.message || "Failed to update visit status"
+          response.message ||
+            t("visits.updateStatusFailed")
         );
       }
 
@@ -113,20 +113,13 @@ const Visits = () => {
         )
       );
 
-      enqueueSnackbar(
-        "Visit status updated successfully",
-        {
-          variant: "success",
-        }
-      );
+      showSuccess(t("visits.statusUpdatedSuccess"));
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to update visit status",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("visits.updateStatusFailed")
+        )
       );
     } finally {
       setUpdatingId(null);
@@ -137,19 +130,19 @@ const Visits = () => {
     const statusMap = {
       waiting: {
         className: "bg-warning text-dark",
-        label: "Waiting",
+        label: t("visits.statuses.waiting"),
       },
       in_consultation: {
         className: "bg-primary",
-        label: "In Consultation",
+        label: t("visits.statuses.inConsultation"),
       },
       completed: {
         className: "bg-success",
-        label: "Completed",
+        label: t("visits.statuses.completed"),
       },
       cancelled: {
         className: "bg-danger",
-        label: "Cancelled",
+        label: t("visits.statuses.cancelled"),
       },
     };
 
@@ -169,15 +162,15 @@ const Visits = () => {
     const paymentMap = {
       pending: {
         className: "bg-warning text-dark",
-        label: "Pending",
+        label: t("visits.paymentStatuses.pending"),
       },
       paid: {
         className: "bg-success",
-        label: "Paid",
+        label: t("visits.paymentStatuses.paid"),
       },
       cancelled: {
         className: "bg-danger",
-        label: "Cancelled",
+        label: t("visits.paymentStatuses.cancelled"),
       },
     };
 
@@ -196,10 +189,13 @@ const Visits = () => {
   const formatDate = (date) => {
     if (!date) return "-";
 
-    return new Date(date).toLocaleString("en-GB", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
+    return new Date(date).toLocaleString(
+      i18n.language === "ar" ? "ar-EG" : "en-GB",
+      {
+        dateStyle: "short",
+        timeStyle: "short",
+      }
+    );
   };
 
   const resetFilters = () => {
@@ -219,9 +215,12 @@ const Visits = () => {
     <div className="container-fluid py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h3 className="mb-1">Visits</h3>
+          <h3 className="mb-1">
+            {t("visits.title")}
+          </h3>
+
           <p className="text-muted mb-0">
-            Manage and track patient visits
+            {t("visits.subtitle")}
           </p>
         </div>
 
@@ -232,7 +231,7 @@ const Visits = () => {
           disabled={loading}
         >
           <RefreshCw size={18} className="me-1" />
-          Refresh
+          {t("common.refresh")}
         </button>
       </div>
 
@@ -241,14 +240,14 @@ const Visits = () => {
           <div className="row">
             <div className="col-md-4 mb-3">
               <label className="form-label">
-                Patient ID
+                {t("visits.patientId")}
               </label>
 
               <input
                 type="text"
                 name="patient"
                 className="form-control"
-                placeholder="Patient ID..."
+                placeholder={t("visits.patientIdPlaceholder")}
                 value={filters.patient}
                 onChange={handleFilterChange}
               />
@@ -256,14 +255,14 @@ const Visits = () => {
 
             <div className="col-md-4 mb-3">
               <label className="form-label">
-                Specialty ID
+                {t("visits.specialtyId")}
               </label>
 
               <input
                 type="text"
                 name="specialty"
                 className="form-control"
-                placeholder="Specialty ID..."
+                placeholder={t("visits.specialtyIdPlaceholder")}
                 value={filters.specialty}
                 onChange={handleFilterChange}
               />
@@ -271,14 +270,14 @@ const Visits = () => {
 
             <div className="col-md-4 mb-3">
               <label className="form-label">
-                Doctor ID
+                {t("visits.doctorId")}
               </label>
 
               <input
                 type="text"
                 name="doctor"
                 className="form-control"
-                placeholder="Doctor ID..."
+                placeholder={t("visits.doctorIdPlaceholder")}
                 value={filters.doctor}
                 onChange={handleFilterChange}
               />
@@ -286,7 +285,7 @@ const Visits = () => {
 
             <div className="col-md-4 mb-3">
               <label className="form-label">
-                Visit Type
+                {t("visits.visitType")}
               </label>
 
               <select
@@ -295,15 +294,21 @@ const Visits = () => {
                 value={filters.visitType}
                 onChange={handleFilterChange}
               >
-                <option value="">All Visit Types</option>
-                <option value="first">First Visit</option>
-                <option value="follow_up">Follow Up</option>
+                <option value="">
+                  {t("visits.allVisitTypes")}
+                </option>
+                <option value="first">
+                  {t("visits.visitTypes.first")}
+                </option>
+                <option value="follow_up">
+                  {t("visits.visitTypes.followUp")}
+                </option>
               </select>
             </div>
 
             <div className="col-md-4 mb-3">
               <label className="form-label">
-                Payment Status
+                {t("visits.paymentStatus")}
               </label>
 
               <select
@@ -312,16 +317,24 @@ const Visits = () => {
                 value={filters.paymentStatus}
                 onChange={handleFilterChange}
               >
-                <option value="">All Payment Status</option>
-                <option value="pending">Pending</option>
-                <option value="paid">Paid</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="">
+                  {t("visits.allPaymentStatuses")}
+                </option>
+                <option value="pending">
+                  {t("visits.paymentStatuses.pending")}
+                </option>
+                <option value="paid">
+                  {t("visits.paymentStatuses.paid")}
+                </option>
+                <option value="cancelled">
+                  {t("visits.paymentStatuses.cancelled")}
+                </option>
               </select>
             </div>
 
             <div className="col-md-4 mb-3">
               <label className="form-label">
-                Visit Status
+                {t("visits.visitStatus")}
               </label>
 
               <select
@@ -330,16 +343,20 @@ const Visits = () => {
                 value={filters.status}
                 onChange={handleFilterChange}
               >
-                <option value="">All Statuses</option>
-                <option value="waiting">Waiting</option>
+                <option value="">
+                  {t("visits.allStatuses")}
+                </option>
+                <option value="waiting">
+                  {t("visits.statuses.waiting")}
+                </option>
                 <option value="in_consultation">
-                  In Consultation
+                  {t("visits.statuses.inConsultation")}
                 </option>
                 <option value="completed">
-                  Completed
+                  {t("visits.statuses.completed")}
                 </option>
                 <option value="cancelled">
-                  Cancelled
+                  {t("visits.statuses.cancelled")}
                 </option>
               </select>
             </div>
@@ -352,7 +369,7 @@ const Visits = () => {
               onClick={resetFilters}
             >
               <Search size={17} className="me-1" />
-              Reset Filters
+              {t("visits.resetFilters")}
             </button>
           </div>
         </div>
@@ -364,15 +381,15 @@ const Visits = () => {
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Patient</th>
-                  <th>Specialty</th>
-                  <th>Doctor</th>
-                  <th>Type</th>
-                  <th>Fee</th>
-                  <th>Payment</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                  <th>Action</th>
+                  <th>{t("visits.patient")}</th>
+                  <th>{t("visits.specialty")}</th>
+                  <th>{t("visits.doctor")}</th>
+                  <th>{t("visits.type")}</th>
+                  <th>{t("visits.fee")}</th>
+                  <th>{t("visits.payment")}</th>
+                  <th>{t("visits.status")}</th>
+                  <th>{t("visits.date")}</th>
+                  <th>{t("common.actions")}</th>
                 </tr>
               </thead>
 
@@ -383,7 +400,7 @@ const Visits = () => {
                       colSpan="9"
                       className="text-center py-5"
                     >
-                      Loading visits...
+                      {t("visits.loading")}
                     </td>
                   </tr>
                 ) : visits.length === 0 ? (
@@ -392,14 +409,16 @@ const Visits = () => {
                       colSpan="9"
                       className="text-center py-5 text-muted"
                     >
-                      No visits found
+                      {t("visits.noVisitsFound")}
                     </td>
                   </tr>
                 ) : (
                   visits.map((visit) => (
                     <tr key={visit._id}>
                       <td>
-                        {visit.patient?.name || "Walk-in"}
+                        {visit.patient?.name ||
+                          t("visits.walkIn")}
+
                         {visit.patient?.phone && (
                           <div className="small text-muted">
                             {visit.patient.phone}
@@ -412,18 +431,20 @@ const Visits = () => {
                       </td>
 
                       <td>
-                        {visit.doctor?.name || "Any Doctor"}
+                        {visit.doctor?.name ||
+                          t("visits.anyDoctor")}
                       </td>
 
                       <td>
                         {visit.visitType === "first"
-                          ? "First Visit"
-                          : "Follow Up"}
+                          ? t("visits.visitTypes.first")
+                          : t("visits.visitTypes.followUp")}
                       </td>
 
                       <td>
                         <strong>
-                          {visit.consultationFee} EGP
+                          {visit.consultationFee}{" "}
+                          {t("common.egp")}
                         </strong>
                       </td>
 
@@ -457,7 +478,7 @@ const Visits = () => {
                                 )
                               }
                             >
-                              Start
+                              {t("visits.start")}
                             </button>
                           )}
 
@@ -476,7 +497,7 @@ const Visits = () => {
                                 )
                               }
                             >
-                              Complete
+                              {t("visits.complete")}
                             </button>
                           )}
 
@@ -495,18 +516,22 @@ const Visits = () => {
                                   )
                                 }
                               >
-                                Cancel
+                                {t("common.cancel")}
                               </button>
                             )}
 
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-secondary"
-                            title="View visit"
-                            onClick={() => navigate(`/visits/${visit._id}`)}
-                            >
+                            title={t("visits.viewVisit")}
+                            onClick={() =>
+                              navigate(
+                                `/visits/${visit._id}`
+                              )
+                            }
+                          >
                             <Eye size={16} />
-                            </button>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -518,7 +543,7 @@ const Visits = () => {
 
           <div className="d-flex justify-content-between align-items-center p-3 border-top">
             <div className="text-muted small">
-              Total: {pagination.total}
+              {t("visits.total")}: {pagination.total}
             </div>
 
             <div className="d-flex align-items-center gap-2">
@@ -535,11 +560,12 @@ const Visits = () => {
                   }))
                 }
               >
-                Previous
+                {t("common.previous")}
               </button>
 
               <span className="small">
-                Page {pagination.page} of{" "}
+                {t("visits.page")} {pagination.page}{" "}
+                {t("common.of")}{" "}
                 {pagination.pages || 1}
               </span>
 
@@ -548,8 +574,7 @@ const Visits = () => {
                 className="btn btn-sm btn-outline-secondary"
                 disabled={
                   pagination.page >=
-                    pagination.pages ||
-                  loading
+                    pagination.pages || loading
                 }
                 onClick={() =>
                   setFilters((prev) => ({
@@ -558,7 +583,7 @@ const Visits = () => {
                   }))
                 }
               >
-                Next
+                {t("common.next")}
               </button>
             </div>
           </div>

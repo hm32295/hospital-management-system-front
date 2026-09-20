@@ -1,50 +1,59 @@
-
 import { useEffect, useState } from "react";
 import {
   TrendingDown,
   RefreshCw,
 } from "lucide-react";
-
+import { useTranslation } from "react-i18next";
 import AdminDataPage from "../../components/table/AdminDataPage";
 import Header from "../../components/header/Header";
-
 import { getLowStock } from "../../services/stock.service";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const LowStock = () => {
-  const [medicines, setMedicines] = useState([]);
-  const [threshold, setThreshold] =useState(10);
+  const { t } = useTranslation();
 
-  const [pagination, setPagination] =
-    useState({page: 1,limit: 10, total: 0,pages: 0});
+  const [medicines, setMedicines] = useState([]);
+  const [threshold, setThreshold] = useState(10);
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 0,
+  });
+
   const [loading, setLoading] = useState(false);
 
-  const [error, setError] = useState("");
-
-  const fetchLowStock = async (page = 1,selectedThreshold = threshold) => {
+  const fetchLowStock = async (
+    page = 1,
+    selectedThreshold = threshold
+  ) => {
     setLoading(true);
-    setError("");
+
     try {
       const response = await getLowStock({
         threshold: selectedThreshold,
-        page,limit: pagination.limit,
+        page,
+        limit: pagination.limit,
       });
 
-      console.log("Low stock:", response);
-
       setMedicines(response.medicines || []);
+
       setPagination(
-        response.pagination || {page: 1, limit: 10,total: 0,pages: 0,
+        response.pagination || {
+          page: 1,
+          limit: 10,
+          total: 0,
+          pages: 0,
         }
       );
     } catch (error) {
-      console.error(
-        "Failed to load low stock:",
-        error
-      );
-
-      setError(
-        error.response?.data?.message ||
-          "Failed to load low stock"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("stock.loadLowStockFailed")
+        )
       );
     } finally {
       setLoading(false);
@@ -57,6 +66,7 @@ const LowStock = () => {
 
   const handleThresholdChange = (e) => {
     const value = Number(e.target.value);
+
     setThreshold(value);
     fetchLowStock(1, value);
   };
@@ -64,8 +74,7 @@ const LowStock = () => {
   const columns = [
     {
       key: "_id",
-      label: "Medicine",
-
+      label: t("stock.medicine"),
       render: (medicine) => (
         <div>
           <div className="fw-semibold">
@@ -77,16 +86,16 @@ const LowStock = () => {
               {medicine._id.genericName}
             </div>
           )}
-
         </div>
       ),
     },
-
     {
       key: "totalQuantity",
-      label: "Available Quantity",
+      label: t("stock.availableQuantity"),
       render: (value) => {
-        const quantity =Number(value.totalQuantity) || 0;
+        const quantity =
+          Number(value.totalQuantity) || 0;
+
         return (
           <span
             className={`badge ${
@@ -100,24 +109,24 @@ const LowStock = () => {
         );
       },
     },
-
     {
       key: "totalQuantity",
-      label: "Stock Status",
-
+      label: t("stock.status"),
       render: (value) => {
-        const quantity = Number(value.totalQuantity) || 0;
+        const quantity =
+          Number(value.totalQuantity) || 0;
+
         if (quantity === 0) {
           return (
             <span className="badge text-bg-danger">
-              Out of Stock
+              {t("stock.outOfStock")}
             </span>
           );
         }
 
         return (
           <span className="badge text-bg-warning">
-            Low Stock
+            {t("stock.lowStock")}
           </span>
         );
       },
@@ -127,93 +136,77 @@ const LowStock = () => {
   const actions = [
     {
       type: "show",
-      label: "Show",
-
+      label: t("common.view"),
       link: (medicine) =>
         `/medicines/${medicine._id._id}`,
     },
   ];
 
-  // ==========================================
-  // Render
-  // ==========================================
+  const attentionText =
+    pagination.total === 1
+      ? t("stock.medicineNeedsAttention", {
+          count: pagination.total,
+        })
+      : t("stock.medicinesNeedAttention", {
+          count: pagination.total,
+        });
 
   return (
     <div>
       <Header
-        title="Low Stock"
-        description="Monitor medicines with low available stock"
+        title={t("stock.lowStockTitle")}
+        description={t("stock.lowStockSubtitle")}
       />
-
-      {/* Error */}
-
-      {error && (
-        <div className="alert alert-danger">
-          {error}
-        </div>
-      )}
-
-      {/* Warning */}
 
       <div className="alert alert-warning d-flex align-items-center gap-2 mb-4">
         <TrendingDown size={20} />
 
         <div>
           <strong>
-            Low Stock Warning
+            {t("stock.lowStockWarning")}
           </strong>
 
           <div className="small">
-            Medicines at or below the selected
-            quantity threshold are displayed here.
+            {t("stock.lowStockWarningDescription")}
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-body">
           <div className="row align-items-end g-3">
-
-            {/* Threshold */}
-
             <div className="col-12 col-md-4">
               <label className="form-label fw-semibold">
-                Stock Threshold
+                {t("stock.stockThreshold")}
               </label>
 
               <select
                 className="form-select"
                 value={threshold}
-                onChange={
-                  handleThresholdChange
-                }
+                onChange={handleThresholdChange}
                 disabled={loading}
               >
                 <option value={0}>
-                  0 - Out of Stock
+                  {t("stock.outOfStockOption")}
                 </option>
 
                 <option value={5}>
-                  5 or less
+                  {t("stock.orLess", { value: 5 })}
                 </option>
 
                 <option value={10}>
-                  10 or less
+                  {t("stock.orLess", { value: 10 })}
                 </option>
 
                 <option value={20}>
-                  20 or less
+                  {t("stock.orLess", { value: 20 })}
                 </option>
 
                 <option value={50}>
-                  50 or less
+                  {t("stock.orLess", { value: 50 })}
                 </option>
               </select>
             </div>
-
-            {/* Refresh */}
 
             <div className="col-12 col-md-auto">
               <button
@@ -229,59 +222,42 @@ const LowStock = () => {
               >
                 <RefreshCw
                   size={18}
-                  className={
-                    loading
-                      ? "spin"
-                      : ""
-                  }
+                  className={loading ? "spin" : ""}
                 />
 
                 {loading
-                  ? "Refreshing..."
-                  : "Refresh"}
+                  ? t("stock.refreshing")
+                  : t("stock.refresh")}
               </button>
             </div>
 
-            {/* Count */}
-
             <div className="col-12 col-md-auto ms-md-auto">
               <div className="text-muted">
-                {pagination.total} medicine
-                {pagination.total !== 1
-                  ? "s"
-                  : ""}{" "}
-                need attention
+                {attentionText}
               </div>
             </div>
-
           </div>
         </div>
       </div>
 
-      {/* Table */}
-
       <AdminDataPage
-        title="Low Stock Medicines"
-        subtitle={`Medicines with quantity ≤ ${threshold}`}
+        title={t("stock.lowStockMedicinesTitle")}
+        subtitle={t("stock.lowStockDescriptionFull", {
+          threshold,
+        })}
         loading={loading}
         columns={columns}
         actions={actions}
         data={medicines}
       />
 
-      {/* Pagination */}
-
       {pagination.pages > 1 && (
         <div className="d-flex justify-content-center align-items-center gap-3 mt-4">
-
-          {/* Previous */}
-
           <button
             type="button"
             className="btn btn-light border"
             disabled={
-              loading ||
-              pagination.page <= 1
+              loading || pagination.page <= 1
             }
             onClick={() =>
               fetchLowStock(
@@ -290,31 +266,22 @@ const LowStock = () => {
               )
             }
           >
-            Previous
+            {t("stock.previous")}
           </button>
 
-          {/* Page */}
-
           <span>
-            Page{" "}
-            <strong>
-              {pagination.page}
-            </strong>{" "}
-            of{" "}
-            <strong>
-              {pagination.pages}
-            </strong>
+            {t("stock.page")}{" "}
+            <strong>{pagination.page}</strong>{" "}
+            {t("stock.of")}{" "}
+            <strong>{pagination.pages}</strong>
           </span>
-
-          {/* Next */}
 
           <button
             type="button"
             className="btn btn-light border"
             disabled={
               loading ||
-              pagination.page >=
-                pagination.pages
+              pagination.page >= pagination.pages
             }
             onClick={() =>
               fetchLowStock(
@@ -323,9 +290,8 @@ const LowStock = () => {
               )
             }
           >
-            Next
+            {t("stock.next")}
           </button>
-
         </div>
       )}
     </div>

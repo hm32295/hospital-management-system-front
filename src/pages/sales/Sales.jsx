@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ScanBarcode,
   UserRound,
@@ -25,8 +26,15 @@ import {
   createPatient,
   getPatients,
 } from "../../services/patients.service";
+import {
+  showError,
+  showSuccess,
+  showWarning,
+} from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const Sales = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const [customerType, setCustomerType] = useState("existing");
@@ -49,13 +57,21 @@ const Sales = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [serverError, setServerError] = useState("");
 
+  const locale =
+    i18n.language === "ar" ? "ar-EG" : "en-EG";
+
   useEffect(() => {
     const fetchPatients = async () => {
       try {
         const response = await getPatients();
         setPatients(response.patients || []);
       } catch (error) {
-        console.error("Failed to load patients:", error);
+        showError(
+          getApiErrorMessage(
+            error,
+            t("sales.loadPatientsFailed")
+          )
+        );
       }
     };
 
@@ -74,7 +90,12 @@ const Sales = () => {
 
         setBatches(response.batches || []);
       } catch (error) {
-        console.error("Failed to load batches:", error);
+        showError(
+          getApiErrorMessage(
+            error,
+            t("sales.loadBatchesFailed")
+          )
+        );
       }
     };
 
@@ -117,7 +138,8 @@ const Sales = () => {
 
   const handleCreateNewPatient = async () => {
     if (!newPatient.name.trim()) {
-      setServerError("Patient name is required");
+      setServerError(t("sales.patientNameRequired"));
+      showError(t("sales.patientNameRequired"));
       return;
     }
 
@@ -134,21 +156,30 @@ const Sales = () => {
         response.patient || response.data?.patient;
 
       if (!createdPatient) {
-        throw new Error("Patient was not created");
+        throw new Error(t("sales.patientNotCreated"));
       }
 
       setPatient(createdPatient);
-      setPatients((prev) => [createdPatient, ...prev]);
+      setPatients((prev) => [
+        createdPatient,
+        ...prev,
+      ]);
       setCustomerType("existing");
+
       setNewPatient({
         name: "",
         phone: "",
       });
+
+      showSuccess(t("sales.patientCreatedSuccess"));
     } catch (error) {
-      setServerError(
-        error.response?.data?.message ||
-          "Failed to create patient"
+      const message = getApiErrorMessage(
+        error,
+        t("sales.createPatientFailed")
       );
+
+      setServerError(message);
+      showError(message);
     } finally {
       setCreatingPatient(false);
     }
@@ -162,15 +193,17 @@ const Sales = () => {
 
       if (existingItem) {
         if (
-          existingItem.quantity >= availableQuantity
+          existingItem.quantity >=
+          availableQuantity
         ) {
-          console.error(
-            "Cannot exceed available quantity"
+          showWarning(
+            t("sales.cannotExceedAvailable")
           );
           return prev;
         }
 
-        const quantity = existingItem.quantity + 1;
+        const quantity =
+          existingItem.quantity + 1;
 
         return prev.map((item) =>
           item.batch === medicine.batch
@@ -203,7 +236,7 @@ const Sales = () => {
     const medicineData = parseBarcode(decodedText);
 
     if (!medicineData) {
-      console.error("Invalid medicine QR code");
+      showError(t("sales.invalidMedicineCode"));
       return;
     }
 
@@ -212,12 +245,12 @@ const Sales = () => {
     );
 
     if (!scannedBatch) {
-      console.error("Batch not found");
+      showError(t("sales.batchNotFound"));
       return;
     }
 
     if (!scannedBatch.isActive) {
-      console.error("This batch is inactive");
+      showWarning(t("sales.batchInactive"));
       return;
     }
 
@@ -225,14 +258,12 @@ const Sales = () => {
       new Date(scannedBatch.expiryDate) <
       new Date()
     ) {
-      console.error(
-        "This medicine batch has expired"
-      );
+      showWarning(t("sales.batchExpired"));
       return;
     }
 
     if (Number(scannedBatch.quantity) <= 0) {
-      console.error("This batch is out of stock");
+      showWarning(t("sales.batchOutOfStock"));
       return;
     }
 
@@ -261,23 +292,25 @@ const Sales = () => {
   };
 
   const handleManualAdd = (medicine) => {
-    if (!medicine?.medicine || !medicine?.batch) {
-      console.error("Invalid medicine data");
+    if (
+      !medicine?.medicine ||
+      !medicine?.batch
+    ) {
+      showError(t("sales.invalidMedicineData"));
       return;
     }
 
     if (Number(medicine.availableQuantity) <= 0) {
-      console.error("This batch is out of stock");
+      showWarning(t("sales.batchOutOfStock"));
       return;
     }
 
     if (
       medicine.expiryDate &&
-      new Date(medicine.expiryDate) < new Date()
+      new Date(medicine.expiryDate) <
+        new Date()
     ) {
-      console.error(
-        "This medicine batch has expired"
-      );
+      showWarning(t("sales.batchExpired"));
       return;
     }
 
@@ -293,10 +326,11 @@ const Sales = () => {
         if (item.batch !== batchId) return item;
 
         if (
-          item.quantity >= item.availableQuantity
+          item.quantity >=
+          item.availableQuantity
         ) {
-          console.error(
-            "Cannot exceed available quantity"
+          showWarning(
+            t("sales.cannotExceedAvailable")
           );
           return item;
         }
@@ -319,7 +353,8 @@ const Sales = () => {
         .map((item) => {
           if (item.batch !== batchId) return item;
 
-          const quantity = item.quantity - 1;
+          const quantity =
+            item.quantity - 1;
 
           return {
             ...item,
@@ -348,7 +383,8 @@ const Sales = () => {
   const subtotal = cart.reduce(
     (total, item) =>
       total +
-      Number(item.unitPrice) * item.quantity,
+      Number(item.unitPrice) *
+        item.quantity,
     0
   );
 
@@ -367,7 +403,11 @@ const Sales = () => {
       customerType === "existing" &&
       !patient
     ) {
-      setServerError("Please select a patient");
+      const message = t(
+        "sales.selectPatient"
+      );
+      setServerError(message);
+      showError(message);
       return;
     }
 
@@ -375,21 +415,27 @@ const Sales = () => {
       customerType === "new" &&
       !patient
     ) {
-      setServerError(
-        "Please create the new patient first"
+      const message = t(
+        "sales.createNewPatientFirst"
       );
+      setServerError(message);
+      showError(message);
       return;
     }
 
     if (cart.length === 0) {
-      setServerError("Cart is empty");
+      const message = t("sales.cartEmpty");
+      setServerError(message);
+      showError(message);
       return;
     }
 
     if (discountValue > subtotal) {
-      setServerError(
-        "Discount cannot be greater than subtotal"
+      const message = t(
+        "sales.discountExceedsSubtotal"
       );
+      setServerError(message);
+      showError(message);
       return;
     }
 
@@ -412,16 +458,18 @@ const Sales = () => {
 
       setCreatedSale(response.sale);
       setShowPaymentModal(true);
+
+      showSuccess(
+        t("sales.saleCreatedSuccess")
+      );
     } catch (error) {
-      console.error(
-        "Create sale error:",
-        error.response?.data || error
+      const message = getApiErrorMessage(
+        error,
+        t("sales.createSaleFailed")
       );
 
-      setServerError(
-        error.response?.data?.message ||
-          "Failed to create sale"
-      );
+      setServerError(message);
+      showError(message);
     } finally {
       setCreatingSale(false);
     }
@@ -444,23 +492,26 @@ const Sales = () => {
       setCreatedSale(response.sale);
       setShowPaymentModal(false);
 
+      showSuccess(
+        t("sales.paymentSuccess")
+      );
+
       if (
-        response.sale.paymentStatus === "paid"
+        response.sale.paymentStatus ===
+        "paid"
       ) {
         navigate(
           `/add-dispense?sale=${response.sale._id}`
         );
       }
     } catch (error) {
-      console.error(
-        "Payment error:",
-        error.response?.data || error
+      const message = getApiErrorMessage(
+        error,
+        t("sales.paymentFailed")
       );
 
-      setServerError(
-        error.response?.data?.message ||
-          "Failed to process payment"
-      );
+      setServerError(message);
+      showError(message);
     } finally {
       setPaymentLoading(false);
     }
@@ -471,11 +522,11 @@ const Sales = () => {
       <div className="sales-header mb-4">
         <div>
           <h2 className="sales-title">
-            New Sale
+            {t("sales.newSale")}
           </h2>
 
           <p className="sales-subtitle">
-            Create a new medicine sale
+            {t("sales.createNewMedicineSale")}
           </p>
         </div>
 
@@ -494,7 +545,7 @@ const Sales = () => {
         <div className="sales-card-header">
           <div className="sales-section-title">
             <UserRound size={20} />
-            <span>Customer</span>
+            <span>{t("sales.customer")}</span>
           </div>
         </div>
 
@@ -518,7 +569,7 @@ const Sales = () => {
                   size={17}
                   className="me-2"
                 />
-                Existing Patient
+                {t("sales.existingPatient")}
               </button>
             </div>
 
@@ -538,7 +589,7 @@ const Sales = () => {
                   size={17}
                   className="me-2"
                 />
-                New Patient
+                {t("sales.newPatient")}
               </button>
             </div>
 
@@ -560,7 +611,7 @@ const Sales = () => {
                   size={17}
                   className="me-2"
                 />
-                Walk-in Customer
+                {t("sales.walkInCustomer")}
               </button>
             </div>
           </div>
@@ -580,7 +631,7 @@ const Sales = () => {
 
                     <span>
                       {patient.phone ||
-                        "No phone"}
+                        t("sales.noPhone")}
                     </span>
                   </div>
 
@@ -591,7 +642,7 @@ const Sales = () => {
                       setPatient(null)
                     }
                   >
-                    Change
+                    {t("sales.change")}
                   </button>
                 </div>
               ) : (
@@ -604,7 +655,9 @@ const Sales = () => {
                     <input
                       type="text"
                       className="form-control sales-input"
-                      placeholder="Search patient by name or phone..."
+                      placeholder={t(
+                        "sales.searchPatientPlaceholder"
+                      )}
                       value={patientSearch}
                       onChange={(e) =>
                         setPatientSearch(
@@ -643,7 +696,9 @@ const Sales = () => {
 
                                 <span>
                                   {item.phone ||
-                                    "No phone"}
+                                    t(
+                                      "sales.noPhone"
+                                    )}
                                 </span>
                               </div>
                             </button>
@@ -656,7 +711,9 @@ const Sales = () => {
                           />
 
                           <span>
-                            No patients found
+                            {t(
+                              "sales.noPatientsFound"
+                            )}
                           </span>
                         </div>
                       )}
@@ -670,19 +727,21 @@ const Sales = () => {
           {customerType === "new" && (
             <div className="border rounded p-3">
               <h6 className="mb-3">
-                Create New Patient
+                {t("sales.createNewPatient")}
               </h6>
 
               <div className="row g-3">
                 <div className="col-12 col-md-6">
                   <label className="form-label">
-                    Patient Name
+                    {t("sales.patientName")}
                   </label>
 
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Enter patient name"
+                    placeholder={t(
+                      "sales.patientNamePlaceholder"
+                    )}
                     value={newPatient.name}
                     onChange={(e) =>
                       setNewPatient(
@@ -697,13 +756,15 @@ const Sales = () => {
 
                 <div className="col-12 col-md-6">
                   <label className="form-label">
-                    Phone
+                    {t("sales.phone")}
                   </label>
 
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Enter phone number"
+                    placeholder={t(
+                      "sales.phonePlaceholder"
+                    )}
                     value={newPatient.phone}
                     onChange={(e) =>
                       setNewPatient(
@@ -731,8 +792,8 @@ const Sales = () => {
                     />
 
                     {creatingPatient
-                      ? "Creating..."
-                      : "Create Patient"}
+                      ? t("sales.creating")
+                      : t("sales.createPatient")}
                   </button>
                 </div>
               </div>
@@ -745,12 +806,13 @@ const Sales = () => {
 
               <div>
                 <strong>
-                  Walk-in Customer
+                  {t("sales.walkInCustomer")}
                 </strong>
 
                 <div className="small">
-                  This sale will not be linked
-                  to a registered patient.
+                  {t(
+                    "sales.walkInDescription"
+                  )}
                 </div>
               </div>
             </div>
@@ -762,7 +824,9 @@ const Sales = () => {
         <div className="sales-card-header">
           <div className="sales-section-title">
             <ScanBarcode size={20} />
-            <span>Scan Medicine</span>
+            <span>
+              {t("sales.scanMedicine")}
+            </span>
           </div>
         </div>
 
@@ -775,12 +839,11 @@ const Sales = () => {
 
             <div>
               <h5>
-                Scan Barcode / QR Code
+                {t("sales.scanBarcodeTitle")}
               </h5>
 
               <p>
-                Scan the medicine code to add
-                it to the sale.
+                {t("sales.scanBarcodeDescription")}
               </p>
             </div>
 
@@ -799,7 +862,9 @@ const Sales = () => {
         <div className="sales-card-header">
           <div className="sales-section-title">
             <ShoppingCart size={20} />
-            <span>Sale Items</span>
+            <span>
+              {t("sales.saleItems")}
+            </span>
 
             <span className="cart-count">
               {cart.length}
@@ -813,7 +878,7 @@ const Sales = () => {
               onClick={clearCart}
             >
               <Trash2 size={16} />
-              Clear Cart
+              {t("sales.clearCart")}
             </button>
           )}
         </div>
@@ -826,11 +891,14 @@ const Sales = () => {
                 strokeWidth={1.3}
               />
 
-              <h5>Cart is empty</h5>
+              <h5>
+                {t("sales.cartEmpty")}
+              </h5>
 
               <p>
-                Scan a medicine barcode or add
-                medicine manually.
+                {t(
+                  "sales.emptyCartDescription"
+                )}
               </p>
             </div>
           ) : (
@@ -838,12 +906,12 @@ const Sales = () => {
               <table className="table sales-table mb-0">
                 <thead>
                   <tr>
-                    <th>Medicine</th>
-                    <th>Batch</th>
-                    <th>Expiry</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
+                    <th>{t("sales.medicine")}</th>
+                    <th>{t("sales.batch")}</th>
+                    <th>{t("sales.expiry")}</th>
+                    <th>{t("sales.price")}</th>
+                    <th>{t("sales.quantity")}</th>
+                    <th>{t("sales.total")}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -873,14 +941,15 @@ const Sales = () => {
                         {new Date(
                           item.expiryDate
                         ).toLocaleDateString(
-                          "en-GB"
+                          locale
                         )}
                       </td>
 
                       <td>
                         {Number(
                           item.unitPrice
-                        ).toFixed(2)}
+                        ).toFixed(2)}{" "}
+                        {t("common.egp")}
                       </td>
 
                       <td>
@@ -920,7 +989,7 @@ const Sales = () => {
                         </div>
 
                         <small className="text-muted d-block mt-1">
-                          Available:{" "}
+                          {t("sales.available")}:{" "}
                           {item.availableQuantity}
                         </small>
                       </td>
@@ -932,7 +1001,8 @@ const Sales = () => {
                               item.unitPrice
                             ) *
                             item.quantity
-                          ).toFixed(2)}
+                          ).toFixed(2)}{" "}
+                          {t("common.egp")}
                         </strong>
                       </td>
 
@@ -961,15 +1031,20 @@ const Sales = () => {
       <div className="sale-summary-wrapper">
         <div className="sale-summary">
           <div className="summary-row">
-            <span>Subtotal</span>
+            <span>
+              {t("sales.subtotal")}
+            </span>
 
             <strong>
-              {subtotal.toFixed(2)} EGP
+              {subtotal.toFixed(2)}{" "}
+              {t("common.egp")}
             </strong>
           </div>
 
           <div className="summary-row discount-row">
-            <span>Discount</span>
+            <span>
+              {t("sales.discount")}
+            </span>
 
             <div className="discount-input">
               <input
@@ -983,17 +1058,22 @@ const Sales = () => {
                 }
               />
 
-              <span>EGP</span>
+              <span>
+                {t("common.egp")}
+              </span>
             </div>
           </div>
 
           <div className="summary-divider" />
 
           <div className="summary-total">
-            <span>Total</span>
+            <span>
+              {t("sales.total")}
+            </span>
 
             <strong>
-              {total.toFixed(2)} EGP
+              {total.toFixed(2)}{" "}
+              {t("common.egp")}
             </strong>
           </div>
 
@@ -1004,7 +1084,7 @@ const Sales = () => {
               onClick={clearCart}
               disabled={cart.length === 0}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
 
             <button
@@ -1020,8 +1100,8 @@ const Sales = () => {
               }
             >
               {creatingSale
-                ? "Creating Sale..."
-                : "Create Sale"}
+                ? t("sales.creatingSale")
+                : t("sales.createSale")}
             </button>
           </div>
         </div>
@@ -1041,4 +1121,5 @@ const Sales = () => {
     </div>
   );
 };
+
 export default Sales;

@@ -4,8 +4,12 @@ import AdminDataPage from "../../components/table/AdminDataPage";
 import { getStockTransaction } from "../../services/stockTransactions.service";
 import { getMedicines } from "../../services/medicines.service";
 import { getBatches } from "../../services/batches.service";
+import { useTranslation } from "react-i18next";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const StockTransaction = () => {
+  const { t } = useTranslation();
   const [stockTransaction, setStockTransaction] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -16,10 +20,8 @@ const StockTransaction = () => {
   });
 
   const [filtersState, setFiltersState] = useState({});
-
   const [medicines, setMedicines] = useState([]);
   const [medicinesLoading, setMedicinesLoading] = useState(false);
-
   const [batches, setBatches] = useState([]);
   const [batchesLoading, setBatchesLoading] = useState(false);
 
@@ -40,9 +42,11 @@ const StockTransaction = () => {
         ...response.pagination,
       }));
     } catch (error) {
-      console.error(
-        "Failed to load stock transactions:",
-        error
+      showError(
+        getApiErrorMessage(
+          error,
+          t("stockTransactions.loadFailed")
+        )
       );
     } finally {
       setLoading(false);
@@ -61,11 +65,12 @@ const StockTransaction = () => {
 
       setMedicines(response.medicines || []);
     } catch (error) {
-      console.error(
-        "Failed to search medicines:",
-        error
+      showError(
+        getApiErrorMessage(
+          error,
+          t("stockTransactions.searchMedicinesFailed")
+        )
       );
-
       setMedicines([]);
     } finally {
       setMedicinesLoading(false);
@@ -84,11 +89,12 @@ const StockTransaction = () => {
 
       setBatches(response.batches || []);
     } catch (error) {
-      console.error(
-        "Failed to search batches:",
-        error
+      showError(
+        getApiErrorMessage(
+          error,
+          t("stockTransactions.searchBatchesFailed")
+        )
       );
-
       setBatches([]);
     } finally {
       setBatchesLoading(false);
@@ -102,7 +108,7 @@ const StockTransaction = () => {
   const medicineOptions = [
     {
       value: undefined,
-      label: "All",
+      label: t("stockTransactions.all"),
     },
     ...medicines.map((medicine) => ({
       value: medicine._id,
@@ -113,7 +119,7 @@ const StockTransaction = () => {
   const batchOptions = [
     {
       value: undefined,
-      label: "All",
+      label: t("stockTransactions.all"),
     },
     ...batches.map((batch) => ({
       value: batch._id,
@@ -124,9 +130,9 @@ const StockTransaction = () => {
   const filters = [
     {
       name: "batch",
-      label: "Batch Number",
+      label: t("stockTransactions.batchNumber"),
       type: "searchSelect",
-      placeholder: "Search batch...",
+      placeholder: t("stockTransactions.searchBatch"),
       value: filtersState.batch,
       options: batchOptions,
       serverSearch: true,
@@ -136,12 +142,11 @@ const StockTransaction = () => {
       debounceDelay: 400,
       col: "col-12 col-md-6 col-lg-3",
     },
-
     {
       name: "medicine",
-      label: "Medicine",
+      label: t("stockTransactions.medicine"),
       type: "searchSelect",
-      placeholder: "Search medicine...",
+      placeholder: t("stockTransactions.searchMedicine"),
       value: filtersState.medicine,
       options: medicineOptions,
       serverSearch: true,
@@ -151,16 +156,15 @@ const StockTransaction = () => {
       debounceDelay: 400,
       col: "col-12 col-md-6 col-lg-3",
     },
-
     {
       name: "type",
-      label: "Type",
+      label: t("stockTransactions.type"),
       type: "select",
       value: filtersState.type,
       options: [
         {
           value: undefined,
-          label: "All",
+          label: t("stockTransactions.all"),
         },
         {
           value: "IN",
@@ -190,44 +194,44 @@ const StockTransaction = () => {
   const columns = [
     {
       key: "medicine",
-      label: "Medicine",
+      label: t("stockTransactions.medicine"),
       render: (medicine) =>
         medicine?.medicine?.name || "-",
     },
     {
       key: "batch",
-      label: "Batch",
+      label: t("stockTransactions.batch"),
       render: (batch) =>
         batch?.batch?.batchNumber || "-",
     },
     {
       key: "type",
-      label: "Type",
+      label: t("stockTransactions.type"),
     },
     {
       key: "quantity",
-      label: "Quantity",
+      label: t("stockTransactions.quantity"),
     },
     {
       key: "reason",
-      label: "Reason",
+      label: t("stockTransactions.reason"),
     },
     {
       key: "user",
-      label: "User",
+      label: t("stockTransactions.user"),
       render: (user) =>
         user?.user?.name || "-",
     },
     {
       key: "createdAt",
-      label: "Date",
+      label: t("stockTransactions.date"),
     },
   ];
 
   const actions = [
     {
       type: "show",
-      label: "Show",
+      label: t("common.view"),
       link: (transaction) =>
         `/stock-transaction/${transaction._id}`,
     },
@@ -235,8 +239,8 @@ const StockTransaction = () => {
 
   return (
     <AdminDataPage
-      title="Stock Transactions"
-      subtitle="Manage stock movements and inventory transactions"
+      title={t("stockTransactions.title")}
+      subtitle={t("stockTransactions.subtitle")}
       loading={loading}
       columns={columns}
       actions={actions}

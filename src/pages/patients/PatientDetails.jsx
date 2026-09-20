@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   UserRound,
@@ -26,11 +26,13 @@ import {
   createVisitPayment,
   createOperationPayment,
 } from "../../services/payment.service";
+import { showError, showSuccess, showInfo } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const PatientDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+  const { t, i18n } = useTranslation();
 
   const [patient, setPatient] = useState(null);
   const [summary, setSummary] = useState(null);
@@ -43,14 +45,12 @@ const PatientDetails = () => {
   const [payments, setPayments] = useState([]);
 
   const [loading, setLoading] = useState(true);
-
   const [activeTab, setActiveTab] = useState("visits");
 
   const [paymentTarget, setPaymentTarget] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentNotes, setPaymentNotes] = useState("");
-  const [paymentSubmitting, setPaymentSubmitting] =
-    useState(false);
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
 
   const fetchPatientDetails = async () => {
     try {
@@ -61,19 +61,17 @@ const PatientDetails = () => {
       setPatient(response.patient || null);
       setSummary(response.summary || null);
       setAccount(response.account || null);
-
       setVisits(response.visits || []);
       setOperations(response.operations || []);
       setPrescriptions(response.prescriptions || []);
       setSales(response.sales || []);
       setPayments(response.payments || []);
     } catch (error) {
-      enqueueSnackbar(
-        error?.response?.data?.message ||
-          "Failed to load patient details",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("patientDetails.failedLoad")
+        )
       );
     } finally {
       setLoading(false);
@@ -87,11 +85,19 @@ const PatientDetails = () => {
   const formatDate = (date) => {
     if (!date) return "-";
 
-    return new Date(date).toLocaleDateString("en-GB");
+    return new Date(date).toLocaleDateString(
+      i18n.language === "ar" ? "ar-EG" : "en-GB"
+    );
   };
 
   const formatMoney = (amount) => {
-    return `${Number(amount || 0).toLocaleString()} EGP`;
+    return `${Number(amount || 0).toLocaleString(
+      i18n.language === "ar" ? "ar-EG" : "en-EG",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }
+    )} ${t("common.egp")}`;
   };
 
   const getVisitRemaining = (visit) => {
@@ -132,6 +138,30 @@ const PatientDetails = () => {
     );
   };
 
+  const getPaymentTypeLabel = (type) => {
+    return t(`patientDetails.paymentTypes.${type}`, {
+      defaultValue: type,
+    });
+  };
+
+  const getPaymentStatusLabel = (status) => {
+    return t(`patientDetails.paymentStatuses.${status}`, {
+      defaultValue: status,
+    });
+  };
+
+  const getVisitTypeLabel = (type) => {
+    return t(`patientDetails.visitTypes.${type}`, {
+      defaultValue: type,
+    });
+  };
+
+  const getOperationStatusLabel = (status) => {
+    return t(`patientDetails.statuses.${status}`, {
+      defaultValue: status,
+    });
+  };
+
   const openPaymentModal = (type, item) => {
     let remaining = 0;
 
@@ -148,9 +178,7 @@ const PatientDetails = () => {
     }
 
     if (remaining <= 0) {
-      enqueueSnackbar("There is no remaining amount", {
-        variant: "info",
-      });
+      showInfo(t("patientDetails.noRemainingAmount"));
       return;
     }
 
@@ -180,20 +208,15 @@ const PatientDetails = () => {
     const amount = Number(paymentAmount);
 
     if (!amount || amount <= 0) {
-      enqueueSnackbar("Enter a valid payment amount", {
-        variant: "error",
-      });
+      showError(t("patientDetails.validPaymentAmount"));
       return;
     }
 
     if (amount > paymentTarget.remaining) {
-      enqueueSnackbar(
-        `Payment cannot exceed ${formatMoney(
-          paymentTarget.remaining
-        )}`,
-        {
-          variant: "error",
-        }
+      showError(
+        t("patientDetails.paymentExceedsRemaining", {
+          amount: formatMoney(paymentTarget.remaining),
+        })
       );
       return;
     }
@@ -226,20 +249,17 @@ const PatientDetails = () => {
         });
       }
 
-      enqueueSnackbar("Payment completed successfully", {
-        variant: "success",
-      });
+      showSuccess(t("patientDetails.paymentSuccess"));
 
       closePaymentModal();
 
       await fetchPatientDetails();
     } catch (error) {
-      enqueueSnackbar(
-        error?.response?.data?.message ||
-          "Payment failed",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("patientDetails.paymentFailed")
+        )
       );
     } finally {
       setPaymentSubmitting(false);
@@ -251,7 +271,7 @@ const PatientDetails = () => {
       <div className="d-flex justify-content-center align-items-center py-5">
         <div className="spinner-border" role="status">
           <span className="visually-hidden">
-            Loading...
+            {t("common.loading")}
           </span>
         </div>
       </div>
@@ -262,7 +282,7 @@ const PatientDetails = () => {
     return (
       <div className="container-fluid">
         <div className="alert alert-danger">
-          Patient not found
+          {t("patientDetails.notFound")}
         </div>
       </div>
     );
@@ -291,10 +311,12 @@ const PatientDetails = () => {
           onClick={() => navigate("/patients")}
         >
           <ArrowLeft size={18} />
-          Back
+          {t("common.back")}
         </button>
 
-        <h4 className="mb-0">Patient Details</h4>
+        <h4 className="mb-0">
+          {t("patientDetails.title")}
+        </h4>
 
         <div />
       </div>
@@ -327,8 +349,8 @@ const PatientDetails = () => {
                     }`}
                   >
                     {patient.isActive
-                      ? "Active"
-                      : "Inactive"}
+                      ? t("patientDetails.active")
+                      : t("patientDetails.inactive")}
                   </span>
                 </div>
               </div>
@@ -368,7 +390,7 @@ const PatientDetails = () => {
 
             <div className="col-md-3">
               <div className="small text-muted mb-1">
-                National ID
+                {t("patientDetails.nationalId")}
               </div>
 
               <div className="fw-semibold">
@@ -376,11 +398,18 @@ const PatientDetails = () => {
               </div>
 
               <div className="small text-muted mt-2 mb-1">
-                Gender
+                {t("patientDetails.gender")}
               </div>
 
               <div className="fw-semibold text-capitalize">
-                {patient.gender || "-"}
+                {patient.gender
+                  ? t(
+                      `patientDetails.genders.${patient.gender}`,
+                      {
+                        defaultValue: patient.gender,
+                      }
+                    )
+                  : "-"}
               </div>
             </div>
           </div>
@@ -394,7 +423,7 @@ const PatientDetails = () => {
               <div className="d-flex justify-content-between">
                 <div>
                   <div className="text-muted small">
-                    Total Charges
+                    {t("patientDetails.totalCharges")}
                   </div>
 
                   <h4 className="mt-2 mb-0">
@@ -414,7 +443,7 @@ const PatientDetails = () => {
               <div className="d-flex justify-content-between">
                 <div>
                   <div className="text-muted small">
-                    Total Paid
+                    {t("patientDetails.totalPaid")}
                   </div>
 
                   <h4 className="mt-2 mb-0 text-success">
@@ -434,7 +463,7 @@ const PatientDetails = () => {
               <div className="d-flex justify-content-between">
                 <div>
                   <div className="text-muted small">
-                    Discounts
+                    {t("patientDetails.discounts")}
                   </div>
 
                   <h4 className="mt-2 mb-0">
@@ -454,7 +483,7 @@ const PatientDetails = () => {
               <div className="d-flex justify-content-between">
                 <div>
                   <div className="text-muted small">
-                    Balance
+                    {t("patientDetails.balance")}
                   </div>
 
                   <h4
@@ -490,8 +519,11 @@ const PatientDetails = () => {
                   setActiveTab("visits")
                 }
               >
-                <Stethoscope size={16} className="me-1" />
-                Visits
+                <Stethoscope
+                  size={16}
+                  className="me-1"
+                />
+                {t("patientDetails.tabs.visits")}
               </button>
             </li>
 
@@ -507,8 +539,11 @@ const PatientDetails = () => {
                   setActiveTab("operations")
                 }
               >
-                <ReceiptText size={16} className="me-1" />
-                Operations
+                <ReceiptText
+                  size={16}
+                  className="me-1"
+                />
+                {t("patientDetails.tabs.operations")}
               </button>
             </li>
 
@@ -524,8 +559,13 @@ const PatientDetails = () => {
                   setActiveTab("prescriptions")
                 }
               >
-                <Pill size={16} className="me-1" />
-                Prescriptions
+                <Pill
+                  size={16}
+                  className="me-1"
+                />
+                {t(
+                  "patientDetails.tabs.prescriptions"
+                )}
               </button>
             </li>
 
@@ -545,7 +585,7 @@ const PatientDetails = () => {
                   size={16}
                   className="me-1"
                 />
-                Sales
+                {t("patientDetails.tabs.sales")}
               </button>
             </li>
 
@@ -565,7 +605,7 @@ const PatientDetails = () => {
                   size={16}
                   className="me-1"
                 />
-                Payments
+                {t("patientDetails.tabs.payments")}
               </button>
             </li>
 
@@ -585,7 +625,7 @@ const PatientDetails = () => {
                   size={16}
                   className="me-1"
                 />
-                Account
+                {t("patientDetails.tabs.account")}
               </button>
             </li>
           </ul>
@@ -597,14 +637,14 @@ const PatientDetails = () => {
               <table className="table table-hover align-middle">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Specialty</th>
-                    <th>Doctor</th>
-                    <th>Type</th>
-                    <th>Fee</th>
-                    <th>Payment</th>
-                    <th>Status</th>
-                    <th>Action</th>
+                    <th>{t("patientDetails.date")}</th>
+                    <th>{t("patientDetails.specialty")}</th>
+                    <th>{t("patientDetails.doctor")}</th>
+                    <th>{t("patientDetails.type")}</th>
+                    <th>{t("patientDetails.fee")}</th>
+                    <th>{t("patientDetails.payment")}</th>
+                    <th>{t("patientDetails.status")}</th>
+                    <th>{t("common.actions")}</th>
                   </tr>
                 </thead>
 
@@ -615,7 +655,7 @@ const PatientDetails = () => {
                         colSpan="8"
                         className="text-center py-4"
                       >
-                        No visits found
+                        {t("patientDetails.noVisits")}
                       </td>
                     </tr>
                   ) : (
@@ -641,9 +681,10 @@ const PatientDetails = () => {
                               "-"}
                           </td>
 
-                          <td className="text-capitalize">
-                            {visit.visitType ||
-                              "-"}
+                          <td>
+                            {getVisitTypeLabel(
+                              visit.visitType
+                            )}
                           </td>
 
                           <td>
@@ -661,13 +702,17 @@ const PatientDetails = () => {
                                   : "bg-warning text-dark"
                               }`}
                             >
-                              {visit.paymentStatus}
+                              {getPaymentStatusLabel(
+                                visit.paymentStatus
+                              )}
                             </span>
                           </td>
 
                           <td>
                             <span className="text-capitalize">
-                              {visit.status}
+                              {getOperationStatusLabel(
+                                visit.status
+                              )}
                             </span>
                           </td>
 
@@ -684,11 +729,15 @@ const PatientDetails = () => {
                                 }
                               >
                                 <Banknote size={15} />
-                                Pay
+                                {t(
+                                  "patientDetails.pay"
+                                )}
                               </button>
                             ) : (
                               <span className="text-success small">
-                                Paid
+                                {t(
+                                  "patientDetails.paid"
+                                )}
                               </span>
                             )}
                           </td>
@@ -706,14 +755,14 @@ const PatientDetails = () => {
               <table className="table table-hover align-middle">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Operation</th>
-                    <th>Doctor</th>
-                    <th>Total</th>
-                    <th>Paid</th>
-                    <th>Remaining</th>
-                    <th>Status</th>
-                    <th>Action</th>
+                    <th>{t("patientDetails.date")}</th>
+                    <th>{t("patientDetails.operation")}</th>
+                    <th>{t("patientDetails.doctor")}</th>
+                    <th>{t("patientDetails.total")}</th>
+                    <th>{t("patientDetails.paid")}</th>
+                    <th>{t("patientDetails.remaining")}</th>
+                    <th>{t("patientDetails.status")}</th>
+                    <th>{t("common.actions")}</th>
                   </tr>
                 </thead>
 
@@ -724,7 +773,9 @@ const PatientDetails = () => {
                         colSpan="8"
                         className="text-center py-4"
                       >
-                        No operations found
+                        {t(
+                          "patientDetails.noOperations"
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -781,9 +832,9 @@ const PatientDetails = () => {
                                   : "bg-danger"
                               }`}
                             >
-                              {
+                              {getPaymentStatusLabel(
                                 operation.paymentStatus
-                              }
+                              )}
                             </span>
                           </td>
 
@@ -802,7 +853,9 @@ const PatientDetails = () => {
                                 }
                               >
                                 <Banknote size={15} />
-                                Pay
+                                {t(
+                                  "patientDetails.pay"
+                                )}
                               </button>
                             ) : (
                               <span
@@ -815,8 +868,12 @@ const PatientDetails = () => {
                               >
                                 {operation.status ===
                                 "cancelled"
-                                  ? "Cancelled"
-                                  : "Paid"}
+                                  ? t(
+                                      "patientDetails.cancelled"
+                                    )
+                                  : t(
+                                      "patientDetails.paid"
+                                    )}
                               </span>
                             )}
                           </td>
@@ -834,9 +891,9 @@ const PatientDetails = () => {
               <table className="table table-hover align-middle">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Doctor</th>
-                    <th>Status</th>
+                    <th>{t("patientDetails.date")}</th>
+                    <th>{t("patientDetails.doctor")}</th>
+                    <th>{t("patientDetails.status")}</th>
                   </tr>
                 </thead>
 
@@ -847,7 +904,9 @@ const PatientDetails = () => {
                         colSpan="3"
                         className="text-center py-4"
                       >
-                        No prescriptions found
+                        {t(
+                          "patientDetails.noPrescriptions"
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -868,8 +927,9 @@ const PatientDetails = () => {
                           </td>
 
                           <td>
-                            {prescription.status ||
-                              "-"}
+                            {getOperationStatusLabel(
+                              prescription.status
+                            )}
                           </td>
                         </tr>
                       )
@@ -885,15 +945,15 @@ const PatientDetails = () => {
               <table className="table table-hover align-middle">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Medicines</th>
-                    <th>Subtotal</th>
-                    <th>Discount</th>
-                    <th>Total</th>
-                    <th>Paid</th>
-                    <th>Remaining</th>
-                    <th>Status</th>
-                    <th>Action</th>
+                    <th>{t("patientDetails.date")}</th>
+                    <th>{t("patientDetails.medicines")}</th>
+                    <th>{t("patientDetails.subtotal")}</th>
+                    <th>{t("patientDetails.discount")}</th>
+                    <th>{t("patientDetails.total")}</th>
+                    <th>{t("patientDetails.paid")}</th>
+                    <th>{t("patientDetails.remaining")}</th>
+                    <th>{t("patientDetails.status")}</th>
+                    <th>{t("common.actions")}</th>
                   </tr>
                 </thead>
 
@@ -904,7 +964,7 @@ const PatientDetails = () => {
                         colSpan="9"
                         className="text-center py-4"
                       >
-                        No sales found
+                        {t("patientDetails.noSales")}
                       </td>
                     </tr>
                   ) : (
@@ -964,7 +1024,9 @@ const PatientDetails = () => {
                                   : "bg-danger"
                               }`}
                             >
-                              {sale.paymentStatus}
+                              {getPaymentStatusLabel(
+                                sale.paymentStatus
+                              )}
                             </span>
                           </td>
 
@@ -983,7 +1045,9 @@ const PatientDetails = () => {
                                 }
                               >
                                 <Banknote size={15} />
-                                Pay
+                                {t(
+                                  "patientDetails.pay"
+                                )}
                               </button>
                             ) : (
                               <span
@@ -996,8 +1060,12 @@ const PatientDetails = () => {
                               >
                                 {sale.status ===
                                 "cancelled"
-                                  ? "Cancelled"
-                                  : "Paid"}
+                                  ? t(
+                                      "patientDetails.cancelled"
+                                    )
+                                  : t(
+                                      "patientDetails.paid"
+                                    )}
                               </span>
                             )}
                           </td>
@@ -1015,12 +1083,12 @@ const PatientDetails = () => {
               <table className="table table-hover align-middle">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Received By</th>
-                    <th>Status</th>
-                    <th>Notes</th>
+                    <th>{t("patientDetails.date")}</th>
+                    <th>{t("patientDetails.type")}</th>
+                    <th>{t("patientDetails.amount")}</th>
+                    <th>{t("patientDetails.receivedBy")}</th>
+                    <th>{t("patientDetails.status")}</th>
+                    <th>{t("patientDetails.notes")}</th>
                   </tr>
                 </thead>
 
@@ -1031,7 +1099,9 @@ const PatientDetails = () => {
                         colSpan="6"
                         className="text-center py-4"
                       >
-                        No payments found
+                        {t(
+                          "patientDetails.noPayments"
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -1043,8 +1113,10 @@ const PatientDetails = () => {
                           )}
                         </td>
 
-                        <td className="text-capitalize">
-                          {payment.type || "-"}
+                        <td>
+                          {getPaymentTypeLabel(
+                            payment.type
+                          )}
                         </td>
 
                         <td>
@@ -1067,7 +1139,9 @@ const PatientDetails = () => {
                                 : "bg-danger"
                             }`}
                           >
-                            {payment.status}
+                            {getPaymentStatusLabel(
+                              payment.status
+                            )}
                           </span>
                         </td>
 
@@ -1088,7 +1162,9 @@ const PatientDetails = () => {
                 <div className="col-md-4">
                   <div className="border rounded p-3 h-100">
                     <div className="text-muted small">
-                      Visit Charges
+                      {t(
+                        "patientDetails.visitCharges"
+                      )}
                     </div>
 
                     <h5 className="mt-2 mb-0">
@@ -1102,7 +1178,9 @@ const PatientDetails = () => {
                 <div className="col-md-4">
                   <div className="border rounded p-3 h-100">
                     <div className="text-muted small">
-                      Operation Charges
+                      {t(
+                        "patientDetails.operationCharges"
+                      )}
                     </div>
 
                     <h5 className="mt-2 mb-0">
@@ -1116,7 +1194,9 @@ const PatientDetails = () => {
                 <div className="col-md-4">
                   <div className="border rounded p-3 h-100">
                     <div className="text-muted small">
-                      Sales Charges
+                      {t(
+                        "patientDetails.salesCharges"
+                      )}
                     </div>
 
                     <h5 className="mt-2 mb-0">
@@ -1132,7 +1212,9 @@ const PatientDetails = () => {
                 <div className="col-md-4">
                   <div className="border rounded p-3 h-100">
                     <div className="text-muted small">
-                      Visit Payments
+                      {t(
+                        "patientDetails.visitPayments"
+                      )}
                     </div>
 
                     <h5 className="mt-2 mb-0 text-success">
@@ -1146,7 +1228,9 @@ const PatientDetails = () => {
                 <div className="col-md-4">
                   <div className="border rounded p-3 h-100">
                     <div className="text-muted small">
-                      Operation Payments
+                      {t(
+                        "patientDetails.operationPayments"
+                      )}
                     </div>
 
                     <h5 className="mt-2 mb-0 text-success">
@@ -1160,7 +1244,9 @@ const PatientDetails = () => {
                 <div className="col-md-4">
                   <div className="border rounded p-3 h-100">
                     <div className="text-muted small">
-                      Sales Payments
+                      {t(
+                        "patientDetails.salesPayments"
+                      )}
                     </div>
 
                     <h5 className="mt-2 mb-0 text-success">
@@ -1175,12 +1261,15 @@ const PatientDetails = () => {
               <div className="alert alert-light border d-flex justify-content-between align-items-center">
                 <div>
                   <div className="fw-semibold">
-                    Patient Balance
+                    {t(
+                      "patientDetails.patientBalance"
+                    )}
                   </div>
 
                   <div className="small text-muted">
-                    Total charges minus completed
-                    payments and applicable discounts.
+                    {t(
+                      "patientDetails.balanceDescription"
+                    )}
                   </div>
                 </div>
 
@@ -1211,7 +1300,7 @@ const PatientDetails = () => {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">
-                  Patient Payment
+                  {t("patientDetails.patientPayment")}
                 </h5>
 
                 <button
@@ -1228,20 +1317,26 @@ const PatientDetails = () => {
                 <div className="modal-body">
                   <div className="mb-3">
                     <label className="form-label">
-                      Payment Type
+                      {t(
+                        "patientDetails.paymentType"
+                      )}
                     </label>
 
                     <input
                       type="text"
                       className="form-control"
-                      value={paymentTarget.type}
+                      value={getPaymentTypeLabel(
+                        paymentTarget.type
+                      )}
                       readOnly
                     />
                   </div>
 
                   <div className="mb-3">
                     <label className="form-label">
-                      Remaining Amount
+                      {t(
+                        "patientDetails.remainingAmount"
+                      )}
                     </label>
 
                     <input
@@ -1256,7 +1351,9 @@ const PatientDetails = () => {
 
                   <div className="mb-3">
                     <label className="form-label">
-                      Payment Amount
+                      {t(
+                        "patientDetails.paymentAmount"
+                      )}
                     </label>
 
                     <input
@@ -1281,7 +1378,7 @@ const PatientDetails = () => {
 
                   <div className="mb-3">
                     <label className="form-label">
-                      Notes
+                      {t("patientDetails.notes")}
                     </label>
 
                     <textarea
@@ -1293,7 +1390,9 @@ const PatientDetails = () => {
                           e.target.value
                         )
                       }
-                      placeholder="Optional notes"
+                      placeholder={t(
+                        "patientDetails.notesPlaceholder"
+                      )}
                     />
                   </div>
                 </div>
@@ -1305,7 +1404,7 @@ const PatientDetails = () => {
                     onClick={closePaymentModal}
                     disabled={paymentSubmitting}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
 
                   <button
@@ -1319,12 +1418,16 @@ const PatientDetails = () => {
                           className="spinner-border spinner-border-sm"
                           role="status"
                         />
-                        Processing...
+                        {t(
+                          "patientDetails.processing"
+                        )}
                       </>
                     ) : (
                       <>
                         <Banknote size={17} />
-                        Confirm Payment
+                        {t(
+                          "patientDetails.confirmPayment"
+                        )}
                       </>
                     )}
                   </button>

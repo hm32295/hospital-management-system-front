@@ -57,7 +57,7 @@ const EditCategory = () => {
       description: category?.description || "",
       isActive: category?.isActive ?? true,
     },
-    validationSchema: categorySchema,
+    validationSchema: categorySchema(t),
     onSubmit: async (values, { setSubmitting }) => {
       try {
         setServerError("");

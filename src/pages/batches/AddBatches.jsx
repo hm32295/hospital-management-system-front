@@ -21,7 +21,7 @@ const AddBatches = () => {
 
   const formik = useFormik({
     initialValues: batchesInitialValues,
-    validationSchema: batchesSchema,
+    validationSchema: batchesSchema(t),
     onSubmit: async (values, { setSubmitting }) => {
       try {
         const response = await createBatch(values);

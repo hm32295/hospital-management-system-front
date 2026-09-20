@@ -1,21 +1,22 @@
 
 import { useEffect, useState } from "react";
-import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
   getSinglePatient,
   updatePatient,
 } from "../../services/patients.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const EditPatient = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] =
-    useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -31,18 +32,14 @@ const EditPatient = () => {
     try {
       setLoading(true);
 
-      const response =
-        await getSinglePatient(id);
-
-      const patient =
-        response.patient || {};
+      const response = await getSinglePatient(id);
+      const patient = response.patient || {};
 
       setFormData({
         name: patient.name || "",
         phone: patient.phone || "",
         email: patient.email || "",
-        nationalId:
-          patient.nationalId || "",
+        nationalId: patient.nationalId || "",
         dateOfBirth: patient.dateOfBirth
           ? new Date(patient.dateOfBirth)
               .toISOString()
@@ -52,12 +49,11 @@ const EditPatient = () => {
         address: patient.address || "",
       });
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          "Failed to load patient",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("patients.failedLoadSingle")
+        )
       );
 
       navigate("/patients");
@@ -83,12 +79,7 @@ const EditPatient = () => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      enqueueSnackbar(
-        "Patient name is required",
-        {
-          variant: "error",
-        }
-      );
+      showError(t("patients.nameRequired"));
       return;
     }
 
@@ -99,13 +90,10 @@ const EditPatient = () => {
         name: formData.name.trim(),
         phone: formData.phone.trim() || null,
         email: formData.email.trim() || null,
-        nationalId:
-          formData.nationalId.trim() || null,
-        dateOfBirth:
-          formData.dateOfBirth || null,
+        nationalId: formData.nationalId.trim() || null,
+        dateOfBirth: formData.dateOfBirth || null,
         gender: formData.gender || null,
-        address:
-          formData.address.trim() || null,
+        address: formData.address.trim() || null,
       };
 
       const response = await updatePatient(
@@ -116,26 +104,22 @@ const EditPatient = () => {
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Failed to update patient"
+            t("patients.updateFailed")
         );
       }
 
-      enqueueSnackbar(
-        "Patient updated successfully",
-        {
-          variant: "success",
-        }
+      showSuccess(
+        response.message ||
+          t("patients.updatedSuccess")
       );
 
       navigate("/patients");
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to update patient",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("patients.updateFailed")
+        )
       );
     } finally {
       setSubmitting(false);
@@ -146,7 +130,7 @@ const EditPatient = () => {
     return (
       <div className="container-fluid py-5">
         <div className="text-center">
-          Loading patient...
+          {t("patients.loadingPatient")}
         </div>
       </div>
     );
@@ -156,11 +140,11 @@ const EditPatient = () => {
     <div className="container-fluid py-4">
       <div className="mb-4">
         <h3 className="mb-1">
-          Edit Patient
+          {t("patients.editPatient")}
         </h3>
 
         <p className="text-muted mb-0">
-          Update patient information
+          {t("patients.editPatientDescription")}
         </p>
       </div>
 
@@ -168,10 +152,9 @@ const EditPatient = () => {
         <div className="card-body p-4">
           <form onSubmit={handleSubmit}>
             <div className="row">
-
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Patient Name
+                  {t("patients.patientName")}
                   <span className="text-danger ms-1">
                     *
                   </span>
@@ -189,7 +172,7 @@ const EditPatient = () => {
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Phone
+                  {t("patients.phone")}
                 </label>
 
                 <input
@@ -204,7 +187,7 @@ const EditPatient = () => {
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  National ID
+                  {t("patients.nationalId")}
                 </label>
 
                 <input
@@ -219,7 +202,7 @@ const EditPatient = () => {
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Email
+                  {t("patients.email")}
                 </label>
 
                 <input
@@ -234,7 +217,7 @@ const EditPatient = () => {
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Date of Birth
+                  {t("patients.dateOfBirth")}
                 </label>
 
                 <input
@@ -249,7 +232,7 @@ const EditPatient = () => {
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Gender
+                  {t("patients.gender")}
                 </label>
 
                 <select
@@ -260,22 +243,22 @@ const EditPatient = () => {
                   disabled={submitting}
                 >
                   <option value="">
-                    Select gender
+                    {t("patients.selectGender")}
                   </option>
 
                   <option value="male">
-                    Male
+                    {t("patients.genders.male")}
                   </option>
 
                   <option value="female">
-                    Female
+                    {t("patients.genders.female")}
                   </option>
                 </select>
               </div>
 
               <div className="col-12 mb-3">
                 <label className="form-label">
-                  Address
+                  {t("patients.address")}
                 </label>
 
                 <textarea
@@ -296,19 +279,17 @@ const EditPatient = () => {
                 disabled={submitting}
               >
                 {submitting
-                  ? "Saving..."
-                  : "Update Patient"}
+                  ? t("patients.saving")
+                  : t("patients.updatePatient")}
               </button>
 
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() =>
-                  navigate("/patients")
-                }
+                onClick={() => navigate("/patients")}
                 disabled={submitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>

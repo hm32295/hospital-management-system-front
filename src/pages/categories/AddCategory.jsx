@@ -17,7 +17,7 @@ const AddCategory = () => {
 
   const formik = useFormik({
     initialValues: categoryInitialValues,
-    validationSchema: categorySchema,
+    validationSchema: categorySchema(t),
     onSubmit: async (values, { setSubmitting }) => {
       try {
         const categories = [values];

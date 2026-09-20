@@ -1,37 +1,31 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-
+import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import DetailsCard from "../../components/details/DetailsCard";
 import Header from "../../components/header/Header";
-
 import {
   getSingleStockTransaction,
 } from "../../services/stockTransactions.service";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const SingleStockTransaction = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [stockTransaction, setStockTransaction] =
     useState(null);
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchStockTransaction = async () => {
       try {
         setLoading(true);
-        setError("");
 
         const response =
           await getSingleStockTransaction(id);
-
-        console.log(
-          "Single Stock Transaction:",
-          response
-        );
 
         setStockTransaction(
           response.transaction ||
@@ -39,14 +33,11 @@ const SingleStockTransaction = () => {
             null
         );
       } catch (error) {
-        console.error(
-          "Failed to load stock transaction:",
-          error
-        );
-
-        setError(
-          error.response?.data?.message ||
-            "Failed to load Stock Transaction"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("stockTransactions.loadDetailsFailed")
+          )
         );
       } finally {
         setLoading(false);
@@ -61,8 +52,7 @@ const SingleStockTransaction = () => {
   const stockTransactionFields = [
     {
       key: "medicine",
-      label: "Medicine",
-
+      label: t("stockTransactions.medicine"),
       render: (medicine) => (
         <div>
           <div className="fw-semibold">
@@ -77,18 +67,16 @@ const SingleStockTransaction = () => {
 
           {medicine?.manufacturer && (
             <div className="text-muted small">
-              Manufacturer:{" "}
+              {t("stockTransactions.manufacturer")}:{" "}
               {medicine.manufacturer}
             </div>
           )}
         </div>
       ),
     },
-
     {
       key: "batch",
-      label: "Batch",
-
+      label: t("stockTransactions.batch"),
       render: (batch) => (
         <div>
           <div className="fw-semibold">
@@ -97,20 +85,22 @@ const SingleStockTransaction = () => {
 
           {batch?.expiryDate && (
             <div className="text-muted small">
-              Expiry:{" "}
+              {t("stockTransactions.expiry")}:{" "}
               {new Date(
                 batch.expiryDate
-              ).toLocaleDateString("en-GB")}
+              ).toLocaleDateString(
+                i18n.language === "ar"
+                  ? "ar-EG"
+                  : "en-GB"
+              )}
             </div>
           )}
         </div>
       ),
     },
-
     {
       key: "type",
-      label: "Transaction Type",
-
+      label: t("stockTransactions.transactionType"),
       render: (type) => (
         <span
           className={`badge ${
@@ -125,33 +115,25 @@ const SingleStockTransaction = () => {
         </span>
       ),
     },
-
     {
       key: "quantity",
-      label: "Quantity",
-
+      label: t("stockTransactions.quantity"),
       render: (quantity) => (
         <span className="fw-semibold">
           {quantity ?? 0}
         </span>
       ),
     },
-
     {
       key: "reason",
-      label: "Reason",
-
+      label: t("stockTransactions.reason"),
       render: (reason) => (
-        <span>
-          {reason || "-"}
-        </span>
+        <span>{reason || "-"}</span>
       ),
     },
-
     {
       key: "user",
-      label: "Created By",
-
+      label: t("stockTransactions.createdBy"),
       render: (user) => (
         <div>
           <div className="fw-semibold">
@@ -166,62 +148,35 @@ const SingleStockTransaction = () => {
         </div>
       ),
     },
-
     {
       key: "createdAt",
-      label: "Created At",
-
+      label: t("stockTransactions.createdAt"),
       render: (value) =>
         value
-          ? new Date(
-              value
-            ).toLocaleString("en-GB")
+          ? new Date(value).toLocaleString(
+              i18n.language === "ar"
+                ? "ar-EG"
+                : "en-GB"
+            )
           : "-",
     },
   ];
 
-  if (error) {
-    return (
-      <div className="container-fluid">
-        <Header
-          title="Stock Transaction"
-          description="Stock transaction details"
-          buttonContent="Back to Stock Transactions"
-          buttonLink="/stock-transaction"
-        />
-
-        <div className="alert alert-danger">
-          {error}
-        </div>
-
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() =>
-            navigate("/stock-transactions")
-          }
-        >
-          Back to Stock Transactions
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="container-fluid">
       <Header
-        title="Stock Transaction Details"
-        description="View stock movement details"
-        buttonContent="Back to Stock Transactions"
+        title={t("stockTransactions.details")}
+        description={t("stockTransactions.detailsDescription")}
+        buttonContent={t("stockTransactions.backToTransactions")}
         buttonLink="/stock-transaction"
       />
 
       <DetailsCard
-        title="Stock Transaction Information"
+        title={t("stockTransactions.information")}
         data={stockTransaction}
         fields={stockTransactionFields}
         loading={loading}
-        emptyMessage="Stock Transaction not found"
+        emptyMessage={t("stockTransactions.notFound")}
       />
     </div>
   );

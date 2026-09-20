@@ -1,18 +1,17 @@
 
 import { useState } from "react";
-import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import {
-  createPatient,
-} from "../../services/patients.service";
+import { createPatient } from "../../services/patients.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const AddPatient = () => {
-  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [submitting, setSubmitting] =
-    useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,12 +36,7 @@ const AddPatient = () => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      enqueueSnackbar(
-        "Patient name is required",
-        {
-          variant: "error",
-        }
-      );
+      showError(t("patients.nameRequired"));
       return;
     }
 
@@ -53,42 +47,33 @@ const AddPatient = () => {
         name: formData.name.trim(),
         phone: formData.phone.trim() || null,
         email: formData.email.trim() || null,
-        nationalId:
-          formData.nationalId.trim() || null,
-        dateOfBirth:
-          formData.dateOfBirth || null,
+        nationalId: formData.nationalId.trim() || null,
+        dateOfBirth: formData.dateOfBirth || null,
         gender: formData.gender || null,
-        address:
-          formData.address.trim() || null,
+        address: formData.address.trim() || null,
       };
 
-      const response = await createPatient(
-        patientData
-      );
+      const response = await createPatient(patientData);
 
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Failed to create patient"
+            t("patients.createFailed")
         );
       }
 
-      enqueueSnackbar(
-        "Patient created successfully",
-        {
-          variant: "success",
-        }
+      showSuccess(
+        response.message ||
+          t("patients.createdSuccess")
       );
 
       navigate("/patients");
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to create patient",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("patients.createFailed")
+        )
       );
     } finally {
       setSubmitting(false);
@@ -99,11 +84,11 @@ const AddPatient = () => {
     <div className="container-fluid py-4">
       <div className="mb-4">
         <h3 className="mb-1">
-          Add Patient
+          {t("patients.addPatient")}
         </h3>
 
         <p className="text-muted mb-0">
-          Create a new patient
+          {t("patients.addPatientDescription")}
         </p>
       </div>
 
@@ -111,10 +96,9 @@ const AddPatient = () => {
         <div className="card-body p-4">
           <form onSubmit={handleSubmit}>
             <div className="row">
-
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Patient Name
+                  {t("patients.patientName")}
                   <span className="text-danger ms-1">
                     *
                   </span>
@@ -126,14 +110,16 @@ const AddPatient = () => {
                   className="form-control"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Ahmed Mohamed"
+                  placeholder={t(
+                    "patients.patientNamePlaceholder"
+                  )}
                   disabled={submitting}
                 />
               </div>
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Phone
+                  {t("patients.phone")}
                 </label>
 
                 <input
@@ -142,14 +128,16 @@ const AddPatient = () => {
                   className="form-control"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="01xxxxxxxxx"
+                  placeholder={t(
+                    "patients.phonePlaceholder"
+                  )}
                   disabled={submitting}
                 />
               </div>
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  National ID
+                  {t("patients.nationalId")}
                 </label>
 
                 <input
@@ -158,14 +146,16 @@ const AddPatient = () => {
                   className="form-control"
                   value={formData.nationalId}
                   onChange={handleChange}
-                  placeholder="National ID"
+                  placeholder={t(
+                    "patients.nationalIdPlaceholder"
+                  )}
                   disabled={submitting}
                 />
               </div>
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Email
+                  {t("patients.email")}
                 </label>
 
                 <input
@@ -174,14 +164,16 @@ const AddPatient = () => {
                   className="form-control"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="patient@example.com"
+                  placeholder={t(
+                    "patients.emailPlaceholder"
+                  )}
                   disabled={submitting}
                 />
               </div>
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Date of Birth
+                  {t("patients.dateOfBirth")}
                 </label>
 
                 <input
@@ -196,7 +188,7 @@ const AddPatient = () => {
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Gender
+                  {t("patients.gender")}
                 </label>
 
                 <select
@@ -207,22 +199,22 @@ const AddPatient = () => {
                   disabled={submitting}
                 >
                   <option value="">
-                    Select gender
+                    {t("patients.selectGender")}
                   </option>
 
                   <option value="male">
-                    Male
+                    {t("patients.genders.male")}
                   </option>
 
                   <option value="female">
-                    Female
+                    {t("patients.genders.female")}
                   </option>
                 </select>
               </div>
 
               <div className="col-12 mb-3">
                 <label className="form-label">
-                  Address
+                  {t("patients.address")}
                 </label>
 
                 <textarea
@@ -231,7 +223,9 @@ const AddPatient = () => {
                   rows="3"
                   value={formData.address}
                   onChange={handleChange}
-                  placeholder="Patient address"
+                  placeholder={t(
+                    "patients.addressPlaceholder"
+                  )}
                   disabled={submitting}
                 />
               </div>
@@ -244,19 +238,17 @@ const AddPatient = () => {
                 disabled={submitting}
               >
                 {submitting
-                  ? "Saving..."
-                  : "Create Patient"}
+                  ? t("patients.saving")
+                  : t("patients.createPatient")}
               </button>
 
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() =>
-                  navigate("/patients")
-                }
+                onClick={() => navigate("/patients")}
                 disabled={submitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>

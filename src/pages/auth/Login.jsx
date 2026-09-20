@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useFormik } from "formik";
 import { useTranslation } from "react-i18next";
 import FormInput from "../../components/form/FormInput";
-import { loginSchema } from "../../schemas/auth/login.schema";
 import { loginInitialValues } from "../../initialValues/auth/login.initial";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +11,7 @@ import {
   showSuccess,
 } from "../../services/toast.service";
 import { getApiErrorMessage } from "../../services/apiError";
+import { loginValidation } from "../../validations/auth.validation";
 
 const Login = () => {
   const { login } = useAuth();
@@ -19,10 +19,7 @@ const Login = () => {
   const { t } = useTranslation();
   const [serverError, setServerError] = useState("");
 
-  const onSubmit = async (
-    values,
-    { setSubmitting }
-  ) => {
+  const onSubmit = async ( values,{ setSubmitting } ) => {
     try {
       setServerError("");
       const response = await login(values);
@@ -48,7 +45,7 @@ const Login = () => {
 
   const formik = useFormik({
     initialValues: loginInitialValues,
-    validationSchema: loginSchema,
+    validationSchema: loginValidation(t),
     onSubmit,
   });
 

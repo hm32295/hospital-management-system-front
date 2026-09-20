@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+
 import {
   cancelOperation,
   getOperations,
@@ -8,7 +9,9 @@ import {
 import { getPatients } from "../../services/patients.service";
 import { getDoctors } from "../../services/doctor.service";
 import { getSpecialties } from "../../services/specialty.service";
+
 import AdminDataPage from "../../components/table/AdminDataPage";
+
 import { showError, showSuccess } from "../../services/toast.service";
 import { getApiErrorMessage } from "../../services/apiError";
 
@@ -66,8 +69,6 @@ const OperationsPage = () => {
         }
       );
     } catch (error) {
-      console.error("GET OPERATIONS ERROR:", error);
-
       showError(
         getApiErrorMessage(
           error,
@@ -119,8 +120,6 @@ const OperationsPage = () => {
         }))
       );
     } catch (error) {
-      console.error("SEARCH PATIENTS ERROR:", error);
-
       showError(
         getApiErrorMessage(
           error,
@@ -152,8 +151,6 @@ const OperationsPage = () => {
         }))
       );
     } catch (error) {
-      console.error("SEARCH DOCTORS ERROR:", error);
-
       showError(
         getApiErrorMessage(
           error,
@@ -184,8 +181,6 @@ const OperationsPage = () => {
         }))
       );
     } catch (error) {
-      console.error("SEARCH SPECIALTIES ERROR:", error);
-
       showError(
         getApiErrorMessage(
           error,
@@ -241,7 +236,9 @@ const OperationsPage = () => {
     if (!date) return "-";
 
     return new Date(date).toLocaleDateString(
-      i18n.language === "ar" ? "ar-EG" : "en-GB"
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-GB"
     );
   };
 
@@ -309,8 +306,7 @@ const OperationsPage = () => {
           className={`badge ${
             operation.paymentStatus === "paid"
               ? "bg-success"
-              : operation.paymentStatus ===
-                "partial"
+              : operation.paymentStatus === "partial"
               ? "bg-warning text-dark"
               : "bg-secondary"
           }`}
@@ -329,8 +325,7 @@ const OperationsPage = () => {
           className={`badge ${
             operation.status === "completed"
               ? "bg-success"
-              : operation.status ===
-                "cancelled"
+              : operation.status === "cancelled"
               ? "bg-danger"
               : "bg-warning text-dark"
           }`}
