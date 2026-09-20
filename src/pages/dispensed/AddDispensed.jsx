@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFormik } from "formik";
+import { useTranslation } from "react-i18next";
 import { CheckCircle2 } from "lucide-react";
 
 import Header from "../../components/header/Header";
@@ -13,10 +14,13 @@ import {
   createDispensing,
   getAvailableSalesForDispensing,
 } from "../../services/dispensed.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const AddDispensed = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t, i18n } = useTranslation();
 
   const saleId = searchParams.get("sale");
 
@@ -24,6 +28,9 @@ const AddDispensed = () => {
   const [salesLoading, setSalesLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const [selectedSale, setSelectedSale] = useState(null);
+
+  const locale =
+    i18n.language === "ar" ? "ar-EG" : "en-GB";
 
   const formik = useFormik({
     initialValues: {
@@ -36,12 +43,12 @@ const AddDispensed = () => {
         setServerError("");
 
         if (!selectedSale) {
-          setServerError("Please select a sale");
+          showError(t("dispensing.selectSale"));
           return;
         }
 
         if (!values.reason.trim()) {
-          setServerError("Dispensing reason is required");
+          showError(t("dispensing.reasonRequired"));
           return;
         }
 
@@ -50,15 +57,18 @@ const AddDispensed = () => {
           reason: values.reason.trim(),
         });
 
-        console.log("Dispensing created:", response);
+        showSuccess(
+          response?.message ||
+            t("dispensing.createSuccess")
+        );
 
         navigate("/dispenses");
       } catch (error) {
-        console.error("Create dispensing error:", error);
-
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to create dispensing"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("dispensing.failedToCreate")
+          )
         );
       } finally {
         setSubmitting(false);
@@ -77,15 +87,13 @@ const AddDispensed = () => {
 
         setSales(response?.sales || []);
       } catch (error) {
-        console.error(
-          "Failed to load sales:",
-          error
+        const message = getApiErrorMessage(
+          error,
+          t("dispensing.failedToLoadSales")
         );
 
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to load sales"
-        );
+        setServerError(message);
+        showError(message);
       } finally {
         setSalesLoading(false);
       }
@@ -104,25 +112,30 @@ const AddDispensed = () => {
     );
 
     if (!sale) {
-      setServerError(
-        "This sale is not available for dispensing"
+      const message = t(
+        "dispensing.saleNotAvailable"
       );
+
+      setServerError(message);
+      showError(message);
       return;
     }
 
     setSelectedSale(sale);
 
-    formik.setFieldValue(
-      "sale",
-      sale._id
-    );
+    formik.setFieldValue("sale", sale._id);
   }, [saleId, sales]);
 
   const salesOptions = sales.map((sale) => ({
     value: sale._id,
-    label: `Sale #${sale._id.slice(-6)} - ${
-      sale.patient?.name || "No Patient"
-    } - ${Number(sale.totalAmount).toFixed(2)} EGP`,
+    label: `${t("dispensing.sale")} #${sale._id.slice(
+      -6
+    )} - ${
+      sale.patient?.name ||
+      t("dispensing.noPatient")
+    } - ${Number(sale.totalAmount).toFixed(2)} ${t(
+      "common.egp"
+    )}`,
   }));
 
   const handleSaleChange = (selectedSaleId) => {
@@ -141,7 +154,7 @@ const AddDispensed = () => {
   const medicineColumns = [
     {
       key: "medicine",
-      label: "Medicine",
+      label: t("dispensing.medicine"),
       render: (item) => (
         <div className="fw-semibold">
           {item.medicine?.name || "-"}
@@ -154,28 +167,25 @@ const AddDispensed = () => {
         </div>
       ),
     },
-
     {
       key: "batch",
-      label: "Batch",
+      label: t("dispensing.batch"),
       render: (item) =>
         item.batch?.batchNumber || "-",
     },
-
     {
       key: "expiryDate",
-      label: "Expiry",
+      label: t("dispensing.expiry"),
       render: (item) =>
         item.batch?.expiryDate
           ? new Date(
               item.batch.expiryDate
-            ).toLocaleDateString("en-GB")
+            ).toLocaleDateString(locale)
           : "-",
     },
-
     {
       key: "quantity",
-      label: "Quantity",
+      label: t("dispensing.quantity"),
       render: (item) => (
         <span className="badge text-bg-primary">
           {item.quantity}
@@ -187,8 +197,8 @@ const AddDispensed = () => {
   return (
     <div>
       <Header
-        title="Add Dispensing"
-        description="Dispense medicines from a completed sale"
+        title={t("dispensing.addTitle")}
+        description={t("dispensing.addDescription")}
       />
 
       {serverError && (
@@ -205,11 +215,11 @@ const AddDispensed = () => {
                 <FormSearchSelect
                   formik={formik}
                   name="sale"
-                  label="Sale"
+                  label={t("dispensing.sale")}
                   placeholder={
                     salesLoading
-                      ? "Loading paid sales..."
-                      : "Search completed sale..."
+                      ? t("dispensing.loadingPaidSales")
+                      : t("dispensing.searchCompletedSale")
                   }
                   options={salesOptions}
                   disabled={
@@ -228,11 +238,15 @@ const AddDispensed = () => {
 
                       <div>
                         <strong>
-                          Sale is fully paid
+                          {t(
+                            "dispensing.saleFullyPaid"
+                          )}
                         </strong>
 
                         <div className="small">
-                          This sale is ready for dispensing.
+                          {t(
+                            "dispensing.saleReadyForDispensing"
+                          )}
                         </div>
                       </div>
                     </div>
@@ -242,17 +256,17 @@ const AddDispensed = () => {
                     <div className="card border h-100">
                       <div className="card-body">
                         <h6 className="mb-3">
-                          Patient
+                          {t("dispensing.patient")}
                         </h6>
 
                         <div className="fw-semibold">
                           {selectedSale.patient?.name ||
-                            "No patient"}
+                            t("dispensing.noPatient")}
                         </div>
 
                         <div className="text-muted small">
                           {selectedSale.patient?.phone ||
-                            "No phone"}
+                            t("dispensing.noPhone")}
                         </div>
                       </div>
                     </div>
@@ -262,35 +276,41 @@ const AddDispensed = () => {
                     <div className="card border h-100">
                       <div className="card-body">
                         <h6 className="mb-3">
-                          Sale Summary
+                          {t("dispensing.saleSummary")}
                         </h6>
 
                         <div className="d-flex justify-content-between">
-                          <span>Total</span>
+                          <span>
+                            {t("dispensing.total")}
+                          </span>
 
                           <strong>
                             {Number(
                               selectedSale.totalAmount
                             ).toFixed(2)}{" "}
-                            EGP
+                            {t("common.egp")}
                           </strong>
                         </div>
 
                         <div className="d-flex justify-content-between mt-2">
-                          <span>Paid</span>
+                          <span>
+                            {t("dispensing.paid")}
+                          </span>
 
                           <strong className="text-success">
                             {Number(
                               selectedSale.paidAmount
                             ).toFixed(2)}{" "}
-                            EGP
+                            {t("common.egp")}
                           </strong>
                         </div>
 
                         {selectedSale.prescription && (
                           <div className="d-flex justify-content-between mt-2">
                             <span>
-                              Prescription
+                              {t(
+                                "dispensing.prescription"
+                              )}
                             </span>
 
                             <span className="badge text-bg-info">
@@ -308,14 +328,20 @@ const AddDispensed = () => {
 
                   <div className="col-12">
                     <AdminDataPage
-                      title="Medicines"
-                      subtitle="Medicines included in this sale"
+                      title={t(
+                        "dispensing.medicines"
+                      )}
+                      subtitle={t(
+                        "dispensing.medicinesInSale"
+                      )}
                       loading={false}
                       data={
                         selectedSale.items || []
                       }
                       columns={medicineColumns}
-                      emptyMessage="No medicines found"
+                      emptyMessage={t(
+                        "dispensing.noMedicines"
+                      )}
                     />
                   </div>
                 </>
@@ -325,9 +351,11 @@ const AddDispensed = () => {
                 <FormInput
                   formik={formik}
                   name="reason"
-                  label="Dispensing Reason"
+                  label={t("dispensing.dispensingReason")}
                   type="text"
-                  placeholder="Enter dispensing reason"
+                  placeholder={t(
+                    "dispensing.reasonPlaceholder"
+                  )}
                   required
                 />
               </div>
@@ -342,7 +370,7 @@ const AddDispensed = () => {
                 }
                 disabled={formik.isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
@@ -355,8 +383,10 @@ const AddDispensed = () => {
                 }
               >
                 {formik.isSubmitting
-                  ? "Dispensing..."
-                  : "Confirm Dispensing"}
+                  ? t("dispensing.dispensing")
+                  : t(
+                      "dispensing.confirmDispensing"
+                    )}
               </button>
             </div>
           </form>

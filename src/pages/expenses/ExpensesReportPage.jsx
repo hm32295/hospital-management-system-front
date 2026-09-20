@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   Wallet,
@@ -6,11 +7,24 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+
 import AdminDataPage from "../../components/table/AdminDataPage";
-import { getCashTransactions, getCashTransactionSummary } from "../../services/cashTransactions.service";
+
+import {
+  getCashTransactions,
+  getCashTransactionSummary,
+} from "../../services/cashTransactions.service";
+
+import {
+  showError,
+} from "../../services/toast.service";
+
+import { getApiErrorMessage } from "../../services/apiError";
 
 const ExpensesReportPage = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -45,31 +59,41 @@ const ExpensesReportPage = () => {
       };
 
       if (currentFilters.fromDate) {
-        params.fromDate = currentFilters.fromDate;
+        params.fromDate =
+          currentFilters.fromDate;
       }
 
       if (currentFilters.toDate) {
-        params.toDate = currentFilters.toDate;
+        params.toDate =
+          currentFilters.toDate;
       }
 
       if (currentFilters.source) {
-        params.source = currentFilters.source;
+        params.source =
+          currentFilters.source;
       }
 
-        const response = await getCashTransactions(params); 
-        console.log(response);
-        
-      setExpenses(response.transactions|| []);
+      const response =
+        await getCashTransactions(params);
+
+      setExpenses(
+        response.transactions || []
+      );
 
       setPagination((prev) => ({
         ...prev,
-        page: response.pagination?.page || page,
-        total: response.pagination?.total || 0,
+        page:
+          response.pagination?.page ||
+          page,
+        total:
+          response.pagination?.total || 0,
       }));
     } catch (error) {
-      console.error(
-        "Failed to load expenses:",
-        error
+      showError(
+        getApiErrorMessage(
+          error,
+          t("expensesReport.failedLoadExpenses")
+        )
       );
 
       setExpenses([]);
@@ -89,24 +113,34 @@ const ExpensesReportPage = () => {
       };
 
       if (currentFilters.fromDate) {
-        params.fromDate = currentFilters.fromDate;
+        params.fromDate =
+          currentFilters.fromDate;
       }
 
       if (currentFilters.toDate) {
-        params.toDate = currentFilters.toDate;
+        params.toDate =
+          currentFilters.toDate;
       }
 
       if (currentFilters.source) {
-        params.source = currentFilters.source;
+        params.source =
+          currentFilters.source;
       }
 
-      const response = await getCashTransactionSummary(params);
+      const response =
+        await getCashTransactionSummary(
+          params
+        );
 
       setSummary(response.data || null);
     } catch (error) {
-      console.error(
-        "Failed to load expenses summary:",
-        error
+      showError(
+        getApiErrorMessage(
+          error,
+          t(
+            "expensesReport.failedLoadSummary"
+          )
+        )
       );
 
       setSummary(null);
@@ -142,33 +176,52 @@ const ExpensesReportPage = () => {
   };
 
   const formatMoney = (value) => {
-    return `${Number(value || 0).toLocaleString(
-      "en-EG"
-    )} EGP`;
+    return `${Number(
+      value || 0
+    ).toLocaleString(
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-EG"
+    )} ${t("common.egp")}`;
   };
 
   const formatDate = (date) => {
     if (!date) return "-";
 
-    return new Date(date).toLocaleString("en-EG", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
+    return new Date(
+      date
+    ).toLocaleString(
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-EG",
+      {
+        dateStyle: "short",
+        timeStyle: "short",
+      }
+    );
   };
 
   const getSourceLabel = (source) => {
     switch (source) {
       case "expense":
-        return "General Expense";
+        return t(
+          "expensesReport.sources.expense"
+        );
 
       case "doctor_settlement":
-        return "Doctor Settlement";
+        return t(
+          "expensesReport.sources.doctorSettlement"
+        );
 
       case "refund":
-        return "Refund";
+        return t(
+          "expensesReport.sources.refund"
+        );
 
       case "other":
-        return "Other";
+        return t(
+          "expensesReport.sources.other"
+        );
 
       default:
         return source || "-";
@@ -178,14 +231,14 @@ const ExpensesReportPage = () => {
   const columns = [
     {
       key: "createdAt",
-      label: "Date",
+      label: t("expensesReport.date"),
       render: (item) =>
         formatDate(item.createdAt),
     },
 
     {
       key: "source",
-      label: "Type",
+      label: t("expensesReport.type"),
       render: (item) => (
         <span className="badge bg-danger">
           {getSourceLabel(item.source)}
@@ -195,21 +248,21 @@ const ExpensesReportPage = () => {
 
     {
       key: "patient",
-      label: "Patient",
+      label: t("expensesReport.patient"),
       render: (item) =>
         item.patient?.name || "-",
     },
 
     {
       key: "doctor",
-      label: "Doctor",
+      label: t("expensesReport.doctor"),
       render: (item) =>
         item.doctor?.name || "-",
     },
 
     {
       key: "operation",
-      label: "Operation",
+      label: t("expensesReport.operation"),
       render: (item) => {
         if (!item.operation) {
           return "-";
@@ -217,16 +270,16 @@ const ExpensesReportPage = () => {
 
         return (
           item.operation.operationName ||
-          `Operation #${item.operation._id?.slice(
-            -6
-          )}`
+          t("expensesReport.operationNumber", {
+            id: item.operation._id?.slice(-6),
+          })
         );
       },
     },
 
     {
       key: "amount",
-      label: "Amount",
+      label: t("expensesReport.amount"),
       render: (item) => (
         <strong>
           {formatMoney(item.amount)}
@@ -236,14 +289,14 @@ const ExpensesReportPage = () => {
 
     {
       key: "createdBy",
-      label: "Paid By",
+      label: t("expensesReport.paidBy"),
       render: (item) =>
         item.createdBy?.name || "-",
     },
 
     {
       key: "notes",
-      label: "Notes",
+      label: t("expensesReport.notes"),
       render: (item) =>
         item.notes || "-",
     },
@@ -252,52 +305,67 @@ const ExpensesReportPage = () => {
   const filterConfig = [
     {
       name: "fromDate",
-      label: "From Date",
+      label: t("expensesReport.fromDate"),
       type: "date",
       value: filters.fromDate,
     },
 
     {
       name: "toDate",
-      label: "To Date",
+      label: t("expensesReport.toDate"),
       type: "date",
       value: filters.toDate,
     },
 
     {
       name: "source",
-      label: "Expense Type",
+      label: t(
+        "expensesReport.expenseType"
+      ),
       type: "select",
       value: filters.source,
       options: [
         {
           value: "",
-          label: "All Expenses",
+          label: t(
+            "expensesReport.allExpenses"
+          ),
         },
         {
           value: "expense",
-          label: "General Expense",
+          label: t(
+            "expensesReport.sources.expense"
+          ),
         },
         {
           value: "doctor_settlement",
-          label: "Doctor Settlement",
+          label: t(
+            "expensesReport.sources.doctorSettlement"
+          ),
         },
         {
           value: "refund",
-          label: "Refund",
+          label: t(
+            "expensesReport.sources.refund"
+          ),
         },
         {
           value: "other",
-          label: "Other",
+          label: t(
+            "expensesReport.sources.other"
+          ),
         },
       ],
     },
   ];
 
-  const summaryCards = summary? [
+  const summaryCards = summary
+    ? [
         {
           key: "total",
-          label: "Total Expenses",
+          label: t(
+            "expensesReport.totalExpenses"
+          ),
           value: formatMoney(
             summary.totalExpense
           ),
@@ -306,7 +374,9 @@ const ExpensesReportPage = () => {
 
         {
           key: "doctor",
-          label: "Doctor Settlements",
+          label: t(
+            "expensesReport.doctorSettlements"
+          ),
           value: formatMoney(
             summary.expenseSources
               ?.doctorSettlements
@@ -316,7 +386,9 @@ const ExpensesReportPage = () => {
 
         {
           key: "general",
-          label: "General Expenses",
+          label: t(
+            "expensesReport.generalExpenses"
+          ),
           value: formatMoney(
             summary.expenseSources?.expenses
           ),
@@ -325,7 +397,9 @@ const ExpensesReportPage = () => {
 
         {
           key: "refunds",
-          label: "Refunds",
+          label: t(
+            "expensesReport.refunds"
+          ),
           value: formatMoney(
             summary.expenseSources?.refunds
           ),
@@ -336,11 +410,15 @@ const ExpensesReportPage = () => {
 
   return (
     <AdminDataPage
-      title="Expenses"
-      subtitle="View all hospital expenses"
+      title={t("expensesReport.title")}
+      subtitle={t(
+        "expensesReport.subtitle"
+      )}
       type=""
       addLink={null}
-      loading={loading || summaryLoading}
+      loading={
+        loading || summaryLoading
+      }
       data={expenses}
       columns={columns}
       filters={filterConfig}
@@ -354,14 +432,18 @@ const ExpensesReportPage = () => {
       actions={[
         {
           type: "show",
-          label: "View Details",
+          label: t(
+            "expensesReport.viewDetails"
+          ),
           onClick: (item) =>
             navigate(
               `/cash-transactions/${item._id}`
             ),
         },
       ]}
-      emptyMessage="No expenses found"
+      emptyMessage={t(
+        "expensesReport.noExpensesFound"
+      )}
     />
   );
 };

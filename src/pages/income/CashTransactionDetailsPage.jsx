@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -12,15 +13,20 @@ import {
   Banknote,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import DetailsCard from "../../components/details/DetailsCard";
 import {
   getCashTransaction,
 } from "../../services/cashTransactions.service";
 
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
+
 const CashTransactionDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t, i18n } = useTranslation();
 
   const [transaction, setTransaction] =
     useState(null);
@@ -35,14 +41,20 @@ const CashTransactionDetailsPage = () => {
     try {
       setLoading(true);
 
-      const response =await getCashTransaction(id);
-        console.log(response);
-        
-      setTransaction(response.transaction || null);
+      const response =
+        await getCashTransaction(id);
+
+      setTransaction(
+        response.transaction || null
+      );
     } catch (error) {
-      console.error(
-        "Failed to load cash transaction:",
-        error
+      showError(
+        getApiErrorMessage(
+          error,
+          t(
+            "cashTransactionDetails.failedLoad"
+          )
+        )
       );
 
       setTransaction(null);
@@ -52,42 +64,67 @@ const CashTransactionDetailsPage = () => {
   };
 
   const formatMoney = (value) => {
-    return `${Number(value || 0).toLocaleString(
-      "en-EG"
-    )} EGP`;
+    return `${Number(
+      value || 0
+    ).toLocaleString(
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-EG"
+    )} ${t("common.egp")}`;
   };
 
   const formatDate = (date) => {
     if (!date) return "-";
 
-    return new Date(date).toLocaleString("en-EG", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+    return new Date(
+      date
+    ).toLocaleString(
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-EG",
+      {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }
+    );
   };
 
   const getSourceLabel = (source) => {
     switch (source) {
       case "visit_payment":
-        return "Visit Payment";
+        return t(
+          "cashTransactionDetails.sources.visitPayment"
+        );
 
       case "operation_payment":
-        return "Operation Payment";
+        return t(
+          "cashTransactionDetails.sources.operationPayment"
+        );
 
       case "sale_payment":
-        return "Sale Payment";
+        return t(
+          "cashTransactionDetails.sources.salePayment"
+        );
 
       case "expense":
-        return "General Expense";
+        return t(
+          "cashTransactionDetails.sources.expense"
+        );
 
       case "doctor_settlement":
-        return "Doctor Settlement";
+        return t(
+          "cashTransactionDetails.sources.doctorSettlement"
+        );
 
       case "refund":
-        return "Refund";
+        return t(
+          "cashTransactionDetails.sources.refund"
+        );
 
       case "other":
-        return "Other";
+        return t(
+          "cashTransactionDetails.sources.other"
+        );
 
       default:
         return source || "-";
@@ -125,24 +162,39 @@ const CashTransactionDetailsPage = () => {
     }
 
     if (transaction.visit) {
-      return `Visit #${transaction.visit._id?.slice(
-        -6
-      )}`;
+      return t(
+        "cashTransactionDetails.visitReference",
+        {
+          id: transaction.visit._id?.slice(
+            -6
+          ),
+        }
+      );
     }
 
     if (transaction.operation) {
       return (
         transaction.operation.operationName ||
-        `Operation #${transaction.operation._id?.slice(
-          -6
-        )}`
+        t(
+          "cashTransactionDetails.operationReference",
+          {
+            id: transaction.operation._id?.slice(
+              -6
+            ),
+          }
+        )
       );
     }
 
     if (transaction.sale) {
-      return `Sale #${transaction.sale._id?.slice(
-        -6
-      )}`;
+      return t(
+        "cashTransactionDetails.saleReference",
+        {
+          id: transaction.sale._id?.slice(
+            -6
+          ),
+        }
+      );
     }
 
     return "-";
@@ -154,15 +206,21 @@ const CashTransactionDetailsPage = () => {
     }
 
     if (transaction.visit) {
-      return "Visit";
+      return t(
+        "cashTransactionDetails.referenceTypes.visit"
+      );
     }
 
     if (transaction.operation) {
-      return "Operation";
+      return t(
+        "cashTransactionDetails.referenceTypes.operation"
+      );
     }
 
     if (transaction.sale) {
-      return "Sale";
+      return t(
+        "cashTransactionDetails.referenceTypes.sale"
+      );
     }
 
     return "-";
@@ -176,9 +234,12 @@ const CashTransactionDetailsPage = () => {
     return (
       <div className="admin-data-page">
         <div className="d-flex justify-content-center py-5">
-          <div className="spinner-border text-primary">
+          <div
+            className="spinner-border text-primary"
+            role="status"
+          >
             <span className="visually-hidden">
-              Loading...
+              {t("common.loading")}
             </span>
           </div>
         </div>
@@ -192,11 +253,15 @@ const CashTransactionDetailsPage = () => {
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h2 className="mb-1">
-              Transaction Details
+              {t(
+                "cashTransactionDetails.title"
+              )}
             </h2>
 
             <p className="text-muted mb-0">
-              Cash transaction not found
+              {t(
+                "cashTransactionDetails.notFound"
+              )}
             </p>
           </div>
 
@@ -206,12 +271,14 @@ const CashTransactionDetailsPage = () => {
             onClick={handleBack}
           >
             <ArrowLeft size={18} />
-            Back
+            {t("common.back")}
           </button>
         </div>
 
         <div className="alert alert-warning">
-          Cash transaction not found.
+          {t(
+            "cashTransactionDetails.notFound"
+          )}
         </div>
       </div>
     );
@@ -222,7 +289,9 @@ const CashTransactionDetailsPage = () => {
 
   const transactionFields = [
     {
-      label: "Transaction Type",
+      label: t(
+        "cashTransactionDetails.transactionType"
+      ),
       value: (
         <span
           className={`badge ${
@@ -231,17 +300,23 @@ const CashTransactionDetailsPage = () => {
               : "bg-danger"
           }`}
         >
-          {isIncome ? "Income" : "Expense"}
+          {isIncome
+            ? t(
+                "cashTransactionDetails.income"
+              )
+            : t(
+                "cashTransactionDetails.expense"
+              )}
         </span>
       ),
     },
-
     {
-      label: "Source",
+      label: t(
+        "cashTransactionDetails.source"
+      ),
       value: (
         <div className="d-flex align-items-center gap-2">
           {getSourceIcon(transaction.source)}
-
           <span>
             {getSourceLabel(
               transaction.source
@@ -250,9 +325,10 @@ const CashTransactionDetailsPage = () => {
         </div>
       ),
     },
-
     {
-      label: "Amount",
+      label: t(
+        "cashTransactionDetails.amount"
+      ),
       value: (
         <strong
           className={
@@ -265,26 +341,26 @@ const CashTransactionDetailsPage = () => {
         </strong>
       ),
     },
-
     {
-      label: "Date",
+      label: t("cashTransactionDetails.date"),
       value: formatDate(
         transaction.createdAt
       ),
     },
-
     {
-      label: "Reference Type",
+      label: t(
+        "cashTransactionDetails.referenceType"
+      ),
       value: getReferenceType(),
     },
-
     {
-      label: "Reference",
+      label: t(
+        "cashTransactionDetails.reference"
+      ),
       value: getReference(),
     },
-
     {
-      label: "Notes",
+      label: t("cashTransactionDetails.notes"),
       value: transaction.notes || "-",
     },
   ];
@@ -292,26 +368,31 @@ const CashTransactionDetailsPage = () => {
   const patientFields = transaction.patient
     ? [
         {
-          label: "Patient Name",
+          label: t(
+            "cashTransactionDetails.patientName"
+          ),
           value:
             transaction.patient.name || "-",
         },
-
         {
-          label: "Phone",
+          label: t(
+            "cashTransactionDetails.phone"
+          ),
           value:
             transaction.patient.phone || "-",
         },
-
         {
-          label: "National ID",
+          label: t(
+            "cashTransactionDetails.nationalId"
+          ),
           value:
             transaction.patient.nationalId ||
             "-",
         },
-
         {
-          label: "Gender",
+          label: t(
+            "cashTransactionDetails.gender"
+          ),
           value:
             transaction.patient.gender || "-",
         },
@@ -321,13 +402,16 @@ const CashTransactionDetailsPage = () => {
   const doctorFields = transaction.doctor
     ? [
         {
-          label: "Doctor Name",
+          label: t(
+            "cashTransactionDetails.doctorName"
+          ),
           value:
             transaction.doctor.name || "-",
         },
-
         {
-          label: "Email",
+          label: t(
+            "cashTransactionDetails.email"
+          ),
           value:
             transaction.doctor.email || "-",
         },
@@ -337,53 +421,61 @@ const CashTransactionDetailsPage = () => {
   const operationFields = transaction.operation
     ? [
         {
-          label: "Operation",
+          label: t(
+            "cashTransactionDetails.operation"
+          ),
           value:
             transaction.operation
               .operationName || "-",
         },
-
         {
-          label: "Operation Date",
+          label: t(
+            "cashTransactionDetails.operationDate"
+          ),
           value: formatDate(
             transaction.operation
               .operationDate
           ),
         },
-
         {
-          label: "Total Amount",
+          label: t(
+            "cashTransactionDetails.totalAmount"
+          ),
           value: formatMoney(
             transaction.operation
               .totalAmount
           ),
         },
-
         {
-          label: "Doctor Fee",
+          label: t(
+            "cashTransactionDetails.doctorFee"
+          ),
           value: formatMoney(
             transaction.operation
               .doctorFeeAmount
           ),
         },
-
         {
-          label: "Hospital Amount",
+          label: t(
+            "cashTransactionDetails.hospitalAmount"
+          ),
           value: formatMoney(
             transaction.operation
               .hospitalAmount
           ),
         },
-
         {
-          label: "Payment Status",
+          label: t(
+            "cashTransactionDetails.paymentStatus"
+          ),
           value:
             transaction.operation
               .paymentStatus || "-",
         },
-
         {
-          label: "Operation Status",
+          label: t(
+            "cashTransactionDetails.operationStatus"
+          ),
           value:
             transaction.operation.status ||
             "-",
@@ -394,35 +486,41 @@ const CashTransactionDetailsPage = () => {
   const visitFields = transaction.visit
     ? [
         {
-          label: "Visit Type",
+          label: t(
+            "cashTransactionDetails.visitType"
+          ),
           value:
             transaction.visit.visitType ||
             "-",
         },
-
         {
-          label: "Consultation Fee",
+          label: t(
+            "cashTransactionDetails.consultationFee"
+          ),
           value: formatMoney(
             transaction.visit
               .consultationFee
           ),
         },
-
         {
-          label: "Payment Status",
+          label: t(
+            "cashTransactionDetails.paymentStatus"
+          ),
           value:
             transaction.visit
               .paymentStatus || "-",
         },
-
         {
-          label: "Visit Status",
+          label: t(
+            "cashTransactionDetails.visitStatus"
+          ),
           value:
             transaction.visit.status || "-",
         },
-
         {
-          label: "Visit Date",
+          label: t(
+            "cashTransactionDetails.visitDate"
+          ),
           value: formatDate(
             transaction.visit.createdAt
           ),
@@ -433,57 +531,65 @@ const CashTransactionDetailsPage = () => {
   const saleFields = transaction.sale
     ? [
         {
-          label: "Sale Number",
+          label: t(
+            "cashTransactionDetails.saleNumber"
+          ),
           value: `#${transaction.sale._id?.slice(
             -6
           )}`,
         },
-
         {
-          label: "Subtotal",
+          label: t(
+            "cashTransactionDetails.subtotal"
+          ),
           value: formatMoney(
             transaction.sale.subtotal
           ),
         },
-
         {
-          label: "Discount",
+          label: t(
+            "cashTransactionDetails.discount"
+          ),
           value: formatMoney(
             transaction.sale.discount
           ),
         },
-
         {
-          label: "Total Amount",
+          label: t(
+            "cashTransactionDetails.totalAmount"
+          ),
           value: formatMoney(
             transaction.sale.totalAmount
           ),
         },
-
         {
-          label: "Paid Amount",
+          label: t(
+            "cashTransactionDetails.paidAmount"
+          ),
           value: formatMoney(
             transaction.sale.paidAmount
           ),
         },
-
         {
-          label: "Remaining Amount",
+          label: t(
+            "cashTransactionDetails.remainingAmount"
+          ),
           value: formatMoney(
-            transaction.sale
-              .remainingAmount
+            transaction.sale.remainingAmount
           ),
         },
-
         {
-          label: "Payment Status",
+          label: t(
+            "cashTransactionDetails.paymentStatus"
+          ),
           value:
             transaction.sale
               .paymentStatus || "-",
         },
-
         {
-          label: "Sale Status",
+          label: t(
+            "cashTransactionDetails.saleStatus"
+          ),
           value:
             transaction.sale.status || "-",
         },
@@ -494,46 +600,53 @@ const CashTransactionDetailsPage = () => {
     transaction.cashDrawer
       ? [
           {
-            label: "Cash Drawer",
+            label: t(
+              "cashTransactionDetails.cashDrawer"
+            ),
             value: `#${transaction.cashDrawer._id?.slice(
               -6
             )}`,
           },
-
           {
-            label: "Opening Balance",
+            label: t(
+              "cashTransactionDetails.openingBalance"
+            ),
             value: formatMoney(
               transaction.cashDrawer
                 .openingBalance
             ),
           },
-
           {
-            label: "Expected Cash",
+            label: t(
+              "cashTransactionDetails.expectedCash"
+            ),
             value: formatMoney(
               transaction.cashDrawer
                 .expectedCash
             ),
           },
-
           {
-            label: "Actual Cash",
+            label: t(
+              "cashTransactionDetails.actualCash"
+            ),
             value: formatMoney(
               transaction.cashDrawer
                 .actualCash
             ),
           },
-
           {
-            label: "Difference",
+            label: t(
+              "cashTransactionDetails.difference"
+            ),
             value: formatMoney(
               transaction.cashDrawer
                 .difference
             ),
           },
-
           {
-            label: "Drawer Status",
+            label: t(
+              "cashTransactionDetails.drawerStatus"
+            ),
             value:
               transaction.cashDrawer
                 .status || "-",
@@ -544,34 +657,41 @@ const CashTransactionDetailsPage = () => {
   const userFields = [
     {
       label: isIncome
-        ? "Received By"
-        : "Created / Paid By",
-
+        ? t(
+            "cashTransactionDetails.receivedBy"
+          )
+        : t(
+            "cashTransactionDetails.createdPaidBy"
+          ),
       value:
         transaction.createdBy?.name || "-",
     },
-
     {
-      label: "User Email",
+      label: t(
+        "cashTransactionDetails.userEmail"
+      ),
       value:
         transaction.createdBy?.email || "-",
     },
-
     {
-      label: "User Role",
+      label: t(
+        "cashTransactionDetails.userRole"
+      ),
       value:
         transaction.createdBy?.role || "-",
     },
-
     {
-      label: "Created At",
+      label: t(
+        "cashTransactionDetails.createdAt"
+      ),
       value: formatDate(
         transaction.createdAt
       ),
     },
-
     {
-      label: "Updated At",
+      label: t(
+        "cashTransactionDetails.updatedAt"
+      ),
       value: formatDate(
         transaction.updatedAt
       ),
@@ -583,7 +703,9 @@ const CashTransactionDetailsPage = () => {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h2 className="mb-1">
-            Transaction Details
+            {t(
+              "cashTransactionDetails.title"
+            )}
           </h2>
 
           <p className="text-muted mb-0">
@@ -599,7 +721,7 @@ const CashTransactionDetailsPage = () => {
           onClick={handleBack}
         >
           <ArrowLeft size={18} />
-          Back
+          {t("common.back")}
         </button>
       </div>
 
@@ -626,7 +748,9 @@ const CashTransactionDetailsPage = () => {
 
                 <div>
                   <div className="text-muted small">
-                    Transaction
+                    {t(
+                      "cashTransactionDetails.transaction"
+                    )}
                   </div>
 
                   <h5 className="mb-0">
@@ -661,7 +785,9 @@ const CashTransactionDetailsPage = () => {
 
         <div className="col-12 col-lg-8">
           <DetailsCard
-            title="Transaction Information"
+            title={t(
+              "cashTransactionDetails.transactionInformation"
+            )}
             icon={<CreditCard size={20} />}
             fields={transactionFields}
           />
@@ -671,7 +797,9 @@ const CashTransactionDetailsPage = () => {
       {patientFields.length > 0 && (
         <div className="mb-4">
           <DetailsCard
-            title="Patient Information"
+            title={t(
+              "cashTransactionDetails.patientInformation"
+            )}
             icon={<UserRound size={20} />}
             fields={patientFields}
           />
@@ -681,7 +809,9 @@ const CashTransactionDetailsPage = () => {
       {doctorFields.length > 0 && (
         <div className="mb-4">
           <DetailsCard
-            title="Doctor Information"
+            title={t(
+              "cashTransactionDetails.doctorInformation"
+            )}
             icon={<UserRound size={20} />}
             fields={doctorFields}
           />
@@ -691,7 +821,9 @@ const CashTransactionDetailsPage = () => {
       {operationFields.length > 0 && (
         <div className="mb-4">
           <DetailsCard
-            title="Operation Information"
+            title={t(
+              "cashTransactionDetails.operationInformation"
+            )}
             icon={<Activity size={20} />}
             fields={operationFields}
           />
@@ -701,7 +833,9 @@ const CashTransactionDetailsPage = () => {
       {visitFields.length > 0 && (
         <div className="mb-4">
           <DetailsCard
-            title="Visit Information"
+            title={t(
+              "cashTransactionDetails.visitInformation"
+            )}
             icon={<Stethoscope size={20} />}
             fields={visitFields}
           />
@@ -711,7 +845,9 @@ const CashTransactionDetailsPage = () => {
       {saleFields.length > 0 && (
         <div className="mb-4">
           <DetailsCard
-            title="Sale Information"
+            title={t(
+              "cashTransactionDetails.saleInformation"
+            )}
             icon={<ShoppingCart size={20} />}
             fields={saleFields}
           />
@@ -721,7 +857,9 @@ const CashTransactionDetailsPage = () => {
       {cashDrawerFields.length > 0 && (
         <div className="mb-4">
           <DetailsCard
-            title="Cash Drawer Information"
+            title={t(
+              "cashTransactionDetails.cashDrawerInformation"
+            )}
             icon={<Wallet size={20} />}
             fields={cashDrawerFields}
           />
@@ -730,7 +868,9 @@ const CashTransactionDetailsPage = () => {
 
       <div className="mb-4">
         <DetailsCard
-          title="System Information"
+          title={t(
+            "cashTransactionDetails.systemInformation"
+          )}
           icon={<FileText size={20} />}
           fields={userFields}
         />

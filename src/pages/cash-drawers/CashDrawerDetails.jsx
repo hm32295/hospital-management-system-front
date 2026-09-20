@@ -1,15 +1,16 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
+import { useTranslation } from "react-i18next";
 import Header from "../../components/header/Header";
-
-import {
-  getSingleCashDrawer,
-} from "../../services/cashDrawer.service";
+import { getSingleCashDrawer } from "../../services/cashDrawer.service";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const CashDrawerDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [drawer, setDrawer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,22 +19,35 @@ const CashDrawerDetails = () => {
   useEffect(() => {
     const fetchDrawer = async () => {
       try {
-        const response =
-          await getSingleCashDrawer(id);
-
+        const response = await getSingleCashDrawer(id);
         setDrawer(response.cashDrawer);
       } catch (error) {
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to load cash drawer"
+        const message = getApiErrorMessage(
+          error,
+          t("cashDrawers.loadFailed")
         );
+
+        setServerError(message);
+        showError(message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDrawer();
-  }, [id]);
+  }, [id, t]);
+
+  const formatDate = (date) =>
+    date
+      ? new Date(date).toLocaleString(
+          i18n.language === "ar"
+            ? "ar-EG"
+            : "en-GB"
+        )
+      : "-";
+
+  const formatMoney = (value) =>
+    `${Number(value || 0).toFixed(2)} ${t("common.egp")}`;
 
   if (loading) {
     return (
@@ -45,8 +59,18 @@ const CashDrawerDetails = () => {
 
   if (serverError) {
     return (
-      <div className="alert alert-danger">
-        {serverError}
+      <div className="container-fluid">
+        <div className="alert alert-danger">
+          {serverError}
+        </div>
+
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => navigate("/cash-drawers")}
+        >
+          {t("cashDrawers.backToCashDrawers")}
+        </button>
       </div>
     );
   }
@@ -56,8 +80,10 @@ const CashDrawerDetails = () => {
   return (
     <div>
       <Header
-        title="Cash Drawer Details"
-        description="View cash drawer session details"
+        title={t("cashDrawers.detailsTitle")}
+        description={t("cashDrawers.detailsDescription")}
+        buttonContent={t("cashDrawers.backToCashDrawers")}
+        buttonLink="/cash-drawers"
       />
 
       <div className="card border-0 shadow-sm">
@@ -65,49 +91,37 @@ const CashDrawerDetails = () => {
           <div className="row g-4">
             <div className="col-md-4">
               <div className="text-muted">
-                Opening Balance
+                {t("cashDrawers.openingBalance")}
               </div>
-
               <h4>
-                {Number(
-                  drawer.openingBalance
-                ).toFixed(2)}{" "}
-                EGP
+                {formatMoney(drawer.openingBalance)}
               </h4>
             </div>
 
             <div className="col-md-4">
               <div className="text-muted">
-                Expected Cash
+                {t("cashDrawers.expectedCash")}
               </div>
-
               <h4>
-                {Number(
-                  drawer.expectedCash
-                ).toFixed(2)}{" "}
-                EGP
+                {formatMoney(drawer.expectedCash)}
               </h4>
             </div>
 
             <div className="col-md-4">
               <div className="text-muted">
-                Actual Cash
+                {t("cashDrawers.actualCash")}
               </div>
-
               <h4>
                 {drawer.status === "closed"
-                  ? `${Number(
-                      drawer.actualCash
-                    ).toFixed(2)} EGP`
+                  ? formatMoney(drawer.actualCash)
                   : "-"}
               </h4>
             </div>
 
             <div className="col-md-4">
               <div className="text-muted">
-                Difference
+                {t("cashDrawers.difference")}
               </div>
-
               <h4
                 className={
                   drawer.difference === 0
@@ -118,18 +132,15 @@ const CashDrawerDetails = () => {
                 }
               >
                 {drawer.status === "closed"
-                  ? `${Number(
-                      drawer.difference
-                    ).toFixed(2)} EGP`
+                  ? formatMoney(drawer.difference)
                   : "-"}
               </h4>
             </div>
 
             <div className="col-md-4">
               <div className="text-muted">
-                Status
+                {t("cashDrawers.status")}
               </div>
-
               <span
                 className={`badge ${
                   drawer.status === "open"
@@ -137,15 +148,16 @@ const CashDrawerDetails = () => {
                     : "text-bg-secondary"
                 }`}
               >
-                {drawer.status}
+                {drawer.status === "open"
+                  ? t("cashDrawers.statuses.open")
+                  : t("cashDrawers.statuses.closed")}
               </span>
             </div>
 
             <div className="col-md-4">
               <div className="text-muted">
-                Opened By
+                {t("cashDrawers.openedBy")}
               </div>
-
               <div className="fw-semibold">
                 {drawer.openedBy?.name || "-"}
               </div>
@@ -153,21 +165,15 @@ const CashDrawerDetails = () => {
 
             <div className="col-md-4">
               <div className="text-muted">
-                Opened At
+                {t("cashDrawers.openedAt")}
               </div>
-
-              <div>
-                {new Date(
-                  drawer.openedAt
-                ).toLocaleString("en-GB")}
-              </div>
+              <div>{formatDate(drawer.openedAt)}</div>
             </div>
 
             <div className="col-md-4">
               <div className="text-muted">
-                Closed By
+                {t("cashDrawers.closedBy")}
               </div>
-
               <div>
                 {drawer.closedBy?.name || "-"}
               </div>
@@ -175,26 +181,16 @@ const CashDrawerDetails = () => {
 
             <div className="col-md-4">
               <div className="text-muted">
-                Closed At
+                {t("cashDrawers.closedAt")}
               </div>
-
-              <div>
-                {drawer.closedAt
-                  ? new Date(
-                      drawer.closedAt
-                    ).toLocaleString("en-GB")
-                  : "-"}
-              </div>
+              <div>{formatDate(drawer.closedAt)}</div>
             </div>
 
             <div className="col-12">
               <div className="text-muted">
-                Notes
+                {t("cashDrawers.notes")}
               </div>
-
-              <div>
-                {drawer.notes || "-"}
-              </div>
+              <div>{drawer.notes || "-"}</div>
             </div>
           </div>
 
@@ -208,7 +204,7 @@ const CashDrawerDetails = () => {
                   )
                 }
               >
-                Close Cash Drawer
+                {t("cashDrawers.closeDrawer")}
               </button>
             </div>
           )}

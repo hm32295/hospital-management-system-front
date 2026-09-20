@@ -1,6 +1,8 @@
+
 import { useState } from "react";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Header from "../../components/header/Header";
 import FormInput from "../../components/form/FormInput";
 import { batchesInitialValues } from "../../initialValues/batches.initial";
@@ -8,10 +10,12 @@ import { batchesSchema } from "../../schemas/batches.schema";
 import { createBatch } from "../../services/batches.service";
 import FormSearchSelect from "../../components/form/FormSearchSelect";
 import { getMedicines } from "../../services/medicines.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const AddBatches = () => {
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState("");
+  const { t } = useTranslation();
   const [loadingMedicine, setLoadingMedicine] = useState(false);
   const [medicines, setMedicines] = useState([]);
 
@@ -20,14 +24,20 @@ const AddBatches = () => {
     validationSchema: batchesSchema,
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        setServerError("");
-        await createBatch(values);
+        const response = await createBatch(values);
+
+        showSuccess(
+          response?.message ||
+            t("batches.createSuccess")
+        );
 
         navigate("/batches");
       } catch (error) {
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to create batch"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("batches.createFailed")
+          )
         );
       } finally {
         setSubmitting(false);
@@ -48,7 +58,12 @@ const AddBatches = () => {
 
       setMedicines(response.medicines || []);
     } catch (error) {
-      console.log(error);
+      showError(
+        getApiErrorMessage(
+          error,
+          t("batches.loadMedicinesFailed")
+        )
+      );
     } finally {
       setLoadingMedicine(false);
     }
@@ -62,17 +77,11 @@ const AddBatches = () => {
   return (
     <div>
       <Header
-        title="Add Batch"
-        description="Add a new batch to the pharmacy"
-        buttonContent="Back to Batches"
+        title={t("batches.addTitle")}
+        description={t("batches.addDescription")}
+        buttonContent={t("batches.backToBatches")}
         buttonLink="/batches"
       />
-
-      {serverError && (
-        <div className="alert alert-danger">
-          {serverError}
-        </div>
-      )}
 
       <div className="card border-0 shadow-sm">
         <div className="card-body p-4">
@@ -82,8 +91,10 @@ const AddBatches = () => {
                 <FormSearchSelect
                   formik={formik}
                   name="medicine"
-                  label="Medicine"
-                  placeholder="Search medicine..."
+                  label={t("batches.medicine")}
+                  placeholder={t(
+                    "batches.searchMedicine"
+                  )}
                   options={medicineOptions}
                   required
                   serverSearch
@@ -98,9 +109,11 @@ const AddBatches = () => {
                 <FormInput
                   formik={formik}
                   name="batchNumber"
-                  label="Batch Number"
+                  label={t("batches.batchNumber")}
                   type="text"
-                  placeholder="Enter batch number"
+                  placeholder={t(
+                    "batches.batchNumberPlaceholder"
+                  )}
                   required
                 />
               </div>
@@ -109,9 +122,11 @@ const AddBatches = () => {
                 <FormInput
                   formik={formik}
                   name="expiryDate"
-                  label="Expiry Date"
+                  label={t("batches.expiryDate")}
                   type="date"
-                  placeholder="Enter expiry date"
+                  placeholder={t(
+                    "batches.expiryDatePlaceholder"
+                  )}
                   required
                 />
               </div>
@@ -120,9 +135,11 @@ const AddBatches = () => {
                 <FormInput
                   formik={formik}
                   name="quantity"
-                  label="Quantity"
+                  label={t("batches.quantity")}
                   type="number"
-                  placeholder="Enter batch quantity"
+                  placeholder={t(
+                    "batches.quantityPlaceholder"
+                  )}
                   required
                 />
               </div>
@@ -131,9 +148,11 @@ const AddBatches = () => {
                 <FormInput
                   formik={formik}
                   name="sellingPrice"
-                  label="Selling Price"
+                  label={t("batches.sellingPrice")}
                   type="number"
-                  placeholder="Enter selling price"
+                  placeholder={t(
+                    "batches.sellingPricePlaceholder"
+                  )}
                   required
                 />
               </div>
@@ -142,9 +161,11 @@ const AddBatches = () => {
                 <FormInput
                   formik={formik}
                   name="purchasePrice"
-                  label="Purchase Price"
+                  label={t("batches.purchasePrice")}
                   type="number"
-                  placeholder="Enter purchase price"
+                  placeholder={t(
+                    "batches.purchasePricePlaceholder"
+                  )}
                   required
                 />
               </div>
@@ -157,7 +178,7 @@ const AddBatches = () => {
                 onClick={() => navigate("/batches")}
                 disabled={formik.isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
@@ -165,7 +186,9 @@ const AddBatches = () => {
                 className="btn btn-primary"
                 disabled={formik.isSubmitting}
               >
-                {formik.isSubmitting ? "Adding..." : "Add Batch"}
+                {formik.isSubmitting
+                  ? t("batches.adding")
+                  : t("batches.addBatch")}
               </button>
             </div>
           </form>

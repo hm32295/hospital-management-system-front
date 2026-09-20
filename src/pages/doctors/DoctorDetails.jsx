@@ -1,6 +1,6 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSnackbar } from "notistack";
 import {
   Wallet,
   CreditCard,
@@ -13,25 +13,24 @@ import {
   createDoctorSettlement,
 } from "../../services/doctorSettlements.service";
 
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
+import { useTranslation } from "react-i18next";
+
 const DoctorDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+  const { t, i18n } = useTranslation();
 
   const [doctorAccount, setDoctorAccount] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentNotes, setPaymentNotes] = useState("");
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
 
-  const [showPaymentForm, setShowPaymentForm] =
-    useState(false);
-
-  const [paymentAmount, setPaymentAmount] =
-    useState("");
-
-  const [paymentNotes, setPaymentNotes] =
-    useState("");
-
-  const [paymentSubmitting, setPaymentSubmitting] =
-    useState(false);
+  const dateLocale =
+    i18n.language === "ar" ? "ar-EG" : "en-GB";
 
   const loadDoctorAccount = async () => {
     try {
@@ -42,19 +41,17 @@ const DoctorDetails = () => {
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Failed to load doctor account"
+            t("doctors.failedToLoadAccount")
         );
       }
 
       setDoctorAccount(response);
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to load doctor account",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("doctors.failedToLoadAccount")
+        )
       );
     } finally {
       setLoading(false);
@@ -68,64 +65,53 @@ const DoctorDetails = () => {
   }, [id]);
 
   const formatMoney = (value) =>
-    Number(value || 0).toLocaleString("en-EG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    Number(value || 0).toLocaleString(
+      i18n.language === "ar" ? "ar-EG" : "en-EG",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }
+    );
 
   const handleDoctorPayment = async (e) => {
     e.preventDefault();
 
     const amount = Number(paymentAmount || 0);
-    const due = Number(
-      doctorAccount?.summary?.due || 0
-    );
+    const due = Number(doctorAccount?.summary?.due || 0);
 
     if (!amount || amount <= 0) {
-      enqueueSnackbar(
-        "Payment amount must be greater than zero",
-        {
-          variant: "error",
-        }
-      );
-
+      showError(t("doctors.paymentAmountInvalid"));
       return;
     }
 
     if (amount > due) {
-      enqueueSnackbar(
-        `Payment cannot exceed ${due.toFixed(2)} EGP`,
-        {
-          variant: "error",
-        }
+      showError(
+        t("doctors.paymentExceedsDue", {
+          amount: due.toFixed(2),
+        })
       );
-
       return;
     }
 
     try {
       setPaymentSubmitting(true);
 
-      const response =
-        await createDoctorSettlement({
-          doctor: id,
-          amount,
-          notes: paymentNotes.trim(),
-        });
+      const response = await createDoctorSettlement({
+        doctor: id,
+        amount,
+        notes: paymentNotes.trim(),
+      });
 
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Failed to pay doctor"
+            t("doctors.failedToPay")
         );
       }
 
-      enqueueSnackbar(
+      showSuccess(
         response.message ||
-          "Doctor paid successfully",
-        {
-          variant: "success",
-        }
+          t("doctors.paidSuccessfully")
       );
 
       setPaymentAmount("");
@@ -134,13 +120,11 @@ const DoctorDetails = () => {
 
       await loadDoctorAccount();
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to pay doctor",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("doctors.failedToPay")
+        )
       );
     } finally {
       setPaymentSubmitting(false);
@@ -164,7 +148,7 @@ const DoctorDetails = () => {
     return (
       <div className="container-fluid py-4">
         <div className="alert alert-danger">
-          Failed to load doctor account.
+          {t("doctors.failedToLoadAccount")}
         </div>
 
         <button
@@ -173,23 +157,16 @@ const DoctorDetails = () => {
           onClick={() => navigate("/doctors")}
         >
           <ArrowLeft size={16} className="me-1" />
-          Back to Doctors
+          {t("doctors.backToDoctors")}
         </button>
       </div>
     );
   }
 
-  const doctor =
-    doctorAccount.doctor || {};
-
-  const summary =
-    doctorAccount.summary || {};
-
-  const operations =
-    doctorAccount.operations || [];
-
-  const settlements =
-    doctorAccount.settlements || [];
+  const doctor = doctorAccount.doctor || {};
+  const summary = doctorAccount.summary || {};
+  const operations = doctorAccount.operations || [];
+  const settlements = doctorAccount.settlements || [];
 
   return (
     <div className="container-fluid py-4">
@@ -200,19 +177,16 @@ const DoctorDetails = () => {
             className="btn btn-light btn-sm mb-2"
             onClick={() => navigate("/doctors")}
           >
-            <ArrowLeft
-              size={16}
-              className="me-1"
-            />
-            Back
+            <ArrowLeft size={16} className="me-1" />
+            {t("common.back")}
           </button>
 
           <h3 className="mb-1">
-            {doctor.name || "Doctor"}
+            {doctor.name || t("doctors.doctor")}
           </h3>
 
           <p className="text-muted mb-0">
-            Doctor Account
+            {t("doctors.account")}
           </p>
         </div>
       </div>
@@ -224,14 +198,12 @@ const DoctorDetails = () => {
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <small className="text-muted">
-                    Total Earned
+                    {t("doctors.totalEarned")}
                   </small>
 
                   <h4 className="mb-0 mt-2">
-                    {formatMoney(
-                      summary.totalEarned
-                    )}{" "}
-                    EGP
+                    {formatMoney(summary.totalEarned)}{" "}
+                    {t("common.egp")}
                   </h4>
                 </div>
 
@@ -250,14 +222,12 @@ const DoctorDetails = () => {
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <small className="text-muted">
-                    Total Paid
+                    {t("doctors.totalPaid")}
                   </small>
 
                   <h4 className="mb-0 mt-2 text-success">
-                    {formatMoney(
-                      summary.totalPaid
-                    )}{" "}
-                    EGP
+                    {formatMoney(summary.totalPaid)}{" "}
+                    {t("common.egp")}
                   </h4>
                 </div>
 
@@ -276,14 +246,12 @@ const DoctorDetails = () => {
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <small className="text-muted">
-                    Due
+                    {t("doctors.due")}
                   </small>
 
                   <h4 className="mb-0 mt-2 text-danger">
-                    {formatMoney(
-                      summary.due
-                    )}{" "}
-                    EGP
+                    {formatMoney(summary.due)}{" "}
+                    {t("common.egp")}
                   </h4>
                 </div>
 
@@ -307,7 +275,7 @@ const DoctorDetails = () => {
             }
           >
             <CreditCard size={18} />
-            Pay Doctor
+            {t("doctors.payDoctor")}
           </button>
         </div>
       )}
@@ -316,18 +284,16 @@ const DoctorDetails = () => {
         <div className="card border-success mb-4">
           <div className="card-header bg-success-subtle">
             <h6 className="mb-0">
-              Pay Doctor
+              {t("doctors.payDoctor")}
             </h6>
           </div>
 
           <div className="card-body">
-            <form
-              onSubmit={handleDoctorPayment}
-            >
+            <form onSubmit={handleDoctorPayment}>
               <div className="row g-3">
                 <div className="col-md-6">
                   <label className="form-label">
-                    Amount
+                    {t("doctors.amount")}
                   </label>
 
                   <input
@@ -338,27 +304,21 @@ const DoctorDetails = () => {
                     step="0.01"
                     value={paymentAmount}
                     onChange={(e) =>
-                      setPaymentAmount(
-                        e.target.value
-                      )
+                      setPaymentAmount(e.target.value)
                     }
-                    disabled={
-                      paymentSubmitting
-                    }
+                    disabled={paymentSubmitting}
                   />
 
                   <small className="text-muted">
-                    Maximum due:{" "}
-                    {formatMoney(
-                      summary.due
-                    )}{" "}
-                    EGP
+                    {t("doctors.maximumDue")}:{" "}
+                    {formatMoney(summary.due)}{" "}
+                    {t("common.egp")}
                   </small>
                 </div>
 
                 <div className="col-md-6">
                   <label className="form-label">
-                    Notes
+                    {t("doctors.notes")}
                   </label>
 
                   <input
@@ -366,14 +326,12 @@ const DoctorDetails = () => {
                     className="form-control"
                     value={paymentNotes}
                     onChange={(e) =>
-                      setPaymentNotes(
-                        e.target.value
-                      )
+                      setPaymentNotes(e.target.value)
                     }
-                    placeholder="Payment notes..."
-                    disabled={
-                      paymentSubmitting
-                    }
+                    placeholder={t(
+                      "doctors.paymentNotesPlaceholder"
+                    )}
+                    disabled={paymentSubmitting}
                   />
                 </div>
 
@@ -381,17 +339,15 @@ const DoctorDetails = () => {
                   <button
                     type="submit"
                     className="btn btn-success"
-                    disabled={
-                      paymentSubmitting
-                    }
+                    disabled={paymentSubmitting}
                   >
                     {paymentSubmitting ? (
                       <>
                         <span className="spinner-border spinner-border-sm me-2" />
-                        Processing...
+                        {t("doctors.processing")}
                       </>
                     ) : (
-                      "Confirm Payment"
+                      t("doctors.confirmPayment")
                     )}
                   </button>
 
@@ -403,11 +359,9 @@ const DoctorDetails = () => {
                       setPaymentAmount("");
                       setPaymentNotes("");
                     }}
-                    disabled={
-                      paymentSubmitting
-                    }
+                    disabled={paymentSubmitting}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                 </div>
               </div>
@@ -419,102 +373,81 @@ const DoctorDetails = () => {
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-header bg-white">
           <h5 className="mb-0">
-            Operations
+            {t("doctors.operations")}
           </h5>
         </div>
 
         <div className="card-body p-0">
           {operations.length === 0 ? (
             <div className="text-center text-muted py-4">
-              No operations found
+              {t("doctors.noOperations")}
             </div>
           ) : (
             <div className="table-responsive">
               <table className="table align-middle mb-0">
                 <thead>
                   <tr>
-                    <th>Operation</th>
-                    <th>Patient</th>
-                    <th>Doctor Fee</th>
-                    <th>Paid</th>
-                    <th>Due</th>
-                    <th>Status</th>
+                    <th>{t("doctors.operation")}</th>
+                    <th>{t("doctors.patient")}</th>
+                    <th>{t("doctors.doctorFee")}</th>
+                    <th>{t("doctors.paid")}</th>
+                    <th>{t("doctors.due")}</th>
+                    <th>{t("doctors.status")}</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {operations.map((item) => (
-                    <tr
-                      key={
-                        item.operation?._id
-                      }
-                    >
+                    <tr key={item.operation?._id}>
                       <td>
                         <div className="fw-semibold">
-                          {
-                            item.operation
-                              ?.operationName
-                          }
+                          {item.operation?.operationName}
                         </div>
 
                         <small className="text-muted">
-                          {item.operation
-                            ?.operationDate
+                          {item.operation?.operationDate
                             ? new Date(
                                 item.operation.operationDate
-                              ).toLocaleDateString(
-                                "en-EG"
-                              )
+                              ).toLocaleDateString(dateLocale)
                             : "-"}
                         </small>
                       </td>
 
                       <td>
-                        {item.operation
-                          ?.patient?.name ||
-                          "-"}
+                        {item.operation?.patient?.name || "-"}
                       </td>
 
                       <td>
-                        {formatMoney(
-                          item.doctorFeeAmount
-                        )}{" "}
-                        EGP
+                        {formatMoney(item.doctorFeeAmount)}{" "}
+                        {t("common.egp")}
                       </td>
 
                       <td className="text-success">
-                        {formatMoney(
-                          item.paidAmount
-                        )}{" "}
-                        EGP
+                        {formatMoney(item.paidAmount)}{" "}
+                        {t("common.egp")}
                       </td>
 
                       <td className="text-danger">
-                        {formatMoney(
-                          item.remainingAmount
-                        )}{" "}
-                        EGP
+                        {formatMoney(item.remainingAmount)}{" "}
+                        {t("common.egp")}
                       </td>
 
                       <td>
-                        {item.paymentStatus ===
-                          "paid" && (
+                        {item.paymentStatus === "paid" && (
                           <span className="badge bg-success">
-                            Paid
+                            {t("doctors.paid")}
                           </span>
                         )}
 
-                        {item.paymentStatus ===
-                          "partial" && (
+                        {item.paymentStatus === "partial" && (
                           <span className="badge bg-warning text-dark">
-                            Partial
+                            {t("doctors.partial")}
                           </span>
                         )}
 
-                        {item.paymentStatus ===
-                          "unpaid" && (
+                        {item.paymentStatus === "unpaid" && (
                           <span className="badge bg-danger">
-                            Unpaid
+                            {t("doctors.unpaid")}
                           </span>
                         )}
                       </td>
@@ -530,76 +463,63 @@ const DoctorDetails = () => {
       <div className="card border-0 shadow-sm">
         <div className="card-header bg-white">
           <h5 className="mb-0">
-            Settlement History
+            {t("doctors.settlementHistory")}
           </h5>
         </div>
 
         <div className="card-body p-0">
           {settlements.length === 0 ? (
             <div className="text-center text-muted py-4">
-              No settlements found
+              {t("doctors.noSettlements")}
             </div>
           ) : (
             <div className="table-responsive">
               <table className="table align-middle mb-0">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Operation</th>
-                    <th>Patient</th>
-                    <th>Paid By</th>
-                    <th>Notes</th>
+                    <th>{t("doctors.date")}</th>
+                    <th>{t("doctors.amount")}</th>
+                    <th>{t("doctors.operation")}</th>
+                    <th>{t("doctors.patient")}</th>
+                    <th>{t("doctors.paidBy")}</th>
+                    <th>{t("doctors.notes")}</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {settlements.map(
-                    (settlement) => (
-                      <tr
-                        key={settlement._id}
-                      >
-                        <td>
-                          {settlement.createdAt
-                            ? new Date(
-                                settlement.createdAt
-                              ).toLocaleString(
-                                "en-EG"
-                              )
-                            : "-"}
-                        </td>
+                  {settlements.map((settlement) => (
+                    <tr key={settlement._id}>
+                      <td>
+                        {settlement.createdAt
+                          ? new Date(
+                              settlement.createdAt
+                            ).toLocaleString(dateLocale)
+                          : "-"}
+                      </td>
 
-                        <td className="fw-semibold text-success">
-                          {formatMoney(
-                            settlement.amount
-                          )}{" "}
-                          EGP
-                        </td>
+                      <td className="fw-semibold text-success">
+                        {formatMoney(settlement.amount)}{" "}
+                        {t("common.egp")}
+                      </td>
 
-                        <td>
-                          {settlement
-                            .operation
-                            ?.operationName ||
-                            "General Settlement"}
-                        </td>
+                      <td>
+                        {settlement.operation?.operationName ||
+                          t("doctors.generalSettlement")}
+                      </td>
 
-                        <td>
-                          {settlement.patient
-                            ?.name || "-"}
-                        </td>
+                      <td>
+                        {settlement.patient?.name || "-"}
+                      </td>
 
-                        <td>
-                          {settlement.paidBy
-                            ?.name || "-"}
-                        </td>
+                      <td>
+                        {settlement.paidBy?.name || "-"}
+                      </td>
 
-                        <td>
-                          {settlement.notes ||
-                            "-"}
-                        </td>
-                      </tr>
-                    )
-                  )}
+                      <td>
+                        {settlement.notes || "-"}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -611,3 +531,7 @@ const DoctorDetails = () => {
 };
 
 export default DoctorDetails;
+
+
+
+

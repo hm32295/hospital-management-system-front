@@ -1,19 +1,22 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useFormik } from "formik";
+import { useTranslation } from "react-i18next";
 import { LockKeyhole } from "lucide-react";
-
 import Header from "../../components/header/Header";
 import FormInput from "../../components/form/FormInput";
-
 import {
   getSingleCashDrawer,
   closeCashDrawer,
 } from "../../services/cashDrawer.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const CloseCashDrawer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t } = useTranslation();
 
   const [drawer, setDrawer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,29 +27,27 @@ const CloseCashDrawer = () => {
       actualCash: "",
       notes: "",
     },
-
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        setServerError("");
-
         const response = await closeCashDrawer(id, {
           actualCash: Number(values.actualCash),
           notes: values.notes,
         });
 
-        console.log("Drawer closed:", response);
+        showSuccess(
+          response?.message ||
+            t("cashDrawers.closeSuccess")
+        );
 
         navigate(`/cash-drawers/${id}`);
       } catch (error) {
-        console.error(
-          "Close cash drawer error:",
-          error
+        const message = getApiErrorMessage(
+          error,
+          t("cashDrawers.closeFailed")
         );
 
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to close cash drawer"
-        );
+        setServerError(message);
+        showError(message);
       } finally {
         setSubmitting(false);
       }
@@ -56,22 +57,23 @@ const CloseCashDrawer = () => {
   useEffect(() => {
     const fetchDrawer = async () => {
       try {
-        const response =
-          await getSingleCashDrawer(id);
-
+        const response = await getSingleCashDrawer(id);
         setDrawer(response.cashDrawer);
       } catch (error) {
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to load cash drawer"
+        const message = getApiErrorMessage(
+          error,
+          t("cashDrawers.loadFailed")
         );
+
+        setServerError(message);
+        showError(message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDrawer();
-  }, [id]);
+  }, [id, t]);
 
   if (loading) {
     return (
@@ -84,7 +86,8 @@ const CloseCashDrawer = () => {
   if (!drawer) {
     return (
       <div className="alert alert-danger">
-        Cash drawer not found
+        {serverError ||
+          t("cashDrawers.notFound")}
       </div>
     );
   }
@@ -100,11 +103,20 @@ const CloseCashDrawer = () => {
   const difference =
     actualCash - expectedCash;
 
+  const formatMoney = (value) =>
+    `${Number(value || 0).toFixed(2)} ${t("common.egp")}`;
+
   return (
     <div>
       <Header
-        title="Close Cash Drawer"
-        description="Count the actual cash and close the drawer"
+        title={t("cashDrawers.closeTitle")}
+        description={t(
+          "cashDrawers.closeDescription"
+        )}
+        buttonContent={t(
+          "cashDrawers.backToCurrent"
+        )}
+        buttonLink="/cash-drawers/current"
       />
 
       {serverError && (
@@ -120,14 +132,12 @@ const CloseCashDrawer = () => {
               <div className="card border">
                 <div className="card-body">
                   <div className="text-muted small">
-                    Opening Balance
+                    {t("cashDrawers.openingBalance")}
                   </div>
-
                   <h4>
-                    {Number(
+                    {formatMoney(
                       drawer.openingBalance
-                    ).toFixed(2)}{" "}
-                    EGP
+                    )}
                   </h4>
                 </div>
               </div>
@@ -137,11 +147,10 @@ const CloseCashDrawer = () => {
               <div className="card border">
                 <div className="card-body">
                   <div className="text-muted small">
-                    Expected Cash
+                    {t("cashDrawers.expectedCash")}
                   </div>
-
                   <h4 className="text-primary">
-                    {expectedCash.toFixed(2)} EGP
+                    {formatMoney(expectedCash)}
                   </h4>
                 </div>
               </div>
@@ -151,9 +160,8 @@ const CloseCashDrawer = () => {
               <div className="card border">
                 <div className="card-body">
                   <div className="text-muted small">
-                    Difference
+                    {t("cashDrawers.difference")}
                   </div>
-
                   <h4
                     className={
                       difference === 0
@@ -163,7 +171,7 @@ const CloseCashDrawer = () => {
                         : "text-danger"
                     }
                   >
-                    {difference.toFixed(2)} EGP
+                    {formatMoney(difference)}
                   </h4>
                 </div>
               </div>
@@ -178,9 +186,11 @@ const CloseCashDrawer = () => {
                 <FormInput
                   formik={formik}
                   name="actualCash"
-                  label="Actual Cash"
+                  label={t("cashDrawers.actualCash")}
                   type="number"
-                  placeholder="Enter actual cash"
+                  placeholder={t(
+                    "cashDrawers.actualCashPlaceholder"
+                  )}
                   required
                 />
               </div>
@@ -189,27 +199,29 @@ const CloseCashDrawer = () => {
                 <FormInput
                   formik={formik}
                   name="notes"
-                  label="Notes"
+                  label={t("cashDrawers.notes")}
                   type="text"
-                  placeholder="Enter closing notes"
+                  placeholder={t(
+                    "cashDrawers.closingNotesPlaceholder"
+                  )}
                 />
               </div>
             </div>
 
             <div className="alert alert-warning mt-4">
-              Expected cash:{" "}
+              {t("cashDrawers.expectedCash")}:{" "}
               <strong>
-                {expectedCash.toFixed(2)} EGP
+                {formatMoney(expectedCash)}
               </strong>
               <br />
-              Actual cash:{" "}
+              {t("cashDrawers.actualCash")}:{" "}
               <strong>
-                {actualCash.toFixed(2)} EGP
+                {formatMoney(actualCash)}
               </strong>
               <br />
-              Difference:{" "}
+              {t("cashDrawers.difference")}:{" "}
               <strong>
-                {difference.toFixed(2)} EGP
+                {formatMoney(difference)}
               </strong>
             </div>
 
@@ -222,8 +234,9 @@ const CloseCashDrawer = () => {
                     "/cash-drawers/current"
                   )
                 }
+                disabled={formik.isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
@@ -235,10 +248,9 @@ const CloseCashDrawer = () => {
                   size={18}
                   className="me-2"
                 />
-
                 {formik.isSubmitting
-                  ? "Closing..."
-                  : "Close Cash Drawer"}
+                  ? t("cashDrawers.closing")
+                  : t("cashDrawers.closeDrawer")}
               </button>
             </div>
           </form>

@@ -1,78 +1,87 @@
+
 import { useState } from "react";
 import { useFormik } from "formik";
-
+import { useTranslation } from "react-i18next";
 import FormInput from "../../components/form/FormInput";
-
 import { loginSchema } from "../../schemas/auth/login.schema";
 import { loginInitialValues } from "../../initialValues/auth/login.initial";
-
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import {
+  showError,
+  showSuccess,
+} from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const Login = () => {
-  const {login} = useAuth()
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
   const [serverError, setServerError] = useState("");
-  const navigation = useNavigate()
 
+  const onSubmit = async (
+    values,
+    { setSubmitting }
+  ) => {
+    try {
+      setServerError("");
+      const response = await login(values);
 
-  const onSubmit =async (values, { setSubmitting }) => {
-      try {
-        setServerError("");
-        await login(values);
-        navigation('/')
-      } catch (error) {
-        setServerError(
-          error.response?.data?.message ||
-            "Something went wrong"
-        );
-      } finally {
-        setSubmitting(false);
-      }
-  }
-  
-    const formik = useFormik({
-      initialValues: loginInitialValues,
-      validationSchema: loginSchema,
-      onSubmit,
-    });
+      showSuccess(
+        response?.message ||
+          t("auth.loginSuccess")
+      );
 
+      navigate("/");
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        t("auth.loginFailed")
+      );
+
+      setServerError(message);
+      showError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const formik = useFormik({
+    initialValues: loginInitialValues,
+    validationSchema: loginSchema,
+    onSubmit,
+  });
 
   return (
     <div className="container-fluid min-vh-100">
       <div className="row min-vh-100">
-
-        {/* Left Side */}
         <div className="col-lg-6 d-none d-lg-flex align-items-center justify-content-center bg-primary text-white">
           <div className="text-center px-5">
             <h1 className="fw-bold mb-3">
-              Hospital Management System
+              {t("auth.hospitalManagementSystem")}
             </h1>
 
             <p className="lead">
-              Manage your pharmacy and hospital
-              operations efficiently.
+              {t("auth.loginDescription")}
             </p>
           </div>
         </div>
 
-        {/* Login Side */}
         <div className="col-12 col-lg-6 d-flex align-items-center justify-content-center">
           <div
             className="w-100 px-4"
             style={{ maxWidth: "450px" }}
           >
-
             <div className="text-center mb-4">
               <h2 className="fw-bold">
-                Welcome Back
+                {t("auth.welcomeBack")}
               </h2>
 
               <p className="text-muted">
-                Login to your account
+                {t("auth.loginToAccount")}
               </p>
             </div>
 
-            {/* Server Error */}
             {serverError && (
               <div
                 className="alert alert-danger"
@@ -83,13 +92,14 @@ const Login = () => {
             )}
 
             <form onSubmit={formik.handleSubmit}>
-
               <FormInput
                 formik={formik}
                 name="email"
-                label="Email"
+                label={t("auth.email")}
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t(
+                  "auth.emailPlaceholder"
+                )}
                 autoComplete="email"
                 required
               />
@@ -97,9 +107,11 @@ const Login = () => {
               <FormInput
                 formik={formik}
                 name="password"
-                label="Password"
+                label={t("auth.password")}
                 type="password"
-                placeholder="Enter your password"
+                placeholder={t(
+                  "auth.passwordPlaceholder"
+                )}
                 autoComplete="current-password"
                 required
               />
@@ -110,15 +122,12 @@ const Login = () => {
                 disabled={formik.isSubmitting}
               >
                 {formik.isSubmitting
-                  ? "Logging in..."
-                  : "Login"}
+                  ? t("auth.loggingIn")
+                  : t("auth.login")}
               </button>
-
             </form>
-
           </div>
         </div>
-
       </div>
     </div>
   );

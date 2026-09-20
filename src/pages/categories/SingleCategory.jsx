@@ -1,36 +1,39 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+
 import DetailsCard from "../../components/details/DetailsCard";
 import Header from "../../components/header/Header";
 import { getCategoryById } from "../../services/category.service";
-
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const SingleCategory = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
   const [category, setCategory] = useState(null);
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
-
-  // Get category
 
   useEffect(() => {
     const fetchCategory = async () => {
       try {
         setLoading(true);
         setError("");
-        const response = await getCategoryById(id);
-        
-        setCategory(response.category);
 
+        const response = await getCategoryById(id);
+        setCategory(response.category);
       } catch (error) {
-        console.error(error);
-        setError(
-          error.response?.data?.message ||
-            "Failed to load category"
+        const message = getApiErrorMessage(
+          error,
+          t("categories.failedToLoad")
         );
+
+        setError(message);
+        showError(message);
       } finally {
         setLoading(false);
       }
@@ -41,25 +44,21 @@ const SingleCategory = () => {
     }
   }, [id]);
 
-  // category Fields
+  const locale =
+    i18n.language === "ar" ? "ar-EG" : "en-GB";
 
   const categoryFields = [
     {
       key: "name",
-      label: "category Name",
+      label: t("categories.name"),
     },
-
     {
       key: "description",
-      label: "description",
+      label: t("categories.description"),
     },
-
-    
-    
-
     {
       key: "isActive",
-      label: "Status",
+      label: t("categories.status"),
       render: (value) => (
         <span
           className={`badge ${
@@ -68,42 +67,33 @@ const SingleCategory = () => {
               : "text-bg-danger"
           }`}
         >
-          {value ? "Active" : "Inactive"}
+          {value
+            ? t("categories.active")
+            : t("categories.inactive")}
         </span>
       ),
     },
-
     {
       key: "createdAt",
-      label: "Created At",
-
+      label: t("categories.createdAt"),
       render: (value) =>
         value
-          ? new Date(
-              value
-            ).toLocaleString()
+          ? new Date(value).toLocaleString(locale)
           : "-",
     },
-
     {
       key: "updatedAt",
-      label: "Updated At",
-
+      label: t("categories.updatedAt"),
       render: (value) =>
         value
-          ? new Date(
-              value
-            ).toLocaleString()
+          ? new Date(value).toLocaleString(locale)
           : "-",
     },
   ];
 
-  // Error
-
   if (error) {
     return (
       <div className="container-fluid">
-
         <div className="alert alert-danger">
           {error}
         </div>
@@ -111,34 +101,29 @@ const SingleCategory = () => {
         <button
           type="button"
           className="btn btn-secondary"
-          onClick={() =>
-            navigate("/categories")
-          }
+          onClick={() => navigate("/categories")}
         >
-          Back to categories
+          {t("categories.backToCategories")}
         </button>
-
       </div>
     );
   }
 
-  // Render
-
   return (
     <div className="container-fluid">
-             
-      <Header buttonContent={'Back to categories'} buttonLink={'/categories'} title={'category Details'}/>
-
-      {/* Details */}
+      <Header
+        buttonContent={t("categories.backToCategories")}
+        buttonLink="/categories"
+        title={t("categories.detailsTitle")}
+      />
 
       <DetailsCard
-        title="categories Information"
+        title={t("categories.information")}
         data={category}
         fields={categoryFields}
         loading={loading}
-        emptyMessage="category not found"
+        emptyMessage={t("categories.notFound")}
       />
-
     </div>
   );
 };

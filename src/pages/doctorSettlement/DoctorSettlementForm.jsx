@@ -1,8 +1,19 @@
 
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { createDoctorSettlement } from "../../services/doctorSettlements.service";
+import { useTranslation } from "react-i18next";
+
+import {
+  createDoctorSettlement,
+} from "../../services/doctorSettlements.service";
+
+import {
+  showError,
+  showSuccess,
+} from "../../services/toast.service";
+
+import { getApiErrorMessage } from "../../services/apiError";
+
 import FormInput from "../../components/form/FormInput";
 
 const DoctorSettlementForm = ({
@@ -11,6 +22,7 @@ const DoctorSettlementForm = ({
   onSuccess,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const formik = useFormik({
     initialValues: {
@@ -22,24 +34,43 @@ const DoctorSettlementForm = ({
       const errors = {};
 
       const amount = Number(values.amount || 0);
-      const remaining = Number(remainingAmount || 0);
+      const remaining = Number(
+        remainingAmount || 0
+      );
 
       if (!values.amount) {
-        errors.amount = "Settlement amount is required";
+        errors.amount = t(
+          "doctorSettlement.amountRequired"
+        );
       } else if (amount <= 0) {
-        errors.amount = "Settlement amount must be greater than 0";
+        errors.amount = t(
+          "doctorSettlement.amountGreaterThanZero"
+        );
       } else if (amount > remaining) {
-        errors.amount = `Amount cannot exceed ${remaining}`;
+        errors.amount = t(
+          "doctorSettlement.amountExceedsRemaining",
+          {
+            amount: remaining.toFixed(2),
+          }
+        );
       }
 
-      if (values.notes && values.notes.length > 1000) {
-        errors.notes = "Notes cannot exceed 1000 characters";
+      if (
+        values.notes &&
+        values.notes.length > 1000
+      ) {
+        errors.notes = t(
+          "doctorSettlement.notesMaxLength"
+        );
       }
 
       return errors;
     },
 
-    onSubmit: async (values, { setSubmitting, resetForm }) => {
+    onSubmit: async (
+      values,
+      { setSubmitting, resetForm }
+    ) => {
       try {
         const payload = {
           operation: operation._id,
@@ -47,10 +78,16 @@ const DoctorSettlementForm = ({
           notes: values.notes || "",
         };
 
-        const response = await createDoctorSettlement(payload);
+        const response =
+          await createDoctorSettlement(
+            payload
+          );
 
-        toast.success(
-          response?.message || "Doctor settlement created successfully"
+        showSuccess(
+          response?.message ||
+            t(
+              "doctorSettlement.createdSuccess"
+            )
         );
 
         resetForm();
@@ -58,12 +95,18 @@ const DoctorSettlementForm = ({
         if (onSuccess) {
           onSuccess(response);
         } else {
-          navigate(`/operations/${operation._id}`);
+          navigate(
+            `/operations/${operation._id}`
+          );
         }
       } catch (error) {
-        toast.error(
-          error?.response?.data?.message ||
-            "Failed to create doctor settlement"
+        showError(
+          getApiErrorMessage(
+            error,
+            t(
+              "doctorSettlement.createFailed"
+            )
+          )
         );
       } finally {
         setSubmitting(false);
@@ -77,8 +120,18 @@ const DoctorSettlementForm = ({
         <div className="col-12">
           <div className="alert alert-info mb-0">
             <div className="d-flex justify-content-between">
-              <span>Remaining Doctor Fee</span>
-              <strong>{Number(remainingAmount || 0).toFixed(2)} EGP</strong>
+              <span>
+                {t(
+                  "doctorSettlement.remainingDoctorFee"
+                )}
+              </span>
+
+              <strong>
+                {Number(
+                  remainingAmount || 0
+                ).toFixed(2)}{" "}
+                {t("common.egp")}
+              </strong>
             </div>
           </div>
         </div>
@@ -87,7 +140,9 @@ const DoctorSettlementForm = ({
           <FormInput
             formik={formik}
             name="amount"
-            label="Settlement Amount"
+            label={t(
+              "doctorSettlement.settlementAmount"
+            )}
             type="number"
             min="0.01"
             max={remainingAmount}
@@ -100,9 +155,13 @@ const DoctorSettlementForm = ({
           <FormInput
             formik={formik}
             name="notes"
-            label="Notes"
+            label={t(
+              "doctorSettlement.notes"
+            )}
             textarea
-            placeholder="Enter settlement notes..."
+            placeholder={t(
+              "doctorSettlement.notesPlaceholder"
+            )}
           />
         </div>
 
@@ -112,7 +171,9 @@ const DoctorSettlementForm = ({
             className="btn btn-success"
             disabled={
               formik.isSubmitting ||
-              Number(remainingAmount || 0) <= 0
+              Number(
+                remainingAmount || 0
+              ) <= 0
             }
           >
             {formik.isSubmitting ? (
@@ -121,10 +182,14 @@ const DoctorSettlementForm = ({
                   className="spinner-border spinner-border-sm me-2"
                   role="status"
                 />
-                Processing...
+                {t(
+                  "doctorSettlement.processing"
+                )}
               </>
             ) : (
-              "Pay Doctor"
+              t(
+                "doctorSettlement.payDoctor"
+              )
             )}
           </button>
         </div>

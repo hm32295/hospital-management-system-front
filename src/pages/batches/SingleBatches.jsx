@@ -1,20 +1,20 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import DetailsCard from "../../components/details/DetailsCard";
 import Header from "../../components/header/Header";
 import { getBatchById } from "../../services/batches.service";
-
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const SingleBatches = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const [batches, setBatches] = useState(null);
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
-
-  // Get Batches
 
   useEffect(() => {
     const fetchBatches = async () => {
@@ -23,14 +23,14 @@ const SingleBatches = () => {
         setError("");
         const response = await getBatchById(id);
         setBatches(response.batch);
-console.log(response);
-
       } catch (error) {
-        console.error(error);
-        setError(
-          error.response?.data?.message ||
-            "Failed to load Batches"
+        const message = getApiErrorMessage(
+          error,
+          t("batches.loadDetailsFailed")
         );
+        console.error(error);
+        setError(message);
+        showError(message);
       } finally {
         setLoading(false);
       }
@@ -39,57 +39,47 @@ console.log(response);
     if (id) {
       fetchBatches();
     }
-  }, [id]);
-
+  }, [id, t]);
 
   const batchesFields = [
     {
       key: "medicine",
-        label: "Batches medicine name",
-          render: (medicine) => {
-          return medicine.name
-      }
+      label: t("batches.medicineName"),
+      render: (medicine) => medicine?.name || "-",
     },
     {
-        key: "medicine",
-        label: "Batches medicine generic name",
-        render: (medicine) => {
-        return medicine.genericName
-    }
-},
-{
-    key: "medicine",
-    label: "Batches medicine manufacturer",
-    render: (medicine) => {
-    return medicine.manufacturer
-    }
+      key: "medicine",
+      label: t("batches.genericName"),
+      render: (medicine) => medicine?.genericName || "-",
+    },
+    {
+      key: "medicine",
+      label: t("batches.manufacturer"),
+      render: (medicine) => medicine?.manufacturer || "-",
     },
     {
       key: "sellingPrice",
-      label: "selling Price",
+      label: t("batches.sellingPrice"),
     },
     {
       key: "purchasePrice",
-      label: "purchase Price",
+      label: t("batches.purchasePrice"),
     },
     {
       key: "expiryDate",
-      label: "expiry Date",
+      label: t("batches.expiryDate"),
     },
     {
       key: "quantity",
-      label: "quantity",
+      label: t("batches.quantity"),
     },
     {
       key: "batchNumber",
-      label: "batch Number",
+      label: t("batches.batchNumber"),
     },
-
-    
-
     {
       key: "isActive",
-      label: "Status",
+      label: t("batches.status"),
       render: (value) => (
         <span
           className={`badge ${
@@ -98,42 +88,41 @@ console.log(response);
               : "text-bg-danger"
           }`}
         >
-          {value ? "Active" : "Inactive"}
+          {value
+            ? t("batches.active")
+            : t("batches.inactive")}
         </span>
       ),
     },
-
     {
       key: "createdAt",
-      label: "Created At",
-
+      label: t("batches.createdAt"),
       render: (value) =>
         value
-          ? new Date(
-              value
-            ).toLocaleString()
+          ? new Date(value).toLocaleString(
+              i18n.language === "ar"
+                ? "ar-EG"
+                : "en-GB"
+            )
           : "-",
     },
-
     {
       key: "updatedAt",
-      label: "Updated At",
-
+      label: t("batches.updatedAt"),
       render: (value) =>
         value
-          ? new Date(
-              value
-            ).toLocaleString()
+          ? new Date(value).toLocaleString(
+              i18n.language === "ar"
+                ? "ar-EG"
+                : "en-GB"
+            )
           : "-",
     },
   ];
 
-  // Error
-
   if (error) {
     return (
       <div className="container-fluid">
-
         <div className="alert alert-danger">
           {error}
         </div>
@@ -141,34 +130,29 @@ console.log(response);
         <button
           type="button"
           className="btn btn-secondary"
-          onClick={() =>
-            navigate("/batches")
-          }
+          onClick={() => navigate("/batches")}
         >
-          Back to batches
+          {t("batches.backToBatches")}
         </button>
-
       </div>
     );
   }
 
-  // Render
-
   return (
     <div className="container-fluid">
-             
-      <Header buttonContent={'Back to batches'} buttonLink={'/batches'} title={'Batches Details'}/>
-
-      {/* Details */}
+      <Header
+        buttonContent={t("batches.backToBatches")}
+        buttonLink="/batches"
+        title={t("batches.detailsTitle")}
+      />
 
       <DetailsCard
-        title="batches Information"
+        title={t("batches.information")}
         data={batches}
         fields={batchesFields}
         loading={loading}
-        emptyMessage="Batches not found"
+        emptyMessage={t("batches.notFound")}
       />
-
     </div>
   );
 };

@@ -1,10 +1,13 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
+import { useTranslation } from "react-i18next";
 import { Wallet } from "lucide-react";
 
 import Header from "../../components/header/Header";
 import FormInput from "../../components/form/FormInput";
+import FormSearchSelect from "../../components/form/FormSearchSelect";
 
 import {
   getCurrentCashDrawer,
@@ -13,17 +16,21 @@ import {
 import {
   createExpense,
 } from "../../services/expense.service";
-import FormSearchSelect from "../../components/form/FormSearchSelect";
+
+import {
+  showError,
+  showSuccess,
+} from "../../services/toast.service";
+
+import { getApiErrorMessage } from "../../services/apiError";
 
 const AddExpense = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [drawer, setDrawer] = useState(null);
   const [loadingDrawer, setLoadingDrawer] =
     useState(true);
-
-  const [serverError, setServerError] =
-    useState("");
 
   const formik = useFormik({
     initialValues: {
@@ -39,36 +46,37 @@ const AddExpense = () => {
       { setSubmitting }
     ) => {
       try {
-        setServerError("");
-        if (!drawer) {setServerError("There is no open cash drawer" );
+        if (!drawer) {
+          showError(
+            t("expense.noOpenCashDrawer")
+          );
           return;
         }
 
-        const response = await createExpense({
-          cashDrawer: drawer._id,
-          amount: Number(values.amount),
-          category: values.category,
-          description: values.description,
-          paymentMethod:
-            values.paymentMethod,
-          notes: values.notes,
-        });
+        const response =
+          await createExpense({
+            cashDrawer: drawer._id,
+            amount: Number(values.amount),
+            category: values.category,
+            description:
+              values.description,
+            paymentMethod:
+              values.paymentMethod,
+            notes: values.notes,
+          });
 
-        console.log(
-          "Expense created:",
-          response
+        showSuccess(
+          response?.message ||
+            t("expense.createdSuccess")
         );
 
         navigate("/expenses");
       } catch (error) {
-        console.error(
-          "Create expense error:",
-          error
-        );
-
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to create expense"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("expense.createFailed")
+          )
         );
       } finally {
         setSubmitting(false);
@@ -85,6 +93,13 @@ const AddExpense = () => {
         setDrawer(response.cashDrawer);
       } catch (error) {
         setDrawer(null);
+
+        showError(
+          getApiErrorMessage(
+            error,
+            t("expense.failedLoadCashDrawer")
+          )
+        );
       } finally {
         setLoadingDrawer(false);
       }
@@ -92,16 +107,33 @@ const AddExpense = () => {
 
     fetchDrawer();
   }, []);
+
   const options = () => {
-    return ["supplies", "maintenance", "transportation", "utilities", "salary", "other"]
-      .map(item => {
-        return {value: item,label:item}
-    })
-  }
+    return [
+      "supplies",
+      "maintenance",
+      "transportation",
+      "utilities",
+      "salary",
+      "other",
+    ].map((item) => ({
+      value: item,
+      label: t(
+        `expense.categories.${item}`
+      ),
+    }));
+  };
+
   if (loadingDrawer) {
     return (
       <div className="text-center py-5">
-        <div className="spinner-border" />
+        <div
+          className="spinner-border"
+          role="status"
+        />
+        <div className="mt-2">
+          {t("common.loading")}
+        </div>
       </div>
     );
   }
@@ -109,13 +141,16 @@ const AddExpense = () => {
   return (
     <div>
       <Header
-        title="Add Expense"
-        description="Record an expense from the current cash drawer"
+        title={t("expense.addExpense")}
+        description={t(
+          "expense.addExpenseDescription"
+        )}
       />
 
       {!drawer && (
         <div className="alert alert-warning">
-          There is no open cash drawer.
+          {t("expense.noOpenCashDrawer")}
+
           <button
             className="btn btn-sm btn-primary ms-3"
             onClick={() =>
@@ -124,14 +159,8 @@ const AddExpense = () => {
               )
             }
           >
-            Open Cash Drawer
+            {t("expense.openCashDrawer")}
           </button>
-        </div>
-      )}
-
-      {serverError && (
-        <div className="alert alert-danger">
-          {serverError}
         </div>
       )}
 
@@ -139,12 +168,15 @@ const AddExpense = () => {
         <div className="card border-0 shadow-sm">
           <div className="card-body p-4">
             <div className="alert alert-info">
-              Current Expected Cash:{" "}
+              {t(
+                "expense.currentExpectedCash"
+              )}
+              :{" "}
               <strong>
                 {Number(
                   drawer.expectedCash
                 ).toFixed(2)}{" "}
-                EGP
+                {t("common.egp")}
               </strong>
             </div>
 
@@ -156,9 +188,13 @@ const AddExpense = () => {
                   <FormInput
                     formik={formik}
                     name="amount"
-                    label="Amount"
+                    label={t(
+                      "expense.amount"
+                    )}
                     type="number"
-                    placeholder="Enter expense amount"
+                    placeholder={t(
+                      "expense.amountPlaceholder"
+                    )}
                     required
                   />
                 </div>
@@ -167,12 +203,15 @@ const AddExpense = () => {
                   <FormSearchSelect
                     formik={formik}
                     name="category"
-                    label="Category"
+                    label={t(
+                      "expense.category"
+                    )}
                     type="select"
-                    placeholder="e.g. Electricity"
+                    placeholder={t(
+                      "expense.categoryPlaceholder"
+                    )}
                     required
                     options={options()}
-                    
                   />
                 </div>
 
@@ -180,9 +219,13 @@ const AddExpense = () => {
                   <FormInput
                     formik={formik}
                     name="description"
-                    label="Description"
+                    label={t(
+                      "expense.description"
+                    )}
                     type="text"
-                    placeholder="Enter expense description"
+                    placeholder={t(
+                      "expense.descriptionPlaceholder"
+                    )}
                     required
                   />
                 </div>
@@ -191,7 +234,9 @@ const AddExpense = () => {
                   <FormInput
                     formik={formik}
                     name="paymentMethod"
-                    label="Payment Method"
+                    label={t(
+                      "expense.paymentMethod"
+                    )}
                     type="text"
                     value="cash"
                     disabled
@@ -202,9 +247,13 @@ const AddExpense = () => {
                   <FormInput
                     formik={formik}
                     name="notes"
-                    label="Notes"
+                    label={t(
+                      "expense.notes"
+                    )}
                     type="text"
-                    placeholder="Enter notes"
+                    placeholder={t(
+                      "expense.notesPlaceholder"
+                    )}
                   />
                 </div>
               </div>
@@ -217,7 +266,7 @@ const AddExpense = () => {
                     navigate("/expenses")
                   }
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
 
                 <button
@@ -233,8 +282,8 @@ const AddExpense = () => {
                   />
 
                   {formik.isSubmitting
-                    ? "Saving..."
-                    : "Save Expense"}
+                    ? t("expense.saving")
+                    : t("expense.saveExpense")}
                 </button>
               </div>
             </form>

@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   UserRound,
@@ -12,14 +13,20 @@ import {
 
 import Header from "../../components/header/Header";
 import { getSingleDispensing } from "../../services/dispensed.service";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const SingleDispensed = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [dispensing, setDispensing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const locale =
+    i18n.language === "ar" ? "ar-EG" : "en-GB";
 
   const fetchDispensing = async () => {
     setLoading(true);
@@ -27,15 +34,16 @@ const SingleDispensed = () => {
 
     try {
       const response = await getSingleDispensing(id);
-      console.log(response);
-      
+
       setDispensing(response.dispense || response);
     } catch (error) {
-      console.error("Failed to load dispensing:", error);
-      setError(
-        error.response?.data?.message ||
-          "Failed to load dispensing"
+      const message = getApiErrorMessage(
+        error,
+        t("dispensing.failedToLoad")
       );
+
+      setError(message);
+      showError(message);
     } finally {
       setLoading(false);
     }
@@ -50,8 +58,9 @@ const SingleDispensed = () => {
       <div className="container-fluid py-4">
         <div className="text-center py-5">
           <div className="spinner-border" role="status" />
+
           <div className="mt-3 text-muted">
-            Loading dispensing...
+            {t("dispensing.loading")}
           </div>
         </div>
       </div>
@@ -71,7 +80,7 @@ const SingleDispensed = () => {
           onClick={() => navigate("/dispenses")}
         >
           <ArrowLeft size={17} className="me-2" />
-          Back to Dispenses
+          {t("dispensing.backToDispenses")}
         </button>
       </div>
     );
@@ -81,7 +90,7 @@ const SingleDispensed = () => {
     return (
       <div className="container-fluid py-4">
         <div className="alert alert-warning">
-          Dispensing not found
+          {t("dispensing.notFound")}
         </div>
 
         <button
@@ -90,7 +99,7 @@ const SingleDispensed = () => {
           onClick={() => navigate("/dispenses")}
         >
           <ArrowLeft size={17} className="me-2" />
-          Back to Dispenses
+          {t("dispensing.backToDispenses")}
         </button>
       </div>
     );
@@ -104,8 +113,8 @@ const SingleDispensed = () => {
   return (
     <div>
       <Header
-        title="Dispensing Details"
-        description="View dispensing information and medicines"
+        title={t("dispensing.detailsTitle")}
+        description={t("dispensing.detailsDescription")}
       />
 
       <div className="container-fluid pb-4">
@@ -116,11 +125,11 @@ const SingleDispensed = () => {
             onClick={() => navigate("/dispenses")}
           >
             <ArrowLeft size={17} className="me-2" />
-            Back to Dispenses
+            {t("dispensing.backToDispenses")}
           </button>
 
           <span className="badge text-bg-success px-3 py-2">
-            Dispensed
+            {t("dispensing.dispensed")}
           </span>
         </div>
 
@@ -130,11 +139,14 @@ const SingleDispensed = () => {
               <div className="card-body p-4">
                 <div className="d-flex align-items-center gap-2 mb-3">
                   <UserRound size={20} />
-                  <h5 className="mb-0">Patient</h5>
+                  <h5 className="mb-0">
+                    {t("dispensing.patient")}
+                  </h5>
                 </div>
 
                 <div className="fw-semibold fs-5">
-                  {patient?.name || "No patient"}
+                  {patient?.name ||
+                    t("dispensing.noPatient")}
                 </div>
 
                 {patient?.phone && (
@@ -151,7 +163,9 @@ const SingleDispensed = () => {
               <div className="card-body p-4">
                 <div className="d-flex align-items-center gap-2 mb-3">
                   <ReceiptText size={20} />
-                  <h5 className="mb-0">Sale</h5>
+                  <h5 className="mb-0">
+                    {t("dispensing.sale")}
+                  </h5>
                 </div>
 
                 {sale?._id ? (
@@ -161,29 +175,47 @@ const SingleDispensed = () => {
                     </div>
 
                     <div className="d-flex justify-content-between mt-3">
-                      <span>Total</span>
+                      <span>
+                        {t("dispensing.total")}
+                      </span>
+
                       <strong>
-                        {Number(sale.totalAmount || 0).toFixed(2)} EGP
+                        {Number(
+                          sale.totalAmount || 0
+                        ).toFixed(2)}{" "}
+                        {t("common.egp")}
                       </strong>
                     </div>
 
                     <div className="d-flex justify-content-between mt-2">
-                      <span>Paid</span>
+                      <span>
+                        {t("dispensing.paid")}
+                      </span>
+
                       <strong className="text-success">
-                        {Number(sale.paidAmount || 0).toFixed(2)} EGP
+                        {Number(
+                          sale.paidAmount || 0
+                        ).toFixed(2)}{" "}
+                        {t("common.egp")}
                       </strong>
                     </div>
 
                     <div className="d-flex justify-content-between mt-2">
-                      <span>Status</span>
+                      <span>
+                        {t("dispensing.status")}
+                      </span>
+
                       <span className="badge text-bg-success">
-                        {sale.paymentStatus || "paid"}
+                        {sale.paymentStatus ||
+                          "paid"}
                       </span>
                     </div>
                   </>
                 ) : (
                   <div className="text-muted">
-                    This dispensing is not linked to a sale.
+                    {t(
+                      "dispensing.notLinkedToSale"
+                    )}
                   </div>
                 )}
               </div>
@@ -195,7 +227,9 @@ const SingleDispensed = () => {
               <div className="card-body p-4">
                 <div className="d-flex align-items-center gap-2 mb-3">
                   <UserCog size={20} />
-                  <h5 className="mb-0">Created By</h5>
+                  <h5 className="mb-0">
+                    {t("dispensing.createdBy")}
+                  </h5>
                 </div>
 
                 <div className="fw-semibold">
@@ -216,14 +250,16 @@ const SingleDispensed = () => {
               <div className="card-body p-4">
                 <div className="d-flex align-items-center gap-2 mb-3">
                   <CalendarDays size={20} />
-                  <h5 className="mb-0">Dispensing Date</h5>
+                  <h5 className="mb-0">
+                    {t("dispensing.dispensingDate")}
+                  </h5>
                 </div>
 
                 <div className="fw-semibold">
                   {dispensing.createdAt
                     ? new Date(
                         dispensing.createdAt
-                      ).toLocaleDateString("en-GB")
+                      ).toLocaleDateString(locale)
                     : "-"}
                 </div>
 
@@ -231,7 +267,7 @@ const SingleDispensed = () => {
                   <div className="text-muted small mt-1">
                     {new Date(
                       dispensing.createdAt
-                    ).toLocaleTimeString("en-GB", {
+                    ).toLocaleTimeString(locale, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -246,7 +282,11 @@ const SingleDispensed = () => {
               <div className="card-body p-4">
                 <div className="d-flex align-items-center gap-2 mb-3">
                   <PackageCheck size={20} />
-                  <h5 className="mb-0">Dispensed Medicines</h5>
+                  <h5 className="mb-0">
+                    {t(
+                      "dispensing.dispensedMedicines"
+                    )}
+                  </h5>
                 </div>
 
                 <div className="table-responsive">
@@ -254,45 +294,63 @@ const SingleDispensed = () => {
                     <thead>
                       <tr>
                         <th>#</th>
-                        <th>Medicine</th>
-                        <th>Generic Name</th>
-                        <th>Batch</th>
-                        <th>expiry</th>
-                        <th>Quantity</th>
+                        <th>{t("dispensing.medicine")}</th>
+                        <th>{t("dispensing.genericName")}</th>
+                        <th>{t("dispensing.batch")}</th>
+                        <th>{t("dispensing.expiry")}</th>
+                        <th>{t("dispensing.quantity")}</th>
                       </tr>
                     </thead>
 
                     <tbody>
                       {items.length > 0 ? (
                         items.map((item, index) => (
-                          <tr key={`${item.medicine?._id || index}-${index}`}>
+                          <tr
+                            key={`${
+                              item.medicine?._id ||
+                              index
+                            }-${index}`}
+                          >
                             <td>{index + 1}</td>
 
                             <td>
                               <div className="fw-semibold">
-                                {item.medicine?.name || "-"}
+                                {item.medicine?.name ||
+                                  "-"}
                               </div>
 
-                              {item.medicine?.manufacturer && (
+                              {item.medicine
+                                ?.manufacturer && (
                                 <div className="text-muted small">
-                                  {item.medicine.manufacturer}
+                                  {
+                                    item.medicine
+                                      .manufacturer
+                                  }
                                 </div>
                               )}
                             </td>
 
                             <td>
-                              {item.medicine?.genericName || "-"}
+                              {item.medicine
+                                ?.genericName || "-"}
                             </td>
 
                             <td>
-                              {item.batch?.batchNumber ||
+                              {item.batch
+                                ?.batchNumber ||
                                 item.batch ||
                                 "-"}
                             </td>
+
                             <td>
-                              {item.batch?.expiryDate ||
-                                item.batch ||
-                                "-"}
+                              {item.batch?.expiryDate
+                                ? new Date(
+                                    item.batch
+                                      .expiryDate
+                                  ).toLocaleDateString(
+                                    locale
+                                  )
+                                : item.batch || "-"}
                             </td>
 
                             <td>
@@ -305,10 +363,12 @@ const SingleDispensed = () => {
                       ) : (
                         <tr>
                           <td
-                            colSpan="5"
+                            colSpan="6"
                             className="text-center text-muted py-4"
                           >
-                            No medicines found
+                            {t(
+                              "dispensing.noMedicines"
+                            )}
                           </td>
                         </tr>
                       )}
@@ -322,7 +382,9 @@ const SingleDispensed = () => {
           <div className="col-12">
             <div className="card border-0 shadow-sm">
               <div className="card-body p-4">
-                <h5 className="mb-3">Reason</h5>
+                <h5 className="mb-3">
+                  {t("dispensing.reason")}
+                </h5>
 
                 <div className="bg-light rounded p-3">
                   {dispensing.reason || "-"}
@@ -337,4 +399,3 @@ const SingleDispensed = () => {
 };
 
 export default SingleDispensed;
-

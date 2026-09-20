@@ -1,44 +1,42 @@
-import { useState } from "react";
+
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
+import { useTranslation } from "react-i18next";
 import { Wallet } from "lucide-react";
-
 import Header from "../../components/header/Header";
 import FormInput from "../../components/form/FormInput";
-
-import {
-  openCashDrawer,
-} from "../../services/cashDrawer.service";
+import { openCashDrawer } from "../../services/cashDrawer.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const AddCashDrawer = () => {
   const navigate = useNavigate();
-
-  const [serverError, setServerError] = useState("");
+  const { t } = useTranslation();
 
   const formik = useFormik({
     initialValues: {
       openingBalance: "",
       notes: "",
     },
-
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        setServerError("");
-
         const response = await openCashDrawer({
           openingBalance: Number(values.openingBalance || 0),
           notes: values.notes,
         });
 
-        console.log("Cash drawer opened:", response);
+        showSuccess(
+          response?.message ||
+            t("cashDrawers.openSuccess")
+        );
 
-        navigate("/cash-drawers/current");
+        navigate("/cash-drawers/");
       } catch (error) {
-        console.error("Open cash drawer error:", error);
-
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to open cash drawer"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("cashDrawers.openFailed")
+          )
         );
       } finally {
         setSubmitting(false);
@@ -49,15 +47,11 @@ const AddCashDrawer = () => {
   return (
     <div>
       <Header
-        title="Open Cash Drawer"
-        description="Open a new cash drawer for today's operations"
+        title={t("cashDrawers.openTitle")}
+        description={t("cashDrawers.openDescription")}
+        buttonContent={t("cashDrawers.backToCashDrawers")}
+        buttonLink="/cash-drawers"
       />
-
-      {serverError && (
-        <div className="alert alert-danger">
-          {serverError}
-        </div>
-      )}
 
       <div className="card border-0 shadow-sm">
         <div className="card-body p-4">
@@ -67,9 +61,11 @@ const AddCashDrawer = () => {
                 <FormInput
                   formik={formik}
                   name="openingBalance"
-                  label="Opening Balance"
+                  label={t("cashDrawers.openingBalance")}
                   type="number"
-                  placeholder="Enter opening balance"
+                  placeholder={t(
+                    "cashDrawers.openingBalancePlaceholder"
+                  )}
                   required
                 />
               </div>
@@ -78,9 +74,11 @@ const AddCashDrawer = () => {
                 <FormInput
                   formik={formik}
                   name="notes"
-                  label="Notes"
+                  label={t("cashDrawers.notes")}
                   type="text"
-                  placeholder="Enter notes"
+                  placeholder={t(
+                    "cashDrawers.notesPlaceholder"
+                  )}
                 />
               </div>
             </div>
@@ -94,7 +92,7 @@ const AddCashDrawer = () => {
                 }
                 disabled={formik.isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
@@ -103,10 +101,9 @@ const AddCashDrawer = () => {
                 disabled={formik.isSubmitting}
               >
                 <Wallet size={18} className="me-2" />
-
                 {formik.isSubmitting
-                  ? "Opening..."
-                  : "Open Cash Drawer"}
+                  ? t("cashDrawers.opening")
+                  : t("cashDrawers.openDrawer")}
               </button>
             </div>
           </form>

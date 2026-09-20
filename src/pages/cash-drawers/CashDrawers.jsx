@@ -1,14 +1,22 @@
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getAllCashDrawers } from "../../services/cashDrawer.service";
 import AdminDataPage from "../../components/table/AdminDataPage";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const CashDrawers = () => {
+  const { t, i18n } = useTranslation();
+
   const [drawers, setDrawers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [serverError, setServerError] = useState("");
-
-  const [pagination, setPagination] = useState({page: 1,total: 0,limit: 10});
+  const [pagination, setPagination] = useState({
+    page: 1,
+    total: 0,
+    limit: 10,
+  });
 
   const fetchDrawers = async () => {
     try {
@@ -16,19 +24,24 @@ const CashDrawers = () => {
       setServerError("");
 
       const response = await getAllCashDrawers({
-        page: pagination.page,limit: pagination.limit,
+        page: pagination.page,
+        limit: pagination.limit,
       });
 
       setDrawers(response.cashDrawers || []);
+
       setPagination((prev) => ({
         ...prev,
         ...(response.pagination || {}),
       }));
     } catch (error) {
-      setServerError(
-        error.response?.data?.message ||
-          "Failed to load cash drawers"
+      const message = getApiErrorMessage(
+        error,
+        t("cashDrawers.loadFailed")
       );
+
+      setServerError(message);
+      showError(message);
     } finally {
       setLoading(false);
     }
@@ -36,71 +49,58 @@ const CashDrawers = () => {
 
   useEffect(() => {
     fetchDrawers();
-  }, []);
-  useEffect(() => {
-      const fetchDrawers = async () => {
-    try {
-      setLoading(true);
-      setServerError("");
+  }, [pagination.page, pagination.limit]);
 
-      const response = await getAllCashDrawers({page: pagination.page,limit: pagination.limit});
+  const formatMoney = (value) =>
+    `${Number(value || 0).toFixed(2)} ${t("common.egp")}`;
 
-      setDrawers(response.cashDrawers || []);
-
-    } catch (error) {
-      setServerError(
-        error.response?.data?.message ||
-          "Failed to load cash drawers"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-    fetchDrawers();
-  }, [pagination]);
+  const formatDate = (value) =>
+    value
+      ? new Date(value).toLocaleDateString(
+          i18n.language === "ar"
+            ? "ar-EG"
+            : "en-GB"
+        )
+      : "-";
 
   const columns = [
     {
       key: "openedBy",
-      label: "Opened By",
-      render: (drawer) => drawer.openedBy?.name || "-",
+      label: t("cashDrawers.openedBy"),
+      render: (drawer) =>
+        drawer.openedBy?.name || "-",
     },
-
     {
       key: "openingBalance",
-      label: "Opening",
+      label: t("cashDrawers.opening"),
       render: (drawer) =>
-        `${Number(drawer.openingBalance || 0).toFixed(2)} EGP`,
+        formatMoney(drawer.openingBalance),
     },
-
     {
       key: "expectedCash",
-      label: "Expected",
+      label: t("cashDrawers.expected"),
       render: (drawer) =>
-        `${Number(drawer.expectedCash || 0).toFixed(2)} EGP`,
+        formatMoney(drawer.expectedCash),
     },
-
     {
       key: "actualCash",
-      label: "Actual",
+      label: t("cashDrawers.actual"),
       render: (drawer) =>
         drawer.status === "closed"
-          ? `${Number(drawer.actualCash || 0).toFixed(2)} EGP`
+          ? formatMoney(drawer.actualCash)
           : "-",
     },
-
     {
       key: "difference",
-      label: "Difference",
+      label: t("cashDrawers.difference"),
       render: (drawer) =>
         drawer.status === "closed"
-          ? `${Number(drawer.difference || 0).toFixed(2)} EGP`
+          ? formatMoney(drawer.difference)
           : "-",
     },
-
     {
       key: "status",
-      label: "Status",
+      label: t("cashDrawers.status"),
       render: (drawer) => (
         <span
           className={`badge ${
@@ -109,33 +109,33 @@ const CashDrawers = () => {
               : "text-bg-secondary"
           }`}
         >
-          {drawer.status}
+          {drawer.status === "open"
+            ? t("cashDrawers.statuses.open")
+            : t("cashDrawers.statuses.closed")}
         </span>
       ),
     },
-
     {
       key: "openedAt",
-      label: "Opened At",
+      label: t("cashDrawers.openedAt"),
       render: (drawer) =>
-        drawer.openedAt
-          ? new Date(drawer.openedAt).toLocaleDateString("en-GB")
-          : "-",
+        formatDate(drawer.openedAt),
     },
   ];
 
   const actions = [
     {
       type: "show",
-      label: "View Cash Drawer",
-      link: (drawer) => `/cash-drawers/${drawer._id}`,
+      label: t("cashDrawers.viewDrawer"),
+      link: (drawer) =>
+        `/cash-drawers/${drawer._id}`,
     },
   ];
 
   return (
     <AdminDataPage
-      title="Cash Drawers"
-      subtitle="View all cash drawer sessions"
+      title={t("cashDrawers.title")}
+      subtitle={t("cashDrawers.subtitle")}
       type="Open"
       addLink="/cash-drawers/open"
       data={drawers}
@@ -144,10 +144,13 @@ const CashDrawers = () => {
       loading={loading}
       pagination={pagination}
       onPageChange={(page) =>
-        setPagination((prev) => ({...prev ,page}))
+        setPagination((prev) => ({
+          ...prev,
+          page,
+        }))
       }
       emptyMessage={
-        serverError || "No cash drawers found"
+        serverError || t("cashDrawers.noDrawers")
       }
     />
   );

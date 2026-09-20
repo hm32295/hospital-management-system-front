@@ -1,17 +1,19 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Wallet } from "lucide-react";
-import { toast } from "react-toastify";
-
+import { useTranslation } from "react-i18next";
 import { getOperation } from "../../services/operations.service";
 import { getOperationSettlements } from "../../services/doctorSettlements.service";
-
 import DetailsCard from "../../components/details/DetailsCard";
 import DoctorSettlementForm from "./DoctorSettlementForm";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const DoctorSettlementPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [operation, setOperation] = useState(null);
   const [settlements, setSettlements] = useState([]);
@@ -24,7 +26,8 @@ const DoctorSettlementPage = () => {
 
       if (!response?.success) {
         throw new Error(
-          response?.message || "Failed to load operation"
+          response?.message ||
+            t("operations.loadFailed")
         );
       }
 
@@ -32,10 +35,11 @@ const DoctorSettlementPage = () => {
     } catch (error) {
       console.error("GET OPERATION ERROR:", error);
 
-      toast.error(
-        error?.response?.data?.message ||
-          error.message ||
-          "Failed to load operation"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.loadFailed")
+        )
       );
     }
   };
@@ -44,12 +48,13 @@ const DoctorSettlementPage = () => {
     try {
       setSettlementsLoading(true);
 
-      const response = await getOperationSettlements(id);
+      const response =
+        await getOperationSettlements(id);
 
       if (!response?.success) {
         throw new Error(
           response?.message ||
-            "Failed to load doctor settlements"
+            t("operations.loadSettlementsFailed")
         );
       }
 
@@ -60,10 +65,11 @@ const DoctorSettlementPage = () => {
         error
       );
 
-      toast.error(
-        error?.response?.data?.message ||
-          error.message ||
-          "Failed to load doctor settlements"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.loadSettlementsFailed")
+        )
       );
     } finally {
       setSettlementsLoading(false);
@@ -93,13 +99,39 @@ const DoctorSettlementPage = () => {
     await loadData();
   };
 
+  const formatMoney = (value) => {
+    return `${Number(value || 0).toFixed(2)} ${t(
+      "common.egp"
+    )}`;
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "-";
+
+    return new Date(date).toLocaleDateString(
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-GB"
+    );
+  };
+
+  const formatDateTime = (date) => {
+    if (!date) return "-";
+
+    return new Date(date).toLocaleString(
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-GB"
+    );
+  };
+
   if (loading) {
     return (
       <div className="admin-data-page">
         <div className="d-flex justify-content-center py-5">
           <div className="spinner-border text-primary">
             <span className="visually-hidden">
-              Loading...
+              {t("common.loading")}
             </span>
           </div>
         </div>
@@ -111,7 +143,7 @@ const DoctorSettlementPage = () => {
     return (
       <div className="admin-data-page">
         <div className="alert alert-danger">
-          Operation not found
+          {t("operations.operationNotFound")}
         </div>
       </div>
     );
@@ -127,7 +159,9 @@ const DoctorSettlementPage = () => {
         return total;
       }
 
-      return total + Number(settlement.amount || 0);
+      return (
+        total + Number(settlement.amount || 0)
+      );
     },
     0
   );
@@ -141,15 +175,13 @@ const DoctorSettlementPage = () => {
     operation.doctorFeeType === "percentage"
       ? `${operation.doctorFeeValue}%`
       : operation.doctorFeeType === "fixed"
-      ? `${Number(
-          operation.doctorFeeValue || 0
-        ).toFixed(2)} EGP`
-      : "None";
+      ? formatMoney(operation.doctorFeeValue)
+      : t("operations.feeTypes.none");
 
   const operationFields = [
     {
       key: "patient.name",
-      label: "Patient",
+      label: t("operations.patient"),
       nav: (value, data) =>
         value
           ? `/patients/${data.patient?._id}`
@@ -157,7 +189,7 @@ const DoctorSettlementPage = () => {
     },
     {
       key: "doctor.name",
-      label: "Doctor",
+      label: t("operations.doctor"),
       nav: (value, data) =>
         value
           ? `/doctors/${data.doctor?._id}`
@@ -165,40 +197,35 @@ const DoctorSettlementPage = () => {
     },
     {
       key: "specialty.name",
-      label: "Specialty",
+      label: t("operations.specialty"),
     },
     {
       key: "operationName",
-      label: "Operation",
+      label: t("operations.operation"),
     },
     {
       key: "operationDate",
-      label: "Operation Date",
-      render: (value) =>
-        value
-          ? new Date(value).toLocaleDateString("en-GB")
-          : "-",
+      label: t("operations.operationDate"),
+      render: (value) => formatDate(value),
     },
     {
       key: "totalAmount",
-      label: "Operation Total",
-      render: (value) =>
-        `${Number(value || 0).toFixed(2)} EGP`,
+      label: t("operations.operationTotal"),
+      render: (value) => formatMoney(value),
     },
     {
       key: "doctorFeeType",
-      label: "Doctor Fee Type",
+      label: t("operations.doctorFeeType"),
       render: () => doctorFeeType,
     },
     {
       key: "doctorFeeAmount",
-      label: "Doctor Fee",
-      render: (value) =>
-        `${Number(value || 0).toFixed(2)} EGP`,
+      label: t("operations.doctorFee"),
+      render: (value) => formatMoney(value),
     },
     {
       key: "paymentStatus",
-      label: "Payment Status",
+      label: t("operations.paymentStatus"),
       render: (value) => (
         <span
           className={`badge ${
@@ -209,13 +236,25 @@ const DoctorSettlementPage = () => {
               : "bg-secondary"
           }`}
         >
-          {value || "-"}
+          {value === "paid"
+            ? t(
+                "operations.paymentStatuses.paid"
+              )
+            : value === "partial"
+            ? t(
+                "operations.paymentStatuses.partial"
+              )
+            : value === "unpaid"
+            ? t(
+                "operations.paymentStatuses.unpaid"
+              )
+            : "-"}
         </span>
       ),
     },
     {
       key: "status",
-      label: "Operation Status",
+      label: t("operations.operationStatus"),
       render: (value) => (
         <span
           className={`badge ${
@@ -226,7 +265,19 @@ const DoctorSettlementPage = () => {
               : "bg-warning text-dark"
           }`}
         >
-          {value || "-"}
+          {value === "completed"
+            ? t(
+                "operations.statuses.completed"
+              )
+            : value === "cancelled"
+            ? t(
+                "operations.statuses.cancelled"
+              )
+            : value === "pending"
+            ? t(
+                "operations.statuses.pending"
+              )
+            : "-"}
         </span>
       ),
     },
@@ -237,11 +288,13 @@ const DoctorSettlementPage = () => {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 className="mb-1">
-            Doctor Settlement
+            {t("operations.doctorSettlement")}
           </h4>
 
           <p className="text-muted mb-0">
-            Manage payments for the operation doctor
+            {t(
+              "operations.doctorSettlementDescription"
+            )}
           </p>
         </div>
 
@@ -253,7 +306,7 @@ const DoctorSettlementPage = () => {
           }
         >
           <ArrowLeft size={16} />
-          Back to Operation
+          {t("operations.backToOperation")}
         </button>
       </div>
 
@@ -267,11 +320,11 @@ const DoctorSettlementPage = () => {
           <div className="card h-100">
             <div className="card-body">
               <div className="text-muted mb-2">
-                Doctor Fee
+                {t("operations.doctorFee")}
               </div>
 
               <h4 className="mb-0">
-                {doctorFeeAmount.toFixed(2)} EGP
+                {formatMoney(doctorFeeAmount)}
               </h4>
             </div>
           </div>
@@ -281,11 +334,11 @@ const DoctorSettlementPage = () => {
           <div className="card h-100">
             <div className="card-body">
               <div className="text-muted mb-2">
-                Paid to Doctor
+                {t("operations.paidToDoctor")}
               </div>
 
               <h4 className="mb-0 text-success">
-                {paidToDoctor.toFixed(2)} EGP
+                {formatMoney(paidToDoctor)}
               </h4>
             </div>
           </div>
@@ -295,11 +348,11 @@ const DoctorSettlementPage = () => {
           <div className="card h-100">
             <div className="card-body">
               <div className="text-muted mb-2">
-                Remaining
+                {t("operations.remainingDoctorFee")}
               </div>
 
               <h4 className="mb-0 text-danger">
-                {remainingDoctorFee.toFixed(2)} EGP
+                {formatMoney(remainingDoctorFee)}
               </h4>
             </div>
           </div>
@@ -308,20 +361,20 @@ const DoctorSettlementPage = () => {
 
       {operation.status === "cancelled" ? (
         <div className="alert alert-danger mt-4">
-          This operation is cancelled. Doctor settlement
-          is not available.
+          {t("operations.settlementNotAvailable")}
         </div>
       ) : operation.paymentStatus !== "paid" ? (
         <div className="alert alert-warning mt-4">
-          The operation must be fully paid before paying
-          the doctor.
+          {t("operations.mustBeFullyPaid")}
         </div>
       ) : remainingDoctorFee > 0 ? (
         <div className="card mt-4">
           <div className="card-header">
             <div className="d-flex align-items-center gap-2">
               <Wallet size={18} />
-              <strong>Pay Doctor</strong>
+              <strong>
+                {t("operations.payDoctor")}
+              </strong>
             </div>
           </div>
 
@@ -335,13 +388,15 @@ const DoctorSettlementPage = () => {
         </div>
       ) : (
         <div className="alert alert-success mt-4">
-          Doctor fee has been fully paid.
+          {t("operations.doctorFeeFullyPaid")}
         </div>
       )}
 
       <div className="card mt-4">
         <div className="card-header">
-          <strong>Settlement History</strong>
+          <strong>
+            {t("operations.settlementHistory")}
+          </strong>
         </div>
 
         <div className="card-body p-0">
@@ -349,12 +404,24 @@ const DoctorSettlementPage = () => {
             <table className="table table-hover mb-0">
               <thead>
                 <tr>
-                  <th className="text-center">#</th>
-                  <th className="text-center">Amount</th>
-                  <th className="text-center">Status</th>
-                  <th className="text-center">Paid By</th>
-                  <th className="text-center">Date</th>
-                  <th className="text-center">Notes</th>
+                  <th className="text-center">
+                    #
+                  </th>
+                  <th className="text-center">
+                    {t("operations.amount")}
+                  </th>
+                  <th className="text-center">
+                    {t("operations.status")}
+                  </th>
+                  <th className="text-center">
+                    {t("operations.paidBy")}
+                  </th>
+                  <th className="text-center">
+                    {t("operations.date")}
+                  </th>
+                  <th className="text-center">
+                    {t("operations.notes")}
+                  </th>
                 </tr>
               </thead>
 
@@ -367,18 +434,21 @@ const DoctorSettlementPage = () => {
                     >
                       <div className="spinner-border text-primary">
                         <span className="visually-hidden">
-                          Loading...
+                          {t("common.loading")}
                         </span>
                       </div>
                     </td>
                   </tr>
-                ) : settlements.length === 0 ? (
+                ) : settlements.length ===
+                  0 ? (
                   <tr>
                     <td
                       colSpan="6"
                       className="text-center py-4 text-muted"
                     >
-                      No settlement payments found
+                      {t(
+                        "operations.noSettlementPayments"
+                      )}
                     </td>
                   </tr>
                 ) : (
@@ -386,7 +456,8 @@ const DoctorSettlementPage = () => {
                     (settlement, index) => (
                       <tr
                         key={
-                          settlement._id || index
+                          settlement._id ||
+                          index
                         }
                       >
                         <td className="text-center">
@@ -394,10 +465,9 @@ const DoctorSettlementPage = () => {
                         </td>
 
                         <td className="text-center fw-semibold">
-                          {Number(
-                            settlement.amount || 0
-                          ).toFixed(2)}{" "}
-                          EGP
+                          {formatMoney(
+                            settlement.amount
+                          )}
                         </td>
 
                         <td className="text-center">
@@ -409,7 +479,18 @@ const DoctorSettlementPage = () => {
                                 : "bg-danger"
                             }`}
                           >
-                            {settlement.status}
+                            {settlement.status ===
+                            "completed"
+                              ? t(
+                                  "operations.settlementStatuses.completed"
+                                )
+                              : settlement.status ===
+                                "cancelled"
+                              ? t(
+                                  "operations.settlementStatuses.cancelled"
+                                )
+                              : settlement.status ||
+                                "-"}
                           </span>
                         </td>
 
@@ -419,11 +500,9 @@ const DoctorSettlementPage = () => {
                         </td>
 
                         <td className="text-center">
-                          {settlement.createdAt
-                            ? new Date(
-                                settlement.createdAt
-                              ).toLocaleString()
-                            : "-"}
+                          {formatDateTime(
+                            settlement.createdAt
+                          )}
                         </td>
 
                         <td className="text-center">

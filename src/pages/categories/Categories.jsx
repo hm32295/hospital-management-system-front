@@ -1,14 +1,20 @@
+
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+
 import AdminDataPage from "../../components/table/AdminDataPage";
 import {
   deleteCategory,
   getCategory,
 } from "../../services/category.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const Categories = () => {
+  const { t } = useTranslation();
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [serverError, setServerError] = useState("");
   const [filtersState, setFiltersState] = useState({});
   const [pagination, setPagination] = useState({
     limit: 10,
@@ -19,17 +25,27 @@ const Categories = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      setServerError("");
 
-      const response = await getCategory({limit: pagination.limit, page: pagination.page,...filtersState});
+      const response = await getCategory({
+        limit: pagination.limit,
+        page: pagination.page,
+        ...filtersState,
+      });
+
       setCategories(response.categories || []);
+
       if (response.pagination) {
-        setPagination((prev) => ({...prev,...response.pagination}));
+        setPagination((prev) => ({
+          ...prev,
+          ...response.pagination,
+        }));
       }
     } catch (error) {
-      setServerError(
-        error.response?.data?.message ||
-          "Failed to load categories"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("categories.failedToLoad")
+        )
       );
     } finally {
       setLoading(false);
@@ -39,14 +55,20 @@ const Categories = () => {
   const fetchDeactivatedCategory = async (id) => {
     try {
       setLoading(true);
-      setServerError("");
 
-      await deleteCategory(id);
+      const response = await deleteCategory(id);
+
+      showSuccess(
+        response?.message || t("categories.deactivateSuccess")
+      );
+
       await fetchCategories();
     } catch (error) {
-      setServerError(
-        error.response?.data?.message ||
-          "Failed to deactivate category"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("categories.failedToDeactivate")
+        )
       );
     } finally {
       setLoading(false);
@@ -72,9 +94,9 @@ const Categories = () => {
   const filters = [
     {
       name: "search",
-      label: "Search",
+      label: t("categories.search"),
       type: "text",
-      placeholder: "Search category...",
+      placeholder: t("categories.searchPlaceholder"),
       value: filtersState.search,
       col: "col-12 col-md-6 col-lg-4",
     },
@@ -83,11 +105,11 @@ const Categories = () => {
   const columns = [
     {
       key: "name",
-      label: "Category",
+      label: t("categories.category"),
     },
     {
       key: "isActive",
-      label: "Status",
+      label: t("categories.status"),
       render: (category) => (
         <span
           className={`badge ${
@@ -96,13 +118,15 @@ const Categories = () => {
               : "text-bg-danger"
           }`}
         >
-          {category.isActive ? "Active" : "Inactive"}
+          {category.isActive
+            ? t("categories.active")
+            : t("categories.inactive")}
         </span>
       ),
     },
     {
       key: "description",
-      label: "Description",
+      label: t("categories.description"),
       render: (category) => {
         if (!category.description) {
           return "-";
@@ -124,19 +148,19 @@ const Categories = () => {
   const actions = [
     {
       type: "show",
-      label: "Show",
+      label: t("common.view"),
       link: (category) =>
         `/categories/${category._id}`,
     },
     {
       type: "edit",
-      label: "Edit",
+      label: t("common.edit"),
       link: (category) =>
         `/categories/edit/${category._id}`,
     },
     {
       type: "delete",
-      label: "Delete",
+      label: t("common.delete"),
       onClick: (category) =>
         fetchDeactivatedCategory(category._id),
     },
@@ -144,8 +168,8 @@ const Categories = () => {
 
   return (
     <AdminDataPage
-      title="Categories"
-      subtitle="Manage your categories and inventory"
+      title={t("categories.listTitle")}
+      subtitle={t("categories.listDescription")}
       loading={loading}
       columns={columns}
       filters={filters}
@@ -162,9 +186,7 @@ const Categories = () => {
           page,
         }));
       }}
-      emptyMessage={
-        serverError || "No categories found"
-      }
+      emptyMessage={t("categories.noCategories")}
     />
   );
 };

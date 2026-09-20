@@ -1,20 +1,21 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Wallet,
   LockKeyhole,
   RefreshCw,
   Plus,
 } from "lucide-react";
-
 import Header from "../../components/header/Header";
-
-import {
-  getCurrentCashDrawer,
-} from "../../services/cashDrawer.service";
+import { getCurrentCashDrawer } from "../../services/cashDrawer.service";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const CurrentCashDrawer = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [drawer, setDrawer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,16 +27,18 @@ const CurrentCashDrawer = () => {
       setServerError("");
 
       const response = await getCurrentCashDrawer();
-
       setDrawer(response.cashDrawer);
     } catch (error) {
       if (error.response?.status === 404) {
         setDrawer(null);
       } else {
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to load cash drawer"
+        const message = getApiErrorMessage(
+          error,
+          t("cashDrawers.loadFailed")
         );
+
+        setServerError(message);
+        showError(message);
       }
     } finally {
       setLoading(false);
@@ -46,11 +49,25 @@ const CurrentCashDrawer = () => {
     fetchDrawer();
   }, []);
 
+  const formatMoney = (value) =>
+    `${Number(value || 0).toFixed(2)} ${t("common.egp")}`;
+
+  const formatDate = (value) =>
+    value
+      ? new Date(value).toLocaleString(
+          i18n.language === "ar"
+            ? "ar-EG"
+            : "en-GB"
+        )
+      : "-";
+
   return (
     <div>
       <Header
-        title="Current Cash Drawer"
-        description="View and manage the currently open cash drawer"
+        title={t("cashDrawers.currentTitle")}
+        description={t(
+          "cashDrawers.currentDescription"
+        )}
       />
 
       {serverError && (
@@ -66,12 +83,19 @@ const CurrentCashDrawer = () => {
       ) : !drawer ? (
         <div className="card border-0 shadow-sm">
           <div className="card-body text-center py-5">
-            <Wallet size={45} className="text-muted mb-3" />
+            <Wallet
+              size={45}
+              className="text-muted mb-3"
+            />
 
-            <h5>No Open Cash Drawer</h5>
+            <h5>
+              {t("cashDrawers.noOpenDrawer")}
+            </h5>
 
             <p className="text-muted">
-              There is currently no open cash drawer.
+              {t(
+                "cashDrawers.noOpenDrawerDescription"
+              )}
             </p>
 
             <button
@@ -81,7 +105,7 @@ const CurrentCashDrawer = () => {
               }
             >
               <Plus size={18} className="me-2" />
-              Open Cash Drawer
+              {t("cashDrawers.openDrawer")}
             </button>
           </div>
         </div>
@@ -92,8 +116,11 @@ const CurrentCashDrawer = () => {
               className="btn btn-outline-secondary"
               onClick={fetchDrawer}
             >
-              <RefreshCw size={17} className="me-2" />
-              Refresh
+              <RefreshCw
+                size={17}
+                className="me-2"
+              />
+              {t("cashDrawers.refresh")}
             </button>
           </div>
 
@@ -102,14 +129,12 @@ const CurrentCashDrawer = () => {
               <div className="card border-0 shadow-sm">
                 <div className="card-body">
                   <div className="text-muted small">
-                    Opening Balance
+                    {t("cashDrawers.openingBalance")}
                   </div>
-
                   <h3 className="mt-2 mb-0">
-                    {Number(
+                    {formatMoney(
                       drawer.openingBalance
-                    ).toFixed(2)}{" "}
-                    EGP
+                    )}
                   </h3>
                 </div>
               </div>
@@ -119,14 +144,12 @@ const CurrentCashDrawer = () => {
               <div className="card border-0 shadow-sm">
                 <div className="card-body">
                   <div className="text-muted small">
-                    Expected Cash
+                    {t("cashDrawers.expectedCash")}
                   </div>
-
                   <h3 className="mt-2 mb-0 text-success">
-                    {Number(
+                    {formatMoney(
                       drawer.expectedCash
-                    ).toFixed(2)}{" "}
-                    EGP
+                    )}
                   </h3>
                 </div>
               </div>
@@ -136,12 +159,13 @@ const CurrentCashDrawer = () => {
               <div className="card border-0 shadow-sm">
                 <div className="card-body">
                   <div className="text-muted small">
-                    Status
+                    {t("cashDrawers.status")}
                   </div>
-
                   <div className="mt-2">
                     <span className="badge text-bg-success">
-                      OPEN
+                      {t(
+                        "cashDrawers.statuses.open"
+                      )}
                     </span>
                   </div>
                 </div>
@@ -152,13 +176,10 @@ const CurrentCashDrawer = () => {
               <div className="card border-0 shadow-sm">
                 <div className="card-body">
                   <div className="text-muted small">
-                    Opened At
+                    {t("cashDrawers.openedAt")}
                   </div>
-
                   <div className="fw-semibold mt-2">
-                    {new Date(
-                      drawer.openedAt
-                    ).toLocaleString("en-GB")}
+                    {formatDate(drawer.openedAt)}
                   </div>
                 </div>
               </div>
@@ -168,37 +189,34 @@ const CurrentCashDrawer = () => {
               <div className="card border-0 shadow-sm">
                 <div className="card-body">
                   <h5 className="mb-4">
-                    Cash Drawer Information
+                    {t(
+                      "cashDrawers.information"
+                    )}
                   </h5>
 
                   <div className="row g-3">
                     <div className="col-md-6">
                       <div className="text-muted small">
-                        Opened By
+                        {t("cashDrawers.openedBy")}
                       </div>
-
                       <div className="fw-semibold">
-                        {drawer.openedBy?.name ||
-                          "-"}
+                        {drawer.openedBy?.name || "-"}
                       </div>
                     </div>
 
                     <div className="col-md-6">
                       <div className="text-muted small">
-                        Email
+                        {t("cashDrawers.email")}
                       </div>
-
                       <div className="fw-semibold">
-                        {drawer.openedBy?.email ||
-                          "-"}
+                        {drawer.openedBy?.email || "-"}
                       </div>
                     </div>
 
                     <div className="col-12">
                       <div className="text-muted small">
-                        Notes
+                        {t("cashDrawers.notes")}
                       </div>
-
                       <div>
                         {drawer.notes || "-"}
                       </div>
@@ -218,7 +236,9 @@ const CurrentCashDrawer = () => {
                         size={18}
                         className="me-2"
                       />
-                      Close Cash Drawer
+                      {t(
+                        "cashDrawers.closeDrawer"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -232,3 +252,7 @@ const CurrentCashDrawer = () => {
 };
 
 export default CurrentCashDrawer;
+
+
+
+

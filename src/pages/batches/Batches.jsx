@@ -1,18 +1,23 @@
+
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import AdminDataPage from "../../components/table/AdminDataPage";
-import { getBatches } from "../../services/batches.service";
-import { deleteBatch } from "../../services/batches.service";
+import { getBatches, deleteBatch } from "../../services/batches.service";
 import BarcodeModal from "../../components/barcode/BarcodeModal";
 import { Barcode } from "lucide-react";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
- // search, medicine, expiryStatus, page = 1, limit = 100
 const Batches = () => {
+  const { t, i18n } = useTranslation();
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(false);
-  
   const [filtersState, setFiltersState] = useState(null);
-  const [pagination, setPagination] = useState({page: 1, limit: 10, total: 0});
-  // barcode 
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+  });
   const [showBarcode, setShowBarcode] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState(null);
 
@@ -25,196 +30,244 @@ const Batches = () => {
     setShowBarcode(false);
     setSelectedBatch(null);
   };
-  const fetchBatches = async () => {
-        const params = filtersState ? { page: pagination.page, limit: pagination.limit, ...filtersState } :
-        {page: pagination.page, limit: pagination.limit}
 
-   
-    setLoading(true)
+  const fetchBatches = async () => {
+    const params = filtersState
+      ? {
+          page: pagination.page,
+          limit: pagination.limit,
+          ...filtersState,
+        }
+      : {
+          page: pagination.page,
+          limit: pagination.limit,
+        };
+
+    setLoading(true);
+
     try {
-      const response = await getBatches(params)
-      setBatches(response.batches)
-      setPagination((prev)=> ({...prev ,...response.pagination}))
-      
+      const response = await getBatches(params);
+
+      setBatches(response.batches);
+      setPagination((prev) => ({
+        ...prev,
+        ...response.pagination,
+      }));
     } catch (error) {
-      console.log(error);
-      
+      showError(
+        getApiErrorMessage(
+          error,
+          t("batches.loadFailed")
+        )
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const fetchDeactivatedBatches = async (id) => {
-    setLoading(true)
+    setLoading(true);
+
     try {
-      const response = await deleteBatch(id)
-      console.log(response);
-      fetchBatches()
-      
+      const response = await deleteBatch(id);
+
+      showSuccess(
+        response?.message ||
+          t("batches.deleteSuccess")
+      );
+
+      await fetchBatches();
     } catch (error) {
-      console.log(error);
-      
+      showError(
+        getApiErrorMessage(
+          error,
+          t("batches.deleteFailed")
+        )
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchBatches()
+    fetchBatches();
   }, []);
+
   useEffect(() => {
-      const fetchBatchesPagination = async () => {
-        const params = filtersState ? { page: pagination.page, limit: pagination.limit, ...filtersState } :
-        {page: pagination.page, limit: pagination.limit}
+    const fetchBatchesPagination = async () => {
+      const params = filtersState
+        ? {
+            page: pagination.page,
+            limit: pagination.limit,
+            ...filtersState,
+          }
+        : {
+            page: pagination.page,
+            limit: pagination.limit,
+          };
 
-   
-    setLoading(true)
-    try {
-      const response = await getBatches(params)
-      setBatches(response.batches)
-      
-    } catch (error) {
-      console.log(error);
-      
-    } finally {
-      setLoading(false)
-    }
-    }
-    fetchBatchesPagination()
+      setLoading(true);
+
+      try {
+        const response = await getBatches(params);
+        setBatches(response.batches);
+      } catch (error) {
+        showError(
+          getApiErrorMessage(
+            error,
+            t("batches.loadFailed")
+          )
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBatchesPagination();
   }, [pagination.page]);
-
 
   const filters = [
     {
       name: "search",
-      label: "Search",
+      label: t("batches.search"),
       type: "text",
-      placeholder: "Search batch...",
+      placeholder: t("batches.searchPlaceholder"),
       value: filtersState?.search,
       col: "col-12 col-md-6 col-lg-4",
     },
     {
       name: "expiryStatus",
-      label: "expiry Status",
+      label: t("batches.expiryStatus"),
       type: "select",
-      placeholder: "expiry Status...",
+      placeholder: t("batches.expiryStatusPlaceholder"),
       value: filtersState?.expiryStatus,
       col: "col-12 col-md-6 col-lg-4",
       options: [
         {
-          value: 'undefined', 
-          label:'All'
+          value: "undefined",
+          label: t("batches.all"),
         },
         {
-          value: 'expired', 
-          label:'expired'
-        },
-      
-        {
-          value: 'valid', 
-          label:'valid'
+          value: "expired",
+          label: t("batches.expired"),
         },
         {
-          value: 'near', 
-          label:'near'
+          value: "valid",
+          label: t("batches.valid"),
         },
-      
-      ]
+        {
+          value: "near",
+          label: t("batches.near"),
+        },
+      ],
     },
-   
   ];
 
-  
   const handleFilter = (name, value) => {
-    value === 'undefined' ? value = undefined : value = value
-    setFiltersState((prev) => ({...prev,[name]: value }));
-    setPagination((prev) => ({...prev,page: 1}));
-  };
+    setFiltersState((prev) => ({
+      ...prev,
+      [name]: value === "undefined" ? undefined : value,
+    }));
 
+    setPagination((prev) => ({
+      ...prev,
+      page: 1,
+    }));
+  };
 
   const columns = [
     {
-        key: "medicine", label: "M name",
-          render: (batch) => {
-            return batch.medicine.name
-        }
-    
+      key: "medicine",
+      label: t("batches.medicineName"),
+      render: (batch) => batch.medicine.name,
     },
     {
-        key: "genericName", label: "MGN",
-          render: (batch) => {
-            return batch.medicine.genericName
-        }
-
+      key: "genericName",
+      label: t("batches.genericName"),
+      render: (batch) => batch.medicine.genericName,
     },
     {
-        key: "manufacturer", label: "M manufacturer",
-          render: (batch) => {
-            return batch.medicine.manufacturer
-        }
-    
+      key: "manufacturer",
+      label: t("batches.manufacturer"),
+      render: (batch) => batch.medicine.manufacturer,
     },
-    { key: "batchNumber", label: "Batch Number"  },
-    { key: "quantity", label: "quantity"  },
-    { key: "expiryDate", label: "expiry Date"  },
-    { key: "purchasePrice", label: "purchase Price"  },
-    { key: "sellingPrice", label: "selling Price"  },
-    
-  {
-    key: "barcodeValue",
-    label: "Barcode",
-    render: (batch) => (
-      <button
-        type="button"
-        className="btn btn-outline-primary"
-        onClick={() => handleShowBarcode(batch)}
-        title="View Barcode"
-      >
-        <Barcode size={20} />
-      </button>
-    ),
-  },
-
     {
-    key: "isActive",
-    label: "status",
-        render: (Batches) => {
-        return (
-        <span className={`badge ${Batches.isActive ? "text-bg-success" : "text-bg-danger" }`}>
-            {Batches.isActive  ? "Active"  : "Inactive"}
+      key: "batchNumber",
+      label: t("batches.batchNumber"),
+    },
+    {
+      key: "quantity",
+      label: t("batches.quantity"),
+    },
+    {
+      key: "expiryDate",
+      label: t("batches.expiryDate"),
+    },
+    {
+      key: "purchasePrice",
+      label: t("batches.purchasePrice"),
+    },
+    {
+      key: "sellingPrice",
+      label: t("batches.sellingPrice"),
+    },
+    {
+      key: "barcodeValue",
+      label: t("batches.barcode"),
+      render: (batch) => (
+        <button
+          type="button"
+          className="btn btn-outline-primary"
+          onClick={() => handleShowBarcode(batch)}
+          title={t("batches.viewBarcode")}
+        >
+          <Barcode size={20} />
+        </button>
+      ),
+    },
+    {
+      key: "isActive",
+      label: t("batches.status"),
+      render: (batch) => (
+        <span
+          className={`badge ${
+            batch.isActive
+              ? "text-bg-success"
+              : "text-bg-danger"
+          }`}
+        >
+          {batch.isActive
+            ? t("batches.active")
+            : t("batches.inactive")}
         </span>
-        )
-    }
+      ),
     },
-
   ];
 
   const actions = [
     {
       type: "show",
-      label: "Show",
+      label: t("common.view"),
       link: (batch) => `/batches/${batch._id}`,
-     
     },
-
     {
       type: "edit",
-      label: "Edit",
-      link: (batch) => `/batches/edit/${batch._id}`
+      label: t("common.edit"),
+      link: (batch) => `/batches/edit/${batch._id}`,
     },
-
     {
       type: "delete",
-      label: "Delete",
-      onClick: (batch) =>  fetchDeactivatedBatches(batch._id)
-    }
-  ]
+      label: t("common.delete"),
+      onClick: (batch) =>
+        fetchDeactivatedBatches(batch._id),
+    },
+  ];
 
- return (
+  return (
     <>
       <AdminDataPage
-        title="Batches"
-        subtitle="Manage your Batches and inventory"
+        title={t("batches.title")}
+        subtitle={t("batches.subtitle")}
         loading={loading}
         columns={columns}
         type="add"
@@ -231,16 +284,15 @@ const Batches = () => {
             page,
           }));
         }}
-      
-     />
-     
-     <BarcodeModal
+      />
+
+      <BarcodeModal
         show={showBarcode}
         onClose={handleCloseBarcode}
         batch={selectedBatch}
       />
     </>
-  )
+  );
 };
 
 export default Batches;

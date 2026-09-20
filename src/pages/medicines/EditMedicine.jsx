@@ -1,59 +1,62 @@
+
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { useNavigate, useParams } from "react-router-dom";
-import { getMedicineById, updateMedicine } from "../../services/medicines.service";
+import { useTranslation } from "react-i18next";
+
+import {
+  getMedicineById,
+  updateMedicine,
+} from "../../services/medicines.service";
 import { getCategory } from "../../services/category.service";
 import { medicineSchema } from "../../schemas/medicine/medicine.schema";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
+
 import Header from "../../components/header/Header";
 import FormInput from "../../components/form/FormInput";
 import FormSearchSelect from "../../components/form/FormSearchSelect";
 import FormSelect from "../../components/form/FormSelect";
 
 const EditMedicine = () => {
-
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
-  // States
-  const [medicine, setMedicine] =  useState(null);
+
+  const [medicine, setMedicine] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  const [serverError, setServerError] =useState("");
 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
 
-  // Get Medicine + Categories
+      const medicineResponse = await getMedicineById(id);
+      const medicineData = medicineResponse.medicine;
+
+      setMedicine(medicineData);
+
+      setLoadingCategories(true);
+      const categoryResponse = await getCategory();
+      setCategories(categoryResponse.categories || []);
+    } catch (error) {
+      showError(
+        getApiErrorMessage(
+          error,
+          t("medicines.failedLoad")
+        )
+      );
+    } finally {
+      setLoading(false);
+      setLoadingCategories(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setServerError("");
-        const medicineResponse =await getMedicineById(id);
-        const medicineData = medicineResponse.medicine;
-        
-        setMedicine(medicineData);
-        setLoadingCategories(true);
-        const categoryResponse =await getCategory();
-        setCategories(categoryResponse.categories || [] );
-
-      } catch (error) {
-        console.error(error);
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to load medicine"
-        );
-
-      } finally {
-        setLoading(false);
-        setLoadingCategories(false);
-      }
-
-    };
-
     if (id) {
       fetchData();
     }
-
   }, [id]);
 
   const formik = useFormik({
@@ -61,44 +64,48 @@ const EditMedicine = () => {
     initialValues: {
       name: medicine?.name || "",
       genericName: medicine?.genericName || "",
-      category: medicine?.category?._id || medicine?.category ||"",
-      manufacturer:  medicine?.manufacturer || "",
+      category:
+        medicine?.category?._id ||
+        medicine?.category ||
+        "",
+      manufacturer: medicine?.manufacturer || "",
       description: medicine?.description || "",
-      isActive:medicine?.isActive ?? true,
+      isActive: medicine?.isActive ?? true,
     },
-    validationSchema:medicineSchema,
+    validationSchema: medicineSchema,
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        setServerError("");
-        await updateMedicine(id,values  );
+        await updateMedicine(id, values);
+        showSuccess(t("medicines.updatedSuccess"));
         navigate("/medicines");
       } catch (error) {
-        console.error(error);
-        setServerError(
-          error.response?.data?.message ||
-            "Failed to update medicine"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("medicines.updateFailed")
+          )
         );
       } finally {
         setSubmitting(false);
       }
-
     },
-
   });
 
-  const categoryOptions = categories.map((category) => (
-    { value: category._id, label: category.name }
-  ));
-  if (loading) {
+  const categoryOptions = categories.map((category) => ({
+    value: category._id,
+    label: category.name,
+  }));
 
+  if (loading) {
     return (
       <div>
         <Header
-          title="Edit Medicine"
-          description="Update medicine information"
-          buttonContent= 'back to medicine'
-          buttonLink='/medicines'
+          title={t("medicines.editMedicine")}
+          description={t("medicines.editMedicineDescription")}
+          buttonContent={t("medicines.backToMedicines")}
+          buttonLink="/medicines"
         />
+
         <div className="card border-0 shadow-sm">
           <div className="card-body p-5">
             <div className="d-flex justify-content-center">
@@ -107,7 +114,7 @@ const EditMedicine = () => {
                 role="status"
               >
                 <span className="visually-hidden">
-                  Loading...
+                  {t("common.loading")}
                 </span>
               </div>
             </div>
@@ -116,121 +123,111 @@ const EditMedicine = () => {
       </div>
     );
   }
-  return (
 
+  return (
     <div>
       <Header
-        title="Edit Medicine"
-        description="Update medicine information"
-        buttonContent= 'back to medicine'
-        buttonLink='/medicines'
+        title={t("medicines.editMedicine")}
+        description={t("medicines.editMedicineDescription")}
+        buttonContent={t("medicines.backToMedicines")}
+        buttonLink="/medicines"
       />
-      {serverError && (
-        <div className="alert alert-danger">
-          {serverError}
-        </div>
-      )}
+
       <div className="card border-0 shadow-sm">
         <div className="card-body p-4">
           <form onSubmit={formik.handleSubmit}>
             <div className="row g-4">
               <div className="col-12 col-md-6">
-
                 <FormInput
                   formik={formik}
                   name="name"
-                  label="Medicine Name"
+                  label={t("medicines.medicineName")}
                   type="text"
-                  placeholder="Enter medicine name"
+                  placeholder={t("medicines.medicineNamePlaceholder")}
                   required
                 />
               </div>
+
               <div className="col-12 col-md-6">
                 <FormInput
                   formik={formik}
                   name="genericName"
-                  label="Generic Name"
+                  label={t("medicines.genericName")}
                   type="text"
-                  placeholder="Enter generic name"
+                  placeholder={t("medicines.genericNamePlaceholder")}
                   required
                 />
               </div>
-              
 
               <div className="col-12 col-md-6">
-
-                  <FormSelect
-                    formik={formik}
-                    name="isActive"
-                    label="Status"
-                    options={[
-                      {
-                        value: true,
-                        label: "Active",
-                      },
-                      {
-                        value: false,
-                        label: "Inactive",
-                      },
-                    ]}
-                    required
-                  />
-
-                </div>
-
+                <FormSelect
+                  formik={formik}
+                  name="isActive"
+                  label={t("medicines.status")}
+                  options={[
+                    {
+                      value: true,
+                      label: t("medicines.statuses.active"),
+                    },
+                    {
+                      value: false,
+                      label: t("medicines.statuses.inactive"),
+                    },
+                  ]}
+                  required
+                />
+              </div>
 
               <div className="col-12 col-md-6">
                 <FormSearchSelect
                   formik={formik}
                   name="category"
-                  label="Category"
+                  label={t("medicines.category")}
                   placeholder={
                     loadingCategories
-                      ? "Loading categories..."
-                      : "Search category..."
+                      ? t("medicines.loadingCategories")
+                      : t("medicines.searchCategory")
                   }
-                  options={
-                    categoryOptions
-                  }
-                  disabled={
-                    loadingCategories
-                  }
+                  options={categoryOptions}
+                  disabled={loadingCategories}
                   required
                 />
-
               </div>
+
               <div className="col-12 col-md-6">
                 <FormInput
                   formik={formik}
                   name="manufacturer"
-                  label="Manufacturer"
+                  label={t("medicines.manufacturer")}
                   type="text"
-                  placeholder="Enter manufacturer"
-                  required
-                />
-              </div>
-              <div className="col-12">
-                <FormInput
-                  formik={formik}
-                  name="description"
-                  label="Description"
-                  type="textarea"
-                  placeholder="Enter medicine description"
-                  rows={4}
+                  placeholder={t("medicines.manufacturerPlaceholder")}
                   required
                 />
               </div>
 
+              <div className="col-12">
+                <FormInput
+                  formik={formik}
+                  name="description"
+                  label={t("medicines.description")}
+                  type="textarea"
+                  placeholder={t("medicines.descriptionPlaceholder")}
+                  rows={4}
+                  required
+                />
+              </div>
             </div>
+
             <div className="d-flex justify-content-end gap-2 mt-4">
               <button
                 type="button"
                 className="btn btn-light border"
                 onClick={() => navigate("/medicines")}
-                disabled={formik.isSubmitting }
+                disabled={formik.isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
+
               <button
                 type="submit"
                 className="btn btn-primary"
@@ -240,24 +237,15 @@ const EditMedicine = () => {
                 }
               >
                 {formik.isSubmitting
-                  ? "Updating..."
-                  : "Update Medicine"}
-
+                  ? t("medicines.updating")
+                  : t("medicines.updateMedicine")}
               </button>
-
             </div>
-
           </form>
-
         </div>
-
       </div>
-
     </div>
-
   );
-
 };
-
 
 export default EditMedicine;

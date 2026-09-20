@@ -1,6 +1,6 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSnackbar } from "notistack";
 import { ArrowLeft } from "lucide-react";
 
 import {
@@ -9,19 +9,17 @@ import {
 
 import { getSpecialties } from "../../services/specialty.service";
 import FormSearchSelect from "../../components/form/FormSearchSelect";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
+import { useTranslation } from "react-i18next";
 
 const AddDoctor = () => {
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
-  const [submitting, setSubmitting] =
-    useState(false);
-
-  const [specialtyOptions, setSpecialtyOptions] =
-    useState([]);
-
-  const [specialtyLoading, setSpecialtyLoading] =
-    useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [specialtyOptions, setSpecialtyOptions] = useState([]);
+  const [specialtyLoading, setSpecialtyLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -30,9 +28,7 @@ const AddDoctor = () => {
     email: "",
   });
 
-  const fetchSpecialties = async (
-    searchValue
-  ) => {
+  const fetchSpecialties = async (searchValue) => {
     try {
       setSpecialtyLoading(true);
 
@@ -42,12 +38,12 @@ const AddDoctor = () => {
         limit: 10,
       });
 
-      const newOptions = (
-        response.specialties || []
-      ).map((specialty) => ({
-        value: specialty._id,
-        label: specialty.name,
-      }));
+      const newOptions = (response.specialties || []).map(
+        (specialty) => ({
+          value: specialty._id,
+          label: specialty.name,
+        })
+      );
 
       setSpecialtyOptions((prev) => {
         const merged = [...prev];
@@ -55,8 +51,7 @@ const AddDoctor = () => {
         newOptions.forEach((option) => {
           const exists = merged.some(
             (item) =>
-              String(item.value) ===
-              String(option.value)
+              String(item.value) === String(option.value)
           );
 
           if (!exists) {
@@ -67,12 +62,11 @@ const AddDoctor = () => {
         return merged;
       });
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          "Failed to search specialties",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("doctors.failedToSearchSpecialties")
+        )
       );
     } finally {
       setSpecialtyLoading(false);
@@ -92,29 +86,15 @@ const AddDoctor = () => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      enqueueSnackbar(
-        "Doctor name is required",
-        {
-          variant: "error",
-        }
-      );
-
+      showError(t("doctors.nameRequired"));
       return;
     }
 
     if (
-      !Array.isArray(
-        formData.specialties
-      ) ||
+      !Array.isArray(formData.specialties) ||
       formData.specialties.length === 0
     ) {
-      enqueueSnackbar(
-        "At least one specialty is required",
-        {
-          variant: "error",
-        }
-      );
-
+      showError(t("doctors.specialtyRequired"));
       return;
     }
 
@@ -124,38 +104,29 @@ const AddDoctor = () => {
       const doctorData = {
         name: formData.name.trim(),
         specialties: formData.specialties,
-        phone:
-          formData.phone.trim() || null,
-        email:
-          formData.email.trim() || null,
+        phone: formData.phone.trim() || null,
+        email: formData.email.trim() || null,
       };
 
-      const response =
-        await createDoctor(doctorData);
+      const response = await createDoctor(doctorData);
 
       if (!response.success) {
         throw new Error(
-          response.message ||
-            "Failed to create doctor"
+          response.message || t("doctors.failedToCreate")
         );
       }
 
-      enqueueSnackbar(
-        "Doctor created successfully",
-        {
-          variant: "success",
-        }
+      showSuccess(
+        response.message || t("doctors.createdSuccessfully")
       );
 
       navigate("/doctors");
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to create doctor",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          error.message || t("doctors.failedToCreate")
+        )
       );
     } finally {
       setSubmitting(false);
@@ -170,19 +141,16 @@ const AddDoctor = () => {
           className="btn btn-light btn-sm mb-3"
           onClick={() => navigate("/doctors")}
         >
-          <ArrowLeft
-            size={16}
-            className="me-1"
-          />
-          Back
+          <ArrowLeft size={16} className="me-1" />
+          {t("common.back")}
         </button>
 
         <h3 className="mb-1">
-          Add Doctor
+          {t("doctors.addTitle")}
         </h3>
 
         <p className="text-muted mb-0">
-          Create a new doctor
+          {t("doctors.addDescription")}
         </p>
       </div>
 
@@ -192,10 +160,8 @@ const AddDoctor = () => {
             <div className="row">
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Doctor Name
-                  <span className="text-danger ms-1">
-                    *
-                  </span>
+                  {t("doctors.doctorName")}
+                  <span className="text-danger ms-1">*</span>
                 </label>
 
                 <input
@@ -204,24 +170,20 @@ const AddDoctor = () => {
                   className="form-control"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Dr. Ahmed Mohamed"
+                  placeholder={t("doctors.namePlaceholder")}
                   disabled={submitting}
                 />
               </div>
 
               <div className="col-md-6 mb-3">
                 <FormSearchSelect
-                  label="Specialties"
+                  label={t("doctors.specialties")}
                   name="specialties"
-                  value={
-                    formData.specialties
-                  }
+                  value={formData.specialties}
                   options={specialtyOptions}
                   serverSearch
                   onSearch={fetchSpecialties}
-                  loading={
-                    specialtyLoading
-                  }
+                  loading={specialtyLoading}
                   minSearchLength={2}
                   debounceDelay={400}
                   required
@@ -229,8 +191,7 @@ const AddDoctor = () => {
                   onChange={(values) =>
                     setFormData((prev) => ({
                       ...prev,
-                      specialties:
-                        values || [],
+                      specialties: values || [],
                     }))
                   }
                 />
@@ -238,7 +199,7 @@ const AddDoctor = () => {
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Phone
+                  {t("doctors.phone")}
                 </label>
 
                 <input
@@ -247,14 +208,14 @@ const AddDoctor = () => {
                   className="form-control"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="01xxxxxxxxx"
+                  placeholder={t("doctors.phonePlaceholder")}
                   disabled={submitting}
                 />
               </div>
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Email
+                  {t("doctors.email")}
                 </label>
 
                 <input
@@ -263,7 +224,7 @@ const AddDoctor = () => {
                   className="form-control"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="doctor@example.com"
+                  placeholder={t("doctors.emailPlaceholder")}
                   disabled={submitting}
                 />
               </div>
@@ -276,19 +237,17 @@ const AddDoctor = () => {
                 disabled={submitting}
               >
                 {submitting
-                  ? "Creating..."
-                  : "Create Doctor"}
+                  ? t("doctors.creating")
+                  : t("doctors.create")}
               </button>
 
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() =>
-                  navigate("/doctors")
-                }
+                onClick={() => navigate("/doctors")}
                 disabled={submitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>

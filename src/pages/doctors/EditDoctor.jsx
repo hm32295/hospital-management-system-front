@@ -1,9 +1,10 @@
+
 import { useEffect, useState } from "react";
 import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft } from "lucide-react";
 
 import {
@@ -16,12 +17,18 @@ import {
 
 import { getSpecialties } from "../../services/specialty.service";
 
+import {
+  showError,
+  showSuccess,
+} from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
+
 import FormSearchSelect from "../../components/form/FormSearchSelect";
 
 const EditDoctor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const [loading, setLoading] =
     useState(true);
@@ -52,7 +59,7 @@ const EditDoctor = () => {
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Failed to load doctor"
+            t("doctors.failedLoadDoctor")
         );
       }
 
@@ -81,13 +88,11 @@ const EditDoctor = () => {
         selectedSpecialties
       );
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to load doctor",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("doctors.failedLoadDoctor")
+        )
       );
     } finally {
       setLoading(false);
@@ -137,12 +142,11 @@ const EditDoctor = () => {
         return merged;
       });
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          "Failed to search specialties",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("doctors.failedSearchSpecialties")
+        )
       );
     } finally {
       setSpecialtyLoading(false);
@@ -162,13 +166,9 @@ const EditDoctor = () => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      enqueueSnackbar(
-        "Doctor name is required",
-        {
-          variant: "error",
-        }
+      showError(
+        t("doctors.doctorNameRequired")
       );
-
       return;
     }
 
@@ -178,13 +178,9 @@ const EditDoctor = () => {
       ) ||
       formData.specialties.length === 0
     ) {
-      enqueueSnackbar(
-        "At least one specialty is required",
-        {
-          variant: "error",
-        }
+      showError(
+        t("doctors.specialtyRequired")
       );
-
       return;
     }
 
@@ -209,26 +205,21 @@ const EditDoctor = () => {
       if (!response.success) {
         throw new Error(
           response.message ||
-            "Failed to update doctor"
+            t("doctors.failedUpdate")
         );
       }
 
-      enqueueSnackbar(
-        "Doctor updated successfully",
-        {
-          variant: "success",
-        }
+      showSuccess(
+        t("doctors.updatedSuccess")
       );
 
       navigate("/doctors");
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to update doctor",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(
+          error,
+          t("doctors.failedUpdate")
+        )
       );
     } finally {
       setSubmitting(false);
@@ -243,6 +234,9 @@ const EditDoctor = () => {
             className="spinner-border"
             role="status"
           />
+          <div className="mt-2">
+            {t("common.loading")}
+          </div>
         </div>
       </div>
     );
@@ -260,15 +254,15 @@ const EditDoctor = () => {
             size={16}
             className="me-1"
           />
-          Back
+          {t("common.back")}
         </button>
 
         <h3 className="mb-1">
-          Edit Doctor
+          {t("doctors.editDoctor")}
         </h3>
 
         <p className="text-muted mb-0">
-          Update doctor information
+          {t("doctors.updateDescription")}
         </p>
       </div>
 
@@ -278,7 +272,7 @@ const EditDoctor = () => {
             <div className="row">
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Doctor Name
+                  {t("doctors.doctorName")}
                   <span className="text-danger ms-1">
                     *
                   </span>
@@ -290,14 +284,18 @@ const EditDoctor = () => {
                   className="form-control"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Dr. Ahmed Mohamed"
+                  placeholder={t(
+                    "doctors.doctorNamePlaceholder"
+                  )}
                   disabled={submitting}
                 />
               </div>
 
               <div className="col-md-6 mb-3">
                 <FormSearchSelect
-                  label="Specialties"
+                  label={t(
+                    "doctors.specialties"
+                  )}
                   name="specialties"
                   value={
                     formData.specialties
@@ -324,7 +322,7 @@ const EditDoctor = () => {
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Phone
+                  {t("doctors.phone")}
                 </label>
 
                 <input
@@ -333,14 +331,16 @@ const EditDoctor = () => {
                   className="form-control"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="01xxxxxxxxx"
+                  placeholder={t(
+                    "doctors.phonePlaceholder"
+                  )}
                   disabled={submitting}
                 />
               </div>
 
               <div className="col-md-6 mb-3">
                 <label className="form-label">
-                  Email
+                  {t("doctors.email")}
                 </label>
 
                 <input
@@ -349,7 +349,9 @@ const EditDoctor = () => {
                   className="form-control"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="doctor@example.com"
+                  placeholder={t(
+                    "doctors.emailPlaceholder"
+                  )}
                   disabled={submitting}
                 />
               </div>
@@ -362,8 +364,8 @@ const EditDoctor = () => {
                 disabled={submitting}
               >
                 {submitting
-                  ? "Updating..."
-                  : "Update Doctor"}
+                  ? t("doctors.updating")
+                  : t("doctors.updateDoctor")}
               </button>
 
               <button
@@ -374,7 +376,7 @@ const EditDoctor = () => {
                 }
                 disabled={submitting}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>
