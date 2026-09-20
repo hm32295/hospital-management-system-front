@@ -1,13 +1,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Select from "react-select";
+import { useTranslation } from "react-i18next";
 
 const FormSearchSelect = ({
   formik,
   name,
   label,
   options = [],
-  placeholder = "Search...",
+  placeholder,
   required = false,
   disabled = false,
   isClearable = true,
@@ -20,6 +21,7 @@ const FormSearchSelect = ({
   debounceDelay = 400,
   minSearchLength = 2,
 }) => {
+  const { t } = useTranslation();
   const isFormik = !!formik;
 
   const formikValue = isFormik
@@ -107,7 +109,6 @@ const FormSearchSelect = ({
       }
 
       onChange?.(values, selectedOptions);
-
       return;
     }
 
@@ -153,7 +154,7 @@ const FormSearchSelect = ({
       <Select
         options={options}
         value={selectedOption}
-        placeholder={placeholder}
+        placeholder={placeholder || t("common.search")}
         isSearchable
         isMulti={isMulti}
         isClearable={isClearable}
@@ -171,19 +172,21 @@ const FormSearchSelect = ({
         }
         noOptionsMessage={() => {
           if (loading) {
-            return "Loading...";
+            return t("common.loading");
           }
 
           if (
             serverSearch &&
             searchValue.trim().length < minSearchLength
           ) {
-            return `Type at least ${minSearchLength} characters`;
+            return t("common.minSearchCharacters", {
+              count: minSearchLength,
+            });
           }
 
           return searchValue
-            ? "No results found"
-            : "No options found";
+            ? t("common.noResultsFound")
+            : t("common.noOptionsFound");
         }}
       />
 

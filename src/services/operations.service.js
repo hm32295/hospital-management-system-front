@@ -1,6 +1,8 @@
 import api from "./api";
  // operations
 export const getOperations = async (params = {}) => {
+ 
+  
   const response = await api.get("/operations", {
     params,
   });

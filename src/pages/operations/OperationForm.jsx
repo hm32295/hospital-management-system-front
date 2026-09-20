@@ -1,8 +1,12 @@
+
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { createOperation, updateOperation } from "../../services/operations.service";
+import { useTranslation } from "react-i18next";
+import {
+  createOperation,
+  updateOperation,
+} from "../../services/operations.service";
 import { getPatients } from "../../services/patients.service";
 import { getDoctors } from "../../services/doctor.service";
 import { getSpecialties } from "../../services/specialty.service";
@@ -10,12 +14,18 @@ import FormSearchSelect from "../../components/form/FormSearchSelect";
 import FormInput from "../../components/form/FormInput";
 import { operationInitialValues } from "../../initialValues/operation.Initial";
 import { operationSchema } from "../../schemas/operation.schema";
+import {
+  showError,
+  showSuccess,
+} from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const OperationForm = ({
   operation = null,
   loading = false,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [patientOptions, setPatientOptions] = useState([]);
   const [doctorOptions, setDoctorOptions] = useState([]);
@@ -23,8 +33,7 @@ const OperationForm = ({
 
   const [patientLoading, setPatientLoading] = useState(false);
   const [doctorLoading, setDoctorLoading] = useState(false);
-  const [specialtyLoading, setSpecialtyLoading] =
-    useState(false);
+  const [specialtyLoading, setSpecialtyLoading] = useState(false);
 
   const isEdit = Boolean(operation?._id);
 
@@ -92,15 +101,15 @@ const OperationForm = ({
         if (!response?.success) {
           throw new Error(
             response?.message ||
-              "Something went wrong"
+              t("operations.saveFailed")
           );
         }
 
-        toast.success(
+        showSuccess(
           response.message ||
-            `Operation ${
-              isEdit ? "updated" : "created"
-            } successfully`
+            (isEdit
+              ? t("operations.updateSuccess")
+              : t("operations.createSuccess"))
         );
 
         navigate(
@@ -109,10 +118,11 @@ const OperationForm = ({
             : `/operations`
         );
       } catch (error) {
-        toast.error(
-          error?.response?.data?.message ||
-            error.message ||
-            "Something went wrong"
+        showError(
+          getApiErrorMessage(
+            error,
+            t("operations.saveFailed")
+          )
         );
       } finally {
         setSubmitting(false);
@@ -145,6 +155,13 @@ const OperationForm = ({
         "SEARCH PATIENTS ERROR:",
         error
       );
+
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.searchPatientsFailed")
+        )
+      );
     } finally {
       setPatientLoading(false);
     }
@@ -174,6 +191,13 @@ const OperationForm = ({
         "SEARCH DOCTORS ERROR:",
         error
       );
+
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.searchDoctorsFailed")
+        )
+      );
     } finally {
       setDoctorLoading(false);
     }
@@ -202,6 +226,13 @@ const OperationForm = ({
       console.error(
         "SEARCH SPECIALTIES ERROR:",
         error
+      );
+
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.searchSpecialtiesFailed")
+        )
       );
     } finally {
       setSpecialtyLoading(false);
@@ -266,13 +297,13 @@ const OperationForm = ({
           <FormSearchSelect
             formik={formik}
             name="patient"
-            label="Patient"
+            label={t("operations.patient")}
             required
             options={patientOptions}
             serverSearch
             onSearch={searchPatients}
             loading={patientLoading}
-            placeholder="Search patient..."
+            placeholder={t("operations.searchPatient")}
           />
         </div>
 
@@ -280,13 +311,15 @@ const OperationForm = ({
           <FormSearchSelect
             formik={formik}
             name="specialty"
-            label="Specialty"
+            label={t("operations.specialty")}
             required
             options={specialtyOptions}
             serverSearch
             onSearch={searchSpecialties}
             loading={specialtyLoading}
-            placeholder="Search specialty..."
+            placeholder={t(
+              "operations.searchSpecialty"
+            )}
           />
         </div>
 
@@ -294,7 +327,7 @@ const OperationForm = ({
           <FormSearchSelect
             formik={formik}
             name="doctor"
-            label="Doctor"
+            label={t("operations.doctor")}
             required
             options={doctorOptions}
             serverSearch
@@ -302,8 +335,10 @@ const OperationForm = ({
             loading={doctorLoading}
             placeholder={
               formik.values.specialty
-                ? "Search doctor..."
-                : "Select specialty first"
+                ? t("operations.searchDoctor")
+                : t(
+                    "operations.selectSpecialtyFirst"
+                  )
             }
             disabled={
               !formik.values.specialty
@@ -315,9 +350,11 @@ const OperationForm = ({
           <FormInput
             formik={formik}
             name="operationName"
-            label="Operation Name"
+            label={t("operations.operationName")}
             required
-            placeholder="Enter operation name"
+            placeholder={t(
+              "operations.operationNamePlaceholder"
+            )}
           />
         </div>
 
@@ -325,7 +362,7 @@ const OperationForm = ({
           <FormInput
             formik={formik}
             name="operationDate"
-            label="Operation Date"
+            label={t("operations.operationDate")}
             type="date"
             required
           />
@@ -335,7 +372,7 @@ const OperationForm = ({
           <FormInput
             formik={formik}
             name="cost"
-            label="Cost"
+            label={t("operations.cost")}
             type="number"
             min="0"
             step="0.01"
@@ -347,7 +384,7 @@ const OperationForm = ({
           <FormInput
             formik={formik}
             name="discount"
-            label="Discount"
+            label={t("operations.discount")}
             type="number"
             min="0"
             step="0.01"
@@ -356,7 +393,7 @@ const OperationForm = ({
 
         <div className="col-12 col-md-6">
           <label className="form-label">
-            Doctor Fee Type
+            {t("operations.doctorFeeType")}
           </label>
 
           <select
@@ -372,13 +409,15 @@ const OperationForm = ({
             onBlur={formik.handleBlur}
           >
             <option value="none">
-              None
+              {t("operations.feeTypes.none")}
             </option>
+
             <option value="fixed">
-              Fixed Amount
+              {t("operations.feeTypes.fixedAmount")}
             </option>
+
             <option value="percentage">
-              Percentage
+              {t("operations.feeTypes.percentage")}
             </option>
           </select>
 
@@ -397,8 +436,12 @@ const OperationForm = ({
             label={
               formik.values.doctorFeeType ===
               "percentage"
-                ? "Doctor Fee (%)"
-                : "Doctor Fee"
+                ? t(
+                    "operations.doctorFeePercentage"
+                  )
+                : t(
+                    "operations.doctorFee"
+                  )
             }
             type="number"
             min="0"
@@ -420,9 +463,11 @@ const OperationForm = ({
           <FormInput
             formik={formik}
             name="notes"
-            label="Notes"
+            label={t("operations.notes")}
             textarea
-            placeholder="Enter notes..."
+            placeholder={t(
+              "operations.notesPlaceholder"
+            )}
           />
         </div>
 
@@ -430,17 +475,19 @@ const OperationForm = ({
           <div className="card border-0 shadow-sm">
             <div className="card-body">
               <h6 className="mb-3">
-                Financial Summary
+                {t("operations.financialSummary")}
               </h6>
 
               <div className="row g-3">
                 <div className="col-12 col-md-4">
                   <div className="border rounded p-3">
                     <small className="text-muted d-block">
-                      Total Amount
+                      {t("operations.totalAmount")}
                     </small>
+
                     <strong>
-                      {totalAmount.toFixed(2)} EGP
+                      {totalAmount.toFixed(2)}{" "}
+                      {t("common.egp")}
                     </strong>
                   </div>
                 </div>
@@ -448,10 +495,12 @@ const OperationForm = ({
                 <div className="col-12 col-md-4">
                   <div className="border rounded p-3">
                     <small className="text-muted d-block">
-                      Doctor Fee
+                      {t("operations.doctorFee")}
                     </small>
+
                     <strong>
-                      {doctorFeeAmount.toFixed(2)} EGP
+                      {doctorFeeAmount.toFixed(2)}{" "}
+                      {t("common.egp")}
                     </strong>
                   </div>
                 </div>
@@ -459,10 +508,14 @@ const OperationForm = ({
                 <div className="col-12 col-md-4">
                   <div className="border rounded p-3">
                     <small className="text-muted d-block">
-                      Hospital Amount
+                      {t(
+                        "operations.hospitalAmount"
+                      )}
                     </small>
+
                     <strong>
-                      {hospitalAmount.toFixed(2)} EGP
+                      {hospitalAmount.toFixed(2)}{" "}
+                      {t("common.egp")}
                     </strong>
                   </div>
                 </div>
@@ -476,9 +529,11 @@ const OperationForm = ({
             type="button"
             className="btn btn-secondary"
             onClick={() => navigate(-1)}
-            disabled={formik.isSubmitting || loading}
+            disabled={
+              formik.isSubmitting || loading
+            }
           >
-            Cancel
+            {t("common.cancel")}
           </button>
 
           <button
@@ -489,10 +544,10 @@ const OperationForm = ({
             }
           >
             {formik.isSubmitting
-              ? "Saving..."
+              ? t("operations.saving")
               : isEdit
-              ? "Update Operation"
-              : "Create Operation"}
+              ? t("operations.updateOperation")
+              : t("operations.createOperation")}
           </button>
         </div>
       </div>

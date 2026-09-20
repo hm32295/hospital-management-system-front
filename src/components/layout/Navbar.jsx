@@ -1,253 +1,194 @@
-import {
-  Menu,
-  Bell,
-  LogOut,
-} from "lucide-react";
 
-import {
-  useLocation,
-} from "react-router-dom";
-
-import {
-  useAuth,
-} from "../../context/AuthContext";
-
-import {
-  ROLES,
-} from "../../constants/roles";
-
+import { useState } from "react";
+import { Menu, LogOut } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "../../context/AuthContext";
+import { changeLanguage } from "../../services/language.service";
+import { ROLES } from "../../constants/roles";
+import './navbar.css'
 const Navbar = ({ onToggleSidebar }) => {
-  const {
-    user,
-    logout,
-  } = useAuth();
-
+  const { user, logout } = useAuth();
+  const { i18n, t } = useTranslation();
   const location = useLocation();
+  const [isChangingLanguage, setIsChangingLanguage] = useState(false);
 
   const pageTitles = {
-    "/dashboard": "Dashboard",
-    "/": "Dashboard",
-
-    "/reception": "Reception",
-
-    "/patients": "Patients",
-    "/doctors": "Doctors",
-    "/specialties": "Specialties",
-    "/visits": "Visits",
-    "/operations": "Operations",
-
-    "/sales": "Sales",
-    "/medicines": "Medicines",
-    "/batches": "Medicine Batches",
-    "/categories": "Categories",
-    "/dispenses": "Dispensed",
-
-    "/Stock": "Stock",
-    "/stock-transaction": "Stock Transactions",
-
-    "/purchases": "Purchases",
-    "/Suppliers": "Suppliers",
-
-    "/cash-drawers": "Cash Drawers",
-    "/income": "Income",
-    "/expenses": "Expenses",
-    "/expenses-report": "Expenses Report",
-
-    "/users": "Users",
+    "/dashboard": "dashboard",
+    "/": "dashboard",
+    "/reception": "reception",
+    "/patients": "patients",
+    "/doctors": "doctors",
+    "/specialties": "specialties",
+    "/visits": "visits",
+    "/operations": "operations",
+    "/sales": "sales",
+    "/medicines": "medicines",
+    "/batches": "batches",
+    "/categories": "categories",
+    "/dispenses": "dispenses",
+    "/Stock": "stock",
+    "/stock-transaction": "stockTransactions",
+    "/purchases": "purchases",
+    "/Suppliers": "suppliers",
+    "/cash-drawers": "cashDrawers",
+    "/income": "income",
+    "/expenses": "expenses",
+    "/expenses-report": "expensesReport",
+    "/users": "users",
   };
 
   const getPageTitle = () => {
     if (pageTitles[location.pathname]) {
-      return pageTitles[location.pathname];
+      return t(`pages.${pageTitles[location.pathname]}`);
     }
 
-    if (location.pathname.startsWith("/medicines/")) {
-      return "Medicine";
-    }
+    const dynamicPages = [
+      ["/medicines/", "medicine"],
+      ["/categories/", "category"],
+      ["/Suppliers/", "supplier"],
+      ["/batches/", "medicineBatch"],
+      ["/stock-transaction/", "stockTransaction"],
+      ["/users/", "user"],
+      ["/purchases/", "purchase"],
+      ["/dispenses/", "dispensed"],
+      ["/visits/", "visit"],
+      ["/patients/", "patient"],
+      ["/operations/", "operation"],
+      ["/cash-drawers/", "cashDrawer"],
+      ["/expenses/", "expense"],
+      ["/cash-transactions/", "cashTransaction"],
+    ];
 
-    if (location.pathname.startsWith("/categories/")) {
-      return "Category";
-    }
+    const page = dynamicPages.find(([path]) =>
+      location.pathname.startsWith(path)
+    );
 
-    if (location.pathname.startsWith("/Suppliers/")) {
-      return "Supplier";
-    }
-
-    if (location.pathname.startsWith("/batches/")) {
-      return "Medicine Batch";
-    }
-
-    if (location.pathname.startsWith("/stock-transaction/")) {
-      return "Stock Transaction";
-    }
-
-    if (location.pathname.startsWith("/users/")) {
-      return "User";
-    }
-
-    if (location.pathname.startsWith("/purchases/")) {
-      return "Purchase";
-    }
-
-    if (location.pathname.startsWith("/dispenses/")) {
-      return "Dispensed";
-    }
-
-    if (location.pathname.startsWith("/visits/")) {
-      return "Visit";
-    }
-
-    if (location.pathname.startsWith("/patients/")) {
-      return "Patient";
-    }
-
-    if (location.pathname.startsWith("/operations/")) {
-      return "Operation";
-    }
-
-    if (location.pathname.startsWith("/cash-drawers/")) {
-      return "Cash Drawer";
-    }
+    if (page) return t(`pages.${page[1]}`);
 
     if (location.pathname.startsWith("/expiry-batches")) {
-      return "Expiry Batches";
+      return t("pages.expiryBatches");
     }
 
     if (location.pathname.startsWith("/low-stock")) {
-      return "Low Stock";
+      return t("pages.lowStock");
     }
 
     if (location.pathname.startsWith("/expired-batches")) {
-      return "Expired Batches";
+      return t("pages.expiredBatches");
     }
 
-    if (location.pathname.startsWith("/expenses/")) {
-      return "Expense";
-    }
+    return t("pages.hospitalManagement");
+  };
 
-    if (location.pathname.startsWith("/cash-transactions/")) {
-      return "Cash Transaction";
-    }
-
-    return "Hospital Management";
+  const roleLabels = {
+    [ROLES.ADMIN]: "administrator",
+    [ROLES.DOCTOR]: "doctor",
+    [ROLES.NURSE]: "nurse",
+    [ROLES.PHARMACIST]: "pharmacist",
+    [ROLES.RECEPTIONIST]: "receptionist",
+    [ROLES.LAB_TECHNICIAN]: "labTechnician",
+    [ROLES.PATIENT]: "patient",
   };
 
   const getRoleLabel = () => {
-    const roleLabels = {
-      [ROLES.ADMIN]: "Administrator",
-      [ROLES.DOCTOR]: "Doctor",
-      [ROLES.NURSE]: "Nurse",
-      [ROLES.PHARMACIST]: "Pharmacist",
-      [ROLES.RECEPTIONIST]: "Receptionist",
-      [ROLES.LAB_TECHNICIAN]: "Lab Technician",
-      [ROLES.PATIENT]: "Patient",
-    };
-
-    return (
-      roleLabels[user?.role] ||
-      user?.role ||
-      "User"
-    );
+    return t(`roles.${roleLabels[user?.role] || "user"}`);
   };
 
-  const userName =
-    user?.name ||
-    "User";
+  const handleLanguageChange = async () => {
+    if (isChangingLanguage) return;
 
-  const userInitial =
-    userName
-      ?.charAt(0)
-      ?.toUpperCase() ||
-    "U";
+    const nextLanguage = i18n.language === "ar" ? "en" : "ar";
+
+    setIsChangingLanguage(true);
+
+    try {
+      await changeLanguage(nextLanguage);
+    } finally {
+      setTimeout(() => {
+        setIsChangingLanguage(false);
+      }, 300);
+    }
+  };
+
+  const userName = user?.name || t("roles.user");
+  const userInitial = userName?.charAt(0)?.toUpperCase() || "U";
 
   return (
     <header className="navbar-custom">
-
-      {/* Left Side */}
-
       <div className="navbar-left">
-
         <button
           type="button"
           className="sidebar-toggle-btn"
           onClick={onToggleSidebar}
-          aria-label="Open sidebar"
+          aria-label={t("common.openSidebar")}
         >
           <Menu size={23} />
         </button>
 
         <div className="navbar-page-info">
-
-          <h5 className="navbar-page-title">
-            {getPageTitle()}
-          </h5>
-
+          <h5 className="navbar-page-title">{getPageTitle()}</h5>
           <span className="navbar-page-subtitle">
-            Hospital Management System
+            {t("common.hospitalManagementSystem")}
           </span>
-
         </div>
-
       </div>
 
-      {/* Right Side */}
-
       <div className="navbar-right">
-
-        {/* Notifications */}
-
         <button
           type="button"
-          className="navbar-icon-btn navbar-notification-btn"
-          aria-label="Notifications"
+          className={`language-switcher ${
+            isChangingLanguage ? "changing" : ""
+          }`}
+          onClick={handleLanguageChange}
+          disabled={isChangingLanguage}
+          aria-label={t("common.language")}
         >
-          <Bell size={20} />
+          <span
+            className={`language-option ${
+              i18n.language === "ar" ? "active" : ""
+            }`}
+          >
+            عربي
+          </span>
 
-          <span className="notification-dot" />
+          <span
+            className={`language-option ${
+              i18n.language === "en" ? "active" : ""
+            }`}
+          >
+            EN
+          </span>
+
+          <span
+            className={`language-slider ${
+              i18n.language === "en" ? "english" : ""
+            }`}
+          />
         </button>
 
         <div className="navbar-divider" />
 
-        {/* User */}
-
         <div className="navbar-user">
-
           <div className="navbar-user-info">
-
-            <div className="navbar-user-name">
-              {userName}
-            </div>
-
-            <div className="navbar-user-role">
-              {getRoleLabel()}
-            </div>
-
+            <div className="navbar-user-name">{userName}</div>
+            <div className="navbar-user-role">{getRoleLabel()}</div>
           </div>
 
-          <div className="navbar-avatar">
-            {userInitial}
-          </div>
-
+          <div className="navbar-avatar">{userInitial}</div>
         </div>
-
-        {/* Logout */}
 
         <button
           type="button"
           className="navbar-logout-btn"
           onClick={logout}
-          title="Logout"
-          aria-label="Logout"
+          title={t("auth.logout")}
+          aria-label={t("auth.logout")}
         >
           <LogOut size={18} />
-
-          <span>
-            Logout
-          </span>
+          <span>{t("auth.logout")}</span>
         </button>
-
       </div>
-
     </header>
   );
 };

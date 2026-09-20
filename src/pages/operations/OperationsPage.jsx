@@ -1,13 +1,20 @@
+
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import { cancelOperation, getOperations } from "../../services/operations.service";
+import { useTranslation } from "react-i18next";
+import {
+  cancelOperation,
+  getOperations,
+} from "../../services/operations.service";
 import { getPatients } from "../../services/patients.service";
 import { getDoctors } from "../../services/doctor.service";
 import { getSpecialties } from "../../services/specialty.service";
 import AdminDataPage from "../../components/table/AdminDataPage";
-
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const OperationsPage = () => {
+  const { t, i18n } = useTranslation();
+
   const [operations, setOperations] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -17,8 +24,7 @@ const OperationsPage = () => {
 
   const [patientLoading, setPatientLoading] = useState(false);
   const [doctorLoading, setDoctorLoading] = useState(false);
-  const [specialtyLoading, setSpecialtyLoading] =
-    useState(false);
+  const [specialtyLoading, setSpecialtyLoading] = useState(false);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -60,14 +66,13 @@ const OperationsPage = () => {
         }
       );
     } catch (error) {
-      console.error(
-        "GET OPERATIONS ERROR:",
-        error
-      );
+      console.error("GET OPERATIONS ERROR:", error);
 
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to load operations"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.loadFailed")
+        )
       );
     } finally {
       setLoading(false);
@@ -114,9 +119,13 @@ const OperationsPage = () => {
         }))
       );
     } catch (error) {
-      console.error(
-        "SEARCH PATIENTS ERROR:",
-        error
+      console.error("SEARCH PATIENTS ERROR:", error);
+
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.searchPatientsFailed")
+        )
       );
     } finally {
       setPatientLoading(false);
@@ -143,9 +152,13 @@ const OperationsPage = () => {
         }))
       );
     } catch (error) {
-      console.error(
-        "SEARCH DOCTORS ERROR:",
-        error
+      console.error("SEARCH DOCTORS ERROR:", error);
+
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.searchDoctorsFailed")
+        )
       );
     } finally {
       setDoctorLoading(false);
@@ -162,8 +175,7 @@ const OperationsPage = () => {
         limit: 20,
       });
 
-      const data =
-        response?.specialties || [];
+      const data = response?.specialties || [];
 
       setSpecialties(
         data.map((specialty) => ({
@@ -172,9 +184,13 @@ const OperationsPage = () => {
         }))
       );
     } catch (error) {
-      console.error(
-        "SEARCH SPECIALTIES ERROR:",
-        error
+      console.error("SEARCH SPECIALTIES ERROR:", error);
+
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.searchSpecialtiesFailed")
+        )
       );
     } finally {
       setSpecialtyLoading(false);
@@ -183,7 +199,9 @@ const OperationsPage = () => {
 
   const handleCancel = async (operation) => {
     const confirmed = window.confirm(
-      `Are you sure you want to cancel "${operation.operationName}"?`
+      t("operations.cancelConfirmation", {
+        name: operation.operationName,
+      })
     );
 
     if (!confirmed) return;
@@ -196,13 +214,13 @@ const OperationsPage = () => {
       if (!response?.success) {
         throw new Error(
           response?.message ||
-            "Failed to cancel operation"
+            t("operations.cancelFailed")
         );
       }
 
-      toast.success(
+      showSuccess(
         response.message ||
-          "Operation cancelled successfully"
+          t("operations.cancelSuccess")
       );
 
       loadOperations(
@@ -210,10 +228,11 @@ const OperationsPage = () => {
         filters
       );
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message ||
-          error.message ||
-          "Failed to cancel operation"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.cancelFailed")
+        )
       );
     }
   };
@@ -222,52 +241,69 @@ const OperationsPage = () => {
     if (!date) return "-";
 
     return new Date(date).toLocaleDateString(
-      "en-GB"
+      i18n.language === "ar" ? "ar-EG" : "en-GB"
     );
   };
 
   const formatMoney = (value) => {
-    return `${Number(value || 0).toFixed(2)} EGP`;
+    return `${Number(value || 0).toFixed(2)} ${t(
+      "common.egp"
+    )}`;
+  };
+
+  const getStatusLabel = (status) => {
+    return t(`operations.statuses.${status}`, {
+      defaultValue: status,
+    });
+  };
+
+  const getPaymentStatusLabel = (status) => {
+    return t(
+      `operations.paymentStatuses.${status}`,
+      {
+        defaultValue: status,
+      }
+    );
   };
 
   const columns = [
     {
       key: "patient",
-      label: "Patient",
+      label: t("operations.patient"),
       render: (operation) =>
         operation.patient?.name || "-",
     },
     {
       key: "operationName",
-      label: "Operation",
+      label: t("operations.operation"),
     },
     {
       key: "doctor",
-      label: "Doctor",
+      label: t("operations.doctor"),
       render: (operation) =>
         operation.doctor?.name || "-",
     },
     {
       key: "specialty",
-      label: "Specialty",
+      label: t("operations.specialty"),
       render: (operation) =>
         operation.specialty?.name || "-",
     },
     {
       key: "operationDate",
-      label: "Date",
+      label: t("operations.date"),
       render: (operation) =>
         formatDate(operation.operationDate),
     },
     {
       key: "totalAmount",
-      label: "Total",
+      label: t("operations.total"),
       render: (operation) =>
         formatMoney(operation.totalAmount),
     },
     {
       key: "paymentStatus",
-      label: "Payment",
+      label: t("operations.payment"),
       render: (operation) => (
         <span
           className={`badge ${
@@ -279,13 +315,15 @@ const OperationsPage = () => {
               : "bg-secondary"
           }`}
         >
-          {operation.paymentStatus}
+          {getPaymentStatusLabel(
+            operation.paymentStatus
+          )}
         </span>
       ),
     },
     {
       key: "status",
-      label: "Status",
+      label: t("operations.status"),
       render: (operation) => (
         <span
           className={`badge ${
@@ -297,7 +335,7 @@ const OperationsPage = () => {
               : "bg-warning text-dark"
           }`}
         >
-          {operation.status}
+          {getStatusLabel(operation.status)}
         </span>
       ),
     },
@@ -306,26 +344,26 @@ const OperationsPage = () => {
   const filterConfig = [
     {
       name: "search",
-      label: "Operation",
+      label: t("operations.operation"),
       type: "text",
-      placeholder: "Search operation...",
+      placeholder: t("operations.searchOperation"),
       value: filters.search,
       col: "col-12 col-md-6 col-lg-3",
     },
     {
       name: "patient",
-      label: "Patient",
+      label: t("operations.patient"),
       type: "searchSelect",
       options: patients,
       value: filters.patient,
       onSearch: searchPatients,
       loading: patientLoading,
-      placeholder: "Search patient...",
+      placeholder: t("operations.searchPatient"),
       col: "col-12 col-md-6 col-lg-3",
     },
     {
       name: "doctor",
-      label: "Doctor",
+      label: t("operations.doctor"),
       type: "searchSelect",
       options: doctors,
       value: filters.doctor,
@@ -333,67 +371,73 @@ const OperationsPage = () => {
       loading: doctorLoading,
       disabled: !filters.specialty,
       placeholder: filters.specialty
-        ? "Search doctor..."
-        : "Select specialty first",
+        ? t("operations.searchDoctor")
+        : t("operations.selectSpecialtyFirst"),
       col: "col-12 col-md-6 col-lg-3",
     },
     {
       name: "specialty",
-      label: "Specialty",
+      label: t("operations.specialty"),
       type: "searchSelect",
       options: specialties,
       value: filters.specialty,
       onSearch: searchSpecialties,
       loading: specialtyLoading,
-      placeholder: "Search specialty...",
+      placeholder: t("operations.searchSpecialty"),
       col: "col-12 col-md-6 col-lg-3",
     },
     {
       name: "status",
-      label: "Status",
+      label: t("operations.status"),
       type: "select",
       value: filters.status,
       options: [
         {
           value: "",
-          label: "All Statuses",
+          label: t("operations.allStatuses"),
         },
         {
           value: "pending",
-          label: "Pending",
+          label: t("operations.statuses.pending"),
         },
         {
           value: "completed",
-          label: "Completed",
+          label: t("operations.statuses.completed"),
         },
         {
           value: "cancelled",
-          label: "Cancelled",
+          label: t("operations.statuses.cancelled"),
         },
       ],
       col: "col-12 col-md-6 col-lg-3",
     },
     {
       name: "paymentStatus",
-      label: "Payment Status",
+      label: t("operations.paymentStatus"),
       type: "select",
       value: filters.paymentStatus,
       options: [
         {
           value: "",
-          label: "All Payment Statuses",
+          label: t("operations.allPaymentStatuses"),
         },
         {
           value: "unpaid",
-          label: "Unpaid",
+          label: t(
+            "operations.paymentStatuses.unpaid"
+          ),
         },
         {
           value: "partial",
-          label: "Partial",
+          label: t(
+            "operations.paymentStatuses.partial"
+          ),
         },
         {
           value: "paid",
-          label: "Paid",
+          label: t(
+            "operations.paymentStatuses.paid"
+          ),
         },
       ],
       col: "col-12 col-md-6 col-lg-3",
@@ -403,13 +447,13 @@ const OperationsPage = () => {
   const actions = [
     {
       type: "show",
-      label: "View",
+      label: t("common.view"),
       link: (item) =>
         `/operations/${item._id}`,
     },
     {
       type: "edit",
-      label: "Edit",
+      label: t("common.edit"),
       link: (item) =>
         `/operations/edit/${item._id}`,
       hide: (item) =>
@@ -417,7 +461,7 @@ const OperationsPage = () => {
     },
     {
       type: "cancel",
-      label: "Cancel",
+      label: t("operations.cancel"),
       onClick: handleCancel,
       hide: (item) =>
         item.status === "cancelled" ||
@@ -427,8 +471,8 @@ const OperationsPage = () => {
 
   return (
     <AdminDataPage
-      title="Operations"
-      subtitle="Manage hospital operations"
+      title={t("operations.title")}
+      subtitle={t("operations.subtitle")}
       type="Add"
       addLink="/operations/add"
       loading={loading}
@@ -440,7 +484,7 @@ const OperationsPage = () => {
       actions={actions}
       pagination={pagination}
       onPageChange={handlePageChange}
-      emptyMessage="No operations found"
+      emptyMessage={t("operations.noOperationsFound")}
     />
   );
 };

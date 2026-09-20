@@ -7,12 +7,15 @@ import {
   X,
   Loader2,
 } from "lucide-react";
-
+import { useTranslation } from "react-i18next";
 import { getBatches } from "../../services/batches.service";
-
+import {showError,} from "../../services/toast.service";
+import { getApiErrorMessage } from "../../utils/apiError";
 import "./medicineManualSelector.css";
 
 const MedicineManualSelector = ({ onAdd }) => {
+  const { t } = useTranslation();
+
   const [search, setSearch] = useState("");
   const [options, setOptions] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
@@ -43,19 +46,21 @@ const MedicineManualSelector = ({ onAdd }) => {
 
         setOptions(batches);
       } catch (error) {
-        console.error(
-          "Failed to search medicine batches:",
-          error
-        );
-
         setOptions([]);
+
+        showError(
+          getApiErrorMessage(
+            error,
+            t("medicineSelector.searchFailed")
+          )
+        );
       } finally {
         setLoading(false);
       }
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, t]);
 
   const handleSelectBatch = (batch) => {
     if (!batch) return;
@@ -69,12 +74,12 @@ const MedicineManualSelector = ({ onAdd }) => {
     if (!selectedBatch) return;
 
     if (!selectedBatch.medicine?._id) {
-      console.error("Medicine not found");
+      showError(t("medicineSelector.medicineNotFound"));
       return;
     }
 
     if (!selectedBatch.isActive) {
-      console.error("This batch is inactive");
+      showError(t("medicineSelector.batchInactive"));
       return;
     }
 
@@ -82,16 +87,12 @@ const MedicineManualSelector = ({ onAdd }) => {
       new Date(selectedBatch.expiryDate) <
       new Date()
     ) {
-      console.error(
-        "This medicine batch has expired"
-      );
+      showError(t("medicineSelector.batchExpired"));
       return;
     }
 
     if (Number(selectedBatch.quantity) <= 0) {
-      console.error(
-        "This batch is out of stock"
-      );
+      showError(t("medicineSelector.outOfStock"));
       return;
     }
 
@@ -100,29 +101,20 @@ const MedicineManualSelector = ({ onAdd }) => {
 
     const medicine = {
       medicine: selectedBatch.medicine._id,
-
       batch: selectedBatch._id,
-
       name:
         selectedBatch.medicine.name ||
         `Medicine-${selectedBatch.medicine._id.slice(-6)}`,
-
       genericName:
         selectedBatch.medicine.genericName || "",
-
       batchNumber:
         selectedBatch.batchNumber || "-",
-
       expiryDate:
         selectedBatch.expiryDate,
-
       unitPrice,
-
       availableQuantity:
         Number(selectedBatch.quantity) || 0,
-
       quantity: 1,
-
       total: unitPrice,
     };
 
@@ -146,12 +138,10 @@ const MedicineManualSelector = ({ onAdd }) => {
           <Package size={20} />
 
           <div>
-            <h5>
-              Add Medicine Manually
-            </h5>
+            <h5>{t("medicineSelector.title")}</h5>
 
             <span>
-              Search medicine or batch number
+              {t("medicineSelector.subtitle")}
             </span>
           </div>
         </div>
@@ -166,7 +156,7 @@ const MedicineManualSelector = ({ onAdd }) => {
         <input
           type="text"
           className="form-control manual-search-input"
-          placeholder="Search by medicine name, generic name or batch..."
+          placeholder={t("medicineSelector.placeholder")}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -186,7 +176,8 @@ const MedicineManualSelector = ({ onAdd }) => {
             type="button"
             className="manual-clear-btn"
             onClick={handleClear}
-            title="Clear"
+            title={t("common.clear")}
+            aria-label={t("common.clear")}
           >
             <X size={17} />
           </button>
@@ -196,7 +187,9 @@ const MedicineManualSelector = ({ onAdd }) => {
       {search.trim().length > 0 &&
         search.trim().length < 2 && (
           <div className="manual-search-hint">
-            Type at least 2 characters
+            {t("medicineSelector.minCharacters", {
+              count: 2,
+            })}
           </div>
         )}
 
@@ -211,7 +204,7 @@ const MedicineManualSelector = ({ onAdd }) => {
                 />
 
                 <span>
-                  Searching...
+                  {t("medicineSelector.searching")}
                 </span>
               </div>
             ) : options.length === 0 ? (
@@ -219,7 +212,7 @@ const MedicineManualSelector = ({ onAdd }) => {
                 <Package size={32} />
 
                 <span>
-                  No available medicine found
+                  {t("medicineSelector.noMedicineFound")}
                 </span>
               </div>
             ) : (
@@ -247,16 +240,16 @@ const MedicineManualSelector = ({ onAdd }) => {
 
                   <div className="manual-result-meta">
                     <span>
-                      Batch:{" "}
+                      {t("medicineSelector.batch")}:{" "}
                       {batch.batchNumber || "-"}
                     </span>
 
                     <span>
-                      Price:{" "}
+                      {t("medicineSelector.price")}:{" "}
                       {Number(
                         batch.sellingPrice
                       ).toFixed(2)}{" "}
-                      EGP
+                      {t("common.egp")}
                     </span>
                   </div>
                 </button>
@@ -278,18 +271,14 @@ const MedicineManualSelector = ({ onAdd }) => {
                   `Medicine-${selectedBatch.medicine?._id?.slice(-6)}`}
               </strong>
 
-              {selectedBatch.medicine
-                ?.genericName && (
+              {selectedBatch.medicine?.genericName && (
                 <span>
-                  {
-                    selectedBatch.medicine
-                      .genericName
-                  }
+                  {selectedBatch.medicine.genericName}
                 </span>
               )}
 
               <span>
-                Batch:{" "}
+                {t("medicineSelector.batch")}:{" "}
                 {selectedBatch.batchNumber || "-"}
               </span>
             </div>
@@ -297,14 +286,14 @@ const MedicineManualSelector = ({ onAdd }) => {
 
           <div className="manual-selected-price">
             <span>
-              Selling Price
+              {t("medicineSelector.sellingPrice")}
             </span>
 
             <strong>
               {Number(
                 selectedBatch.sellingPrice
               ).toFixed(2)}{" "}
-              EGP
+              {t("common.egp")}
             </strong>
           </div>
 
@@ -314,14 +303,15 @@ const MedicineManualSelector = ({ onAdd }) => {
             onClick={handleAdd}
           >
             <Plus size={18} />
-            Add
+            {t("common.add")}
           </button>
 
           <button
             type="button"
             className="manual-clear-btn"
             onClick={handleClear}
-            title="Clear selection"
+            title={t("medicineSelector.clearSelection")}
+            aria-label={t("medicineSelector.clearSelection")}
           >
             <X size={17} />
           </button>

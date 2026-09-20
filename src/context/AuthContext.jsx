@@ -1,10 +1,10 @@
+
 import {
   createContext,
   useContext,
   useEffect,
   useState,
 } from "react";
-
 import {
   loginUser,
   registerUser,
@@ -14,9 +14,7 @@ import {
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => {
-    return localStorage.getItem("token") || "";
-  });
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
 
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
@@ -37,58 +35,37 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = Boolean(token);
 
-  // =========================
-  // Login
-  // =========================
-
   const login = async (data) => {
     const response = await loginUser(data);
 
-    const { token, user } = response;
+    const { token: newToken, user: loggedUser } = response;
 
-    if (!token || !user) {
+    if (!newToken || !loggedUser) {
       throw new Error("Invalid login response");
     }
 
-    localStorage.setItem("token", token);
-    localStorage.setItem(
-      "user",
-      JSON.stringify(user)
-    );
+    localStorage.setItem("token", newToken);
+    localStorage.setItem("user", JSON.stringify(loggedUser));
 
-    setToken(token);
-    setUser(user);
+    setToken(newToken);
+    setUser(loggedUser);
 
     return response;
   };
-
-  // =========================
-  // Register
-  // =========================
 
   const register = async (data) => {
-    const response = await registerUser(data);
-
-    return response;
+    return await registerUser(data);
   };
-
-  // =========================
-  // Get Current User
-  // =========================
 
   const getSingleUser = async (userId) => {
     const response = await getCurrentUser(userId);
     const currentUser = response.user;
-    localStorage.setItem( "user",JSON.stringify(currentUser));
 
+    localStorage.setItem("user", JSON.stringify(currentUser));
     setUser(currentUser);
 
     return response;
   };
-
-  // =========================
-  // Logout
-  // =========================
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -98,20 +75,24 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // =========================
-  // Restore Session
-  // =========================
-
   const restoreSession = async () => {
-    if (!token) {
+    if (!token || !user) {
+      setLoading(false);
+      return;
+    }
+
+    const userId = user._id || user.id;
+
+    if (!userId) {
+      logout();
       setLoading(false);
       return;
     }
 
     try {
-      await getSingleUser(user.id || user._id);
+      await getSingleUser(userId);
     } catch (error) {
-      console.log("Session expired" ,error);
+      console.error("Session restore failed:", error);
 
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -122,8 +103,8 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
-  useEffect(() => {
 
+  useEffect(() => {
     restoreSession();
   }, []);
 
@@ -134,7 +115,6 @@ export const AuthProvider = ({ children }) => {
         user,
         isAuthenticated,
         loading,
-
         login,
         register,
         getSingleUser,
@@ -150,9 +130,7 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error(
-      "useAuth must be used inside AuthProvider"
-    );
+    throw new Error("useAuth must be used inside AuthProvider");
   }
 
   return context;

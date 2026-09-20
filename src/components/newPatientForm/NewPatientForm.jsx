@@ -1,9 +1,11 @@
+
 import { useFormik } from "formik";
-import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import { createPatient } from "../../services/patients.service";
+import { showSuccess, showError } from "../../services/toast.service";
 
 const NewPatientForm = ({ onPatientCreated, onCancel }) => {
-  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const formik = useFormik({
     initialValues: {
@@ -21,13 +23,11 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
 
         if (!response.success) {
           throw new Error(
-            response.message || "Failed to create patient"
+            response.message || t("patients.createFailed")
           );
         }
 
-        enqueueSnackbar("Patient created successfully", {
-          variant: "success",
-        });
+        showSuccess(t("patients.createdSuccessfully"));
 
         onPatientCreated(response.patient);
         resetForm();
@@ -39,13 +39,10 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
           onCancel();
         }
 
-        enqueueSnackbar(
+        showError(
           error.response?.data?.message ||
             error.message ||
-            "Failed to create patient",
-          {
-            variant: "error",
-          }
+            t("patients.createFailed")
         );
       }
     },
@@ -54,13 +51,14 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
   return (
     <div className="border rounded p-3 mb-4 bg-light">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="mb-0">New Patient</h5>
+        <h5 className="mb-0">{t("patients.newPatient")}</h5>
 
         <button
           type="button"
           className="btn-close"
           onClick={onCancel}
           disabled={formik.isSubmitting}
+          aria-label={t("common.close")}
         />
       </div>
 
@@ -68,7 +66,8 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
         <div className="row">
           <div className="col-md-6 mb-3">
             <label className="form-label">
-              Name <span className="text-danger">*</span>
+              {t("patients.name")}{" "}
+              <span className="text-danger">*</span>
             </label>
 
             <input
@@ -83,7 +82,9 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
           </div>
 
           <div className="col-md-6 mb-3">
-            <label className="form-label">Phone</label>
+            <label className="form-label">
+              {t("patients.phone")}
+            </label>
 
             <input
               type="text"
@@ -97,7 +98,9 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
           </div>
 
           <div className="col-md-6 mb-3">
-            <label className="form-label">National ID</label>
+            <label className="form-label">
+              {t("patients.nationalId")}
+            </label>
 
             <input
               type="text"
@@ -112,7 +115,7 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
 
           <div className="col-md-6 mb-3">
             <label className="form-label">
-              Date of Birth
+              {t("patients.dateOfBirth")}
             </label>
 
             <input
@@ -127,7 +130,9 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
           </div>
 
           <div className="col-md-6 mb-3">
-            <label className="form-label">Gender</label>
+            <label className="form-label">
+              {t("patients.gender")}
+            </label>
 
             <select
               name="gender"
@@ -137,14 +142,22 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
               onBlur={formik.handleBlur}
               disabled={formik.isSubmitting}
             >
-              <option value="">Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
+              <option value="">
+                {t("patients.selectGender")}
+              </option>
+              <option value="male">
+                {t("patients.male")}
+              </option>
+              <option value="female">
+                {t("patients.female")}
+              </option>
             </select>
           </div>
 
           <div className="col-md-6 mb-3">
-            <label className="form-label">Email</label>
+            <label className="form-label">
+              {t("patients.email")}
+            </label>
 
             <input
               type="email"
@@ -158,7 +171,9 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
           </div>
 
           <div className="col-12 mb-3">
-            <label className="form-label">Address</label>
+            <label className="form-label">
+              {t("patients.address")}
+            </label>
 
             <textarea
               name="address"
@@ -178,8 +193,8 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
               disabled={formik.isSubmitting}
             >
               {formik.isSubmitting
-                ? "Creating..."
-                : "Create Patient"}
+                ? t("patients.creating")
+                : t("patients.createPatient")}
             </button>
 
             <button
@@ -188,7 +203,7 @@ const NewPatientForm = ({ onPatientCreated, onCancel }) => {
               onClick={onCancel}
               disabled={formik.isSubmitting}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </div>

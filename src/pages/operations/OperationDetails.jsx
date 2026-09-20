@@ -7,17 +7,26 @@ import {
   CheckCircle,
   Wallet,
 } from "lucide-react";
-import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
-import { completeOperation, getOperation } from "../../services/operations.service";
+import {
+  completeOperation,
+  getOperation,
+} from "../../services/operations.service";
 import {
   getOperationSettlements,
 } from "../../services/doctorSettlements.service";
 import DetailsCard from "../../components/details/DetailsCard";
+import {
+  showError,
+  showSuccess,
+} from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const OperationDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [operation, setOperation] = useState(null);
   const [settlements, setSettlements] = useState([]);
@@ -31,7 +40,7 @@ const OperationDetails = () => {
     if (!response?.success) {
       throw new Error(
         response?.message ||
-          "Failed to load operation"
+          t("operations.loadFailed")
       );
     }
 
@@ -48,7 +57,7 @@ const OperationDetails = () => {
       if (!response?.success) {
         throw new Error(
           response?.message ||
-            "Failed to load doctor settlements"
+            t("operations.loadSettlementsFailed")
         );
       }
 
@@ -59,10 +68,11 @@ const OperationDetails = () => {
         error
       );
 
-      toast.error(
-        error?.response?.data?.message ||
-          error.message ||
-          "Failed to load doctor settlements"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.loadSettlementsFailed")
+        )
       );
     } finally {
       setSettlementsLoading(false);
@@ -81,10 +91,11 @@ const OperationDetails = () => {
         error
       );
 
-      toast.error(
-        error?.response?.data?.message ||
-          error.message ||
-          "Failed to load operation"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.loadFailed")
+        )
       );
     } finally {
       setLoading(false);
@@ -101,22 +112,22 @@ const OperationDetails = () => {
     if (!date) return "-";
 
     return new Date(date).toLocaleDateString(
-      "en-GB"
+      i18n.language === "ar" ? "ar-EG" : "en-GB"
     );
   };
 
   const formatMoney = (value) => {
-    return `${Number(value || 0).toFixed(2)} EGP`;
+    return `${Number(value || 0).toFixed(2)} ${t(
+      "common.egp"
+    )}`;
   };
 
   const getPaymentStatusClass = (status) => {
     switch (status) {
       case "paid":
         return "badge bg-success";
-
       case "partial":
         return "badge bg-warning text-dark";
-
       default:
         return "badge bg-secondary";
     }
@@ -126,10 +137,8 @@ const OperationDetails = () => {
     switch (status) {
       case "completed":
         return "badge bg-success";
-
       case "cancelled":
         return "badge bg-danger";
-
       default:
         return "badge bg-warning text-dark";
     }
@@ -141,37 +150,70 @@ const OperationDetails = () => {
       : "badge bg-danger";
   };
 
-const handleCompleteOperation = async () => {
-  const confirmed = window.confirm(
-    "Are you sure you want to mark this operation as completed?"
-  );
+  const getPaymentStatusLabel = (status) => {
+    return t(
+      `operations.paymentStatuses.${status}`,
+      {
+        defaultValue: status || "-",
+      }
+    );
+  };
 
-  if (!confirmed) return;
+  const getOperationStatusLabel = (status) => {
+    return t(
+      `operations.statuses.${status}`,
+      {
+        defaultValue: status || "-",
+      }
+    );
+  };
 
-  try {
-    const response = await completeOperation(id);
+  const getSettlementStatusLabel = (status) => {
+    return t(
+      `operations.settlementStatuses.${status}`,
+      {
+        defaultValue: status || "-",
+      }
+    );
+  };
 
-    if (!response?.success) {
-      throw new Error(
-        response?.message || "Failed to complete operation"
+  const handleCompleteOperation = async () => {
+    const confirmed = window.confirm(
+      t("operations.completeConfirmation")
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await completeOperation(id);
+
+      if (!response?.success) {
+        throw new Error(
+          response?.message ||
+            t("operations.completeFailed")
+        );
+      }
+
+      showSuccess(
+        response?.message ||
+          t("operations.completeSuccess")
+      );
+
+      setOperation(response.operation);
+    } catch (error) {
+      console.error(
+        "COMPLETE OPERATION ERROR:",
+        error
+      );
+
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.completeFailed")
+        )
       );
     }
-
-    toast.success(
-      response?.message || "Operation completed successfully"
-    );
-
-    setOperation(response.operation);
-  } catch (error) {
-    console.error("COMPLETE OPERATION ERROR:", error);
-
-    toast.error(
-      error?.response?.data?.message ||
-        error.message ||
-        "Failed to complete operation"
-    );
-  }
-};
+  };
 
   const doctorPaidAmount = settlements.reduce(
     (total, settlement) => {
@@ -199,7 +241,7 @@ const handleCompleteOperation = async () => {
   const operationFields = [
     {
       key: "patient.name",
-      label: "Patient",
+      label: t("operations.patient"),
       nav: (value, data) =>
         value
           ? `/patients/${data.patient?._id}`
@@ -207,41 +249,41 @@ const handleCompleteOperation = async () => {
     },
     {
       key: "patient.phone",
-      label: "Patient Phone",
+      label: t("operations.patientPhone"),
     },
     {
       key: "doctor.name",
-      label: "Doctor",
+      label: t("operations.doctor"),
     },
     {
       key: "specialty.name",
-      label: "Specialty",
+      label: t("operations.specialty"),
     },
     {
       key: "operationName",
-      label: "Operation",
+      label: t("operations.operation"),
     },
     {
       key: "operationDate",
-      label: "Operation Date",
+      label: t("operations.operationDate"),
       render: (value) =>
         formatDate(value),
     },
     {
       key: "cost",
-      label: "Cost",
+      label: t("operations.cost"),
       render: (value) =>
         formatMoney(value),
     },
     {
       key: "discount",
-      label: "Discount",
+      label: t("operations.discount"),
       render: (value) =>
         formatMoney(value),
     },
     {
       key: "totalAmount",
-      label: "Total Amount",
+      label: t("operations.totalAmount"),
       render: (value) => (
         <strong>
           {formatMoney(value)}
@@ -250,17 +292,17 @@ const handleCompleteOperation = async () => {
     },
     {
       key: "doctorFeeType",
-      label: "Doctor Fee Type",
+      label: t("operations.doctorFeeType"),
       render: (value) =>
         value === "percentage"
-          ? "Percentage"
+          ? t("operations.feeTypes.percentage")
           : value === "fixed"
-          ? "Fixed"
-          : "None",
+          ? t("operations.feeTypes.fixed")
+          : t("operations.feeTypes.none"),
     },
     {
       key: "doctorFeeValue",
-      label: "Doctor Fee Value",
+      label: t("operations.doctorFeeValue"),
       render: (value, data) =>
         data.doctorFeeType === "percentage"
           ? `${Number(value || 0)}%`
@@ -268,13 +310,13 @@ const handleCompleteOperation = async () => {
     },
     {
       key: "doctorFeeAmount",
-      label: "Doctor Fee Amount",
+      label: t("operations.doctorFeeAmount"),
       render: (value) =>
         formatMoney(value),
     },
     {
       key: "hospitalAmount",
-      label: "Hospital Amount",
+      label: t("operations.hospitalAmount"),
       render: (value) => (
         <strong>
           {formatMoney(value)}
@@ -283,13 +325,13 @@ const handleCompleteOperation = async () => {
     },
     {
       key: "paidAmount",
-      label: "Paid Amount",
+      label: t("operations.paidAmount"),
       render: (value) =>
         formatMoney(value),
     },
     {
       key: "remainingAmount",
-      label: "Remaining Amount",
+      label: t("operations.remainingAmount"),
       render: (value) => (
         <strong>
           {formatMoney(value)}
@@ -298,33 +340,33 @@ const handleCompleteOperation = async () => {
     },
     {
       key: "paymentStatus",
-      label: "Payment Status",
+      label: t("operations.paymentStatus"),
       render: (value) => (
         <span
           className={getPaymentStatusClass(
             value
           )}
         >
-          {value || "-"}
+          {getPaymentStatusLabel(value)}
         </span>
       ),
     },
     {
       key: "status",
-      label: "Operation Status",
+      label: t("operations.operationStatus"),
       render: (value) => (
         <span
           className={getOperationStatusClass(
             value
           )}
         >
-          {value || "-"}
+          {getOperationStatusLabel(value)}
         </span>
       ),
     },
     {
       key: "notes",
-      label: "Notes",
+      label: t("operations.notes"),
       col: "col-12",
     },
   ];
@@ -334,11 +376,12 @@ const handleCompleteOperation = async () => {
       <div className="details-page">
         <div className="details-card">
           <div className="details-empty">
-            <h5>Operation Not Found</h5>
+            <h5>
+              {t("operations.operationNotFound")}
+            </h5>
 
             <p>
-              The requested operation could not
-              be found.
+              {t("operations.operationNotFoundDescription")}
             </p>
 
             <button
@@ -348,7 +391,7 @@ const handleCompleteOperation = async () => {
                 navigate("/operations")
               }
             >
-              Back to Operations
+              {t("operations.backToOperations")}
             </button>
           </div>
         </div>
@@ -361,11 +404,11 @@ const handleCompleteOperation = async () => {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 className="mb-1">
-            Operation Details
+            {t("operations.operationDetails")}
           </h4>
 
           <p className="text-muted mb-0">
-            View operation and payment information
+            {t("operations.detailsDescription")}
           </p>
         </div>
 
@@ -376,32 +419,37 @@ const handleCompleteOperation = async () => {
             onClick={() => navigate("/operations")}
           >
             <ArrowLeft size={17} />
-            Back
+            {t("common.back")}
           </button>
 
-          {!loading && operation?.status === "pending" && (
-            <>
-              <button
-                type="button"
-                className="btn btn-success d-flex align-items-center gap-2"
-                onClick={handleCompleteOperation}
-              >
-                <CheckCircle size={17} />
-                Complete Operation
-              </button>
+          {!loading &&
+            operation?.status === "pending" && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-success d-flex align-items-center gap-2"
+                  onClick={
+                    handleCompleteOperation
+                  }
+                >
+                  <CheckCircle size={17} />
+                  {t("operations.completeOperation")}
+                </button>
 
-              <button
-                type="button"
-                className="btn btn-warning d-flex align-items-center gap-2"
-                onClick={() =>
-                  navigate(`/operations/edit/${operation._id}`)
-                }
-              >
-                <Pencil size={17} />
-                Edit
-              </button>
-            </>
-          )}
+                <button
+                  type="button"
+                  className="btn btn-warning d-flex align-items-center gap-2"
+                  onClick={() =>
+                    navigate(
+                      `/operations/edit/${operation._id}`
+                    )
+                  }
+                >
+                  <Pencil size={17} />
+                  {t("common.edit")}
+                </button>
+              </>
+            )}
         </div>
       </div>
 
@@ -409,7 +457,9 @@ const handleCompleteOperation = async () => {
         data={operation || {}}
         fields={operationFields}
         loading={loading}
-        emptyMessage="No operation information available"
+        emptyMessage={t(
+          "operations.noOperationInformation"
+        )}
       />
 
       {!loading && operation && (
@@ -418,7 +468,7 @@ const handleCompleteOperation = async () => {
             <div className="card h-100 shadow-sm border-0">
               <div className="card-body">
                 <small className="text-muted d-block mb-2">
-                  Total Amount
+                  {t("operations.totalAmount")}
                 </small>
 
                 <h4 className="mb-0">
@@ -434,7 +484,7 @@ const handleCompleteOperation = async () => {
             <div className="card h-100 shadow-sm border-0">
               <div className="card-body">
                 <small className="text-muted d-block mb-2">
-                  Paid Amount
+                  {t("operations.paidAmount")}
                 </small>
 
                 <h4 className="mb-0 text-success">
@@ -450,7 +500,7 @@ const handleCompleteOperation = async () => {
             <div className="card h-100 shadow-sm border-0">
               <div className="card-body">
                 <small className="text-muted d-block mb-2">
-                  Remaining Amount
+                  {t("operations.remainingAmount")}
                 </small>
 
                 <h4 className="mb-0 text-danger">
@@ -472,11 +522,13 @@ const handleCompleteOperation = async () => {
               <div className="d-flex justify-content-between align-items-center gap-3">
                 <div>
                   <h5 className="mb-1">
-                    Operation Payment
+                    {t("operations.operationPayment")}
                   </h5>
 
                   <p className="text-muted mb-0">
-                    Manage payments for this operation
+                    {t(
+                      "operations.operationPaymentDescription"
+                    )}
                   </p>
                 </div>
 
@@ -491,7 +543,7 @@ const handleCompleteOperation = async () => {
                       )
                     }
                   >
-                    Add Payment
+                    {t("operations.addPayment")}
                   </button>
                 )}
               </div>
@@ -505,11 +557,13 @@ const handleCompleteOperation = async () => {
             <div className="d-flex justify-content-between align-items-center gap-3 mb-4">
               <div>
                 <h5 className="mb-1">
-                  Doctor Settlement
+                  {t("operations.doctorSettlement")}
                 </h5>
 
                 <p className="text-muted mb-0">
-                  Manage payments made to the doctor
+                  {t(
+                    "operations.doctorSettlementDescription"
+                  )}
                 </p>
               </div>
 
@@ -528,7 +582,7 @@ const handleCompleteOperation = async () => {
                     }
                   >
                     <Wallet size={17} />
-                    Pay Doctor
+                    {t("operations.payDoctor")}
                   </button>
                 )}
             </div>
@@ -537,7 +591,7 @@ const handleCompleteOperation = async () => {
               <div className="col-12 col-md-4">
                 <div className="border rounded p-3 h-100">
                   <small className="text-muted d-block mb-1">
-                    Doctor Fee
+                    {t("operations.doctorFee")}
                   </small>
 
                   <strong>
@@ -551,7 +605,7 @@ const handleCompleteOperation = async () => {
               <div className="col-12 col-md-4">
                 <div className="border rounded p-3 h-100">
                   <small className="text-muted d-block mb-1">
-                    Paid to Doctor
+                    {t("operations.paidToDoctor")}
                   </small>
 
                   <strong className="text-success">
@@ -565,7 +619,9 @@ const handleCompleteOperation = async () => {
               <div className="col-12 col-md-4">
                 <div className="border rounded p-3 h-100">
                   <small className="text-muted d-block mb-1">
-                    Remaining Doctor Fee
+                    {t(
+                      "operations.remainingDoctorFee"
+                    )}
                   </small>
 
                   <strong
@@ -588,8 +644,9 @@ const handleCompleteOperation = async () => {
               operation.status !==
                 "cancelled" && (
                 <div className="alert alert-warning mt-3 mb-0">
-                  The operation must be fully paid
-                  before paying the doctor.
+                  {t(
+                    "operations.mustBeFullyPaid"
+                  )}
                 </div>
               )}
 
@@ -597,8 +654,9 @@ const handleCompleteOperation = async () => {
               "paid" &&
               doctorFeeAmount === 0 && (
                 <div className="alert alert-secondary mt-3 mb-0">
-                  No doctor fee is assigned to this
-                  operation.
+                  {t(
+                    "operations.noDoctorFee"
+                  )}
                 </div>
               )}
 
@@ -608,14 +666,18 @@ const handleCompleteOperation = async () => {
               doctorRemainingAmount ===
                 0 && (
                 <div className="alert alert-success mt-3 mb-0">
-                  Doctor fee has been fully paid.
+                  {t(
+                    "operations.doctorFeeFullyPaid"
+                  )}
                 </div>
               )}
 
             {settlements.length > 0 && (
               <div className="mt-4">
                 <h6 className="mb-3">
-                  Settlement History
+                  {t(
+                    "operations.settlementHistory"
+                  )}
                 </h6>
 
                 <div className="table-responsive">
@@ -627,23 +689,23 @@ const handleCompleteOperation = async () => {
                         </th>
 
                         <th className="text-center">
-                          Amount
+                          {t("operations.amount")}
                         </th>
 
                         <th className="text-center">
-                          Status
+                          {t("operations.status")}
                         </th>
 
                         <th className="text-center">
-                          Paid By
+                          {t("operations.paidBy")}
                         </th>
 
                         <th className="text-center">
-                          Date
+                          {t("operations.date")}
                         </th>
 
                         <th className="text-center">
-                          Notes
+                          {t("operations.notes")}
                         </th>
                       </tr>
                     </thead>
@@ -676,15 +738,14 @@ const handleCompleteOperation = async () => {
                                   settlement.status
                                 )}
                               >
-                                {
+                                {getSettlementStatusLabel(
                                   settlement.status
-                                }
+                                )}
                               </span>
                             </td>
 
                             <td className="text-center">
-                              {settlement
-                                .paidBy
+                              {settlement.paidBy
                                 ?.name ||
                                 "-"}
                             </td>
@@ -712,7 +773,7 @@ const handleCompleteOperation = async () => {
               <div className="text-center mt-3">
                 <div className="spinner-border spinner-border-sm text-primary">
                   <span className="visually-hidden">
-                    Loading...
+                    {t("common.loading")}
                   </span>
                 </div>
               </div>

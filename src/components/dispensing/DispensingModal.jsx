@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { CheckCircle2, X, PackageCheck } from "lucide-react";
-
+import { useTranslation } from "react-i18next";
 import { createDispensing } from "../../services/dispensed.service";
-
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../utils/apiError";
 import "./dispensingModal.css";
 
 const DispensingModal = ({
@@ -12,6 +14,7 @@ const DispensingModal = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
   const [reason, setReason] = useState("");
 
   useEffect(() => {
@@ -37,11 +40,14 @@ const DispensingModal = ({
         reason: reason.trim(),
       });
 
+      showSuccess(t("dispensing.success"));
       onSuccess(response);
     } catch (error) {
-      console.error(
-        "Create dispensing error:",
-        error.response?.data || error
+      showError(
+        getApiErrorMessage(
+          error,
+          t("dispensing.failed")
+        )
       );
     }
   };
@@ -56,10 +62,8 @@ const DispensingModal = ({
             </div>
 
             <div>
-              <h5>Confirm Dispensing</h5>
-              <span>
-                Confirm medicine dispensing
-              </span>
+              <h5>{t("dispensing.confirmTitle")}</h5>
+              <span>{t("dispensing.confirmSubtitle")}</span>
             </div>
           </div>
 
@@ -68,6 +72,7 @@ const DispensingModal = ({
             className="dispensing-modal-close"
             onClick={onClose}
             disabled={loading}
+            aria-label={t("common.close")}
           >
             <X size={20} />
           </button>
@@ -76,37 +81,43 @@ const DispensingModal = ({
         <div className="dispensing-modal-body">
           <div className="dispensing-summary">
             <div className="dispensing-summary-row">
-              <span>Patient</span>
+              <span>{t("dispensing.patient")}</span>
               <strong>
-                {sale.patient?.name || "No patient"}
+                {sale.patient?.name ||
+                  t("dispensing.noPatient")}
               </strong>
             </div>
 
             <div className="dispensing-summary-row">
-              <span>Sale Total</span>
+              <span>{t("dispensing.saleTotal")}</span>
               <strong>
-                {Number(sale.totalAmount || 0).toFixed(2)} EGP
+                {Number(sale.totalAmount || 0).toFixed(2)}{" "}
+                {t("common.egp")}
               </strong>
             </div>
 
             <div className="dispensing-summary-row">
-              <span>Paid</span>
+              <span>{t("dispensing.paid")}</span>
               <strong>
-                {Number(sale.paidAmount || 0).toFixed(2)} EGP
+                {Number(sale.paidAmount || 0).toFixed(2)}{" "}
+                {t("common.egp")}
               </strong>
             </div>
 
             <div className="dispensing-paid">
               <CheckCircle2 size={18} />
-              <span>Payment completed</span>
+              <span>
+                {t("dispensing.paymentCompleted")}
+              </span>
             </div>
           </div>
 
           <div className="dispensing-items">
             <div className="dispensing-items-title">
-              <span>Medicines</span>
+              <span>{t("dispensing.medicines")}</span>
               <strong>
-                {sale.items?.length || 0} items
+                {sale.items?.length || 0}{" "}
+                {t("dispensing.items")}
               </strong>
             </div>
 
@@ -117,7 +128,8 @@ const DispensingModal = ({
               >
                 <div className="dispensing-item-info">
                   <strong>
-                    {item.medicine?.name || "Medicine"}
+                    {item.medicine?.name ||
+                      t("dispensing.medicine")}
                   </strong>
 
                   {item.medicine?.genericName && (
@@ -127,7 +139,7 @@ const DispensingModal = ({
                   )}
 
                   <small>
-                    Batch:{" "}
+                    {t("dispensing.batch")}:{" "}
                     {item.batch?.batchNumber || "-"}
                   </small>
                 </div>
@@ -142,13 +154,15 @@ const DispensingModal = ({
           <form onSubmit={handleSubmit}>
             <div className="dispensing-input-group">
               <label htmlFor="dispensing-reason">
-                Dispensing Reason
+                {t("dispensing.reason")}
               </label>
 
               <textarea
                 id="dispensing-reason"
                 rows="3"
-                placeholder="Example: Patient prescription"
+                placeholder={t(
+                  "dispensing.reasonPlaceholder"
+                )}
                 value={reason}
                 onChange={(e) =>
                   setReason(e.target.value)
@@ -159,7 +173,7 @@ const DispensingModal = ({
 
               {!reason.trim() && (
                 <small>
-                  Enter the reason for dispensing.
+                  {t("dispensing.reasonRequired")}
                 </small>
               )}
             </div>
@@ -171,19 +185,17 @@ const DispensingModal = ({
                 onClick={onClose}
                 disabled={loading}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
 
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={
-                  !reason.trim() || loading
-                }
+                disabled={!reason.trim() || loading}
               >
                 {loading
-                  ? "Dispensing..."
-                  : "Confirm Dispensing"}
+                  ? t("dispensing.dispensing")
+                  : t("dispensing.confirmTitle")}
               </button>
             </div>
           </form>

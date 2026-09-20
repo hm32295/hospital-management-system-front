@@ -1,3 +1,4 @@
+
 import {
   LayoutDashboard,
   Stethoscope,
@@ -21,19 +22,21 @@ import {
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../context/AuthContext";
 import { ROLES } from "../../constants/roles";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const sections = [
     {
-      title: "Main",
+      title: "main",
       links: [
         {
-          name: "Dashboard",
+          name: "dashboard",
           path: "/dashboard",
           icon: LayoutDashboard,
           roles: [
@@ -48,12 +51,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         },
       ],
     },
-
     {
-      title: "Clinical",
+      title: "clinical",
       links: [
         {
-          name: "Reception",
+          name: "reception",
           path: "/reception",
           icon: Stethoscope,
           roles: [
@@ -61,9 +63,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.RECEPTIONIST,
           ],
         },
-
         {
-          name: "Patients",
+          name: "patients",
           path: "/patients",
           icon: UsersRound,
           roles: [
@@ -73,9 +74,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.RECEPTIONIST,
           ],
         },
-
         {
-          name: "Doctors",
+          name: "doctors",
           path: "/doctors",
           icon: UserRound,
           roles: [
@@ -83,18 +83,16 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.RECEPTIONIST,
           ],
         },
-
         {
-          name: "Specialties",
+          name: "specialties",
           path: "/specialties",
           icon: Stethoscope,
           roles: [
             ROLES.ADMIN,
           ],
         },
-
         {
-          name: "Visits",
+          name: "visits",
           path: "/visits",
           icon: CalendarDays,
           roles: [
@@ -104,9 +102,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.RECEPTIONIST,
           ],
         },
-
         {
-          name: "Operations",
+          name: "operations",
           path: "/operations",
           icon: Activity,
           roles: [
@@ -116,12 +113,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         },
       ],
     },
-
     {
-      title: "Pharmacy",
+      title: "pharmacy",
       links: [
         {
-          name: "Sales",
+          name: "sales",
           path: "/sales",
           icon: ReceiptText,
           roles: [
@@ -129,9 +125,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.PHARMACIST,
           ],
         },
-
         {
-          name: "Medicines",
+          name: "medicines",
           path: "/medicines",
           icon: Pill,
           roles: [
@@ -139,9 +134,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.PHARMACIST,
           ],
         },
-
         {
-          name: "Medicine Batches",
+          name: "medicineBatches",
           path: "/batches",
           icon: Layers3,
           roles: [
@@ -149,9 +143,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.PHARMACIST,
           ],
         },
-
         {
-          name: "Categories",
+          name: "categories",
           path: "/categories",
           icon: Tags,
           roles: [
@@ -159,9 +152,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.PHARMACIST,
           ],
         },
-
         {
-          name: "Dispensed",
+          name: "dispensed",
           path: "/dispenses",
           icon: ClipboardList,
           roles: [
@@ -171,12 +163,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         },
       ],
     },
-
     {
-      title: "Inventory",
+      title: "inventory",
       links: [
         {
-          name: "Stock",
+          name: "stock",
           path: "/Stock",
           icon: Boxes,
           roles: [
@@ -184,9 +175,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.PHARMACIST,
           ],
         },
-
         {
-          name: "Stock Transactions",
+          name: "stockTransactions",
           path: "/stock-transaction",
           icon: ArrowLeftRight,
           roles: [
@@ -196,12 +186,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         },
       ],
     },
-
     {
-      title: "Purchasing",
+      title: "purchasing",
       links: [
         {
-          name: "Purchases",
+          name: "purchases",
           path: "/purchases",
           icon: ShoppingCart,
           roles: [
@@ -209,9 +198,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.PHARMACIST,
           ],
         },
-
         {
-          name: "Suppliers",
+          name: "suppliers",
           path: "/Suppliers",
           icon: Truck,
           roles: [
@@ -221,12 +209,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         },
       ],
     },
-
     {
-      title: "Finance",
+      title: "finance",
       links: [
         {
-          name: "Cash Drawers",
+          name: "cashDrawers",
           path: "/cash-drawers",
           icon: Wallet,
           roles: [
@@ -235,27 +222,24 @@ const Sidebar = ({ isOpen, onClose }) => {
             ROLES.RECEPTIONIST,
           ],
         },
-
         {
-          name: "Income",
+          name: "income",
           path: "/income",
           icon: Banknote,
           roles: [
             ROLES.ADMIN,
           ],
         },
-
         {
-          name: "Expenses",
+          name: "expenses",
           path: "/expenses",
           icon: ReceiptText,
           roles: [
             ROLES.ADMIN,
           ],
         },
-
         {
-          name: "Expenses Report",
+          name: "expensesReport",
           path: "/expenses-report",
           icon: FileText,
           roles: [
@@ -264,12 +248,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         },
       ],
     },
-
     {
-      title: "Administration",
+      title: "administration",
       links: [
         {
-          name: "Users",
+          name: "users",
           path: "/users",
           icon: UsersRound,
           roles: [
@@ -281,13 +264,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   ];
 
   return (
-    <aside
-      className={`sidebar ${
-        isOpen ? "sidebar-open" : ""
-      }`}
-    >
-      {/* Sidebar Header */}
-
+    <aside className={`sidebar ${isOpen ? "sidebar-open" : ""}`}>
       <div className="sidebar-header">
         <div>
           <h4 className="mb-0 fw-bold">
@@ -295,7 +272,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </h4>
 
           <small>
-            Management System
+            {t("common.hospitalManagementSystem")}
           </small>
         </div>
 
@@ -303,20 +280,17 @@ const Sidebar = ({ isOpen, onClose }) => {
           type="button"
           className="sidebar-close-btn"
           onClick={onClose}
-          aria-label="Close sidebar"
+          aria-label={t("common.close")}
         >
           <X size={22} />
         </button>
       </div>
 
-      {/* Sidebar Navigation */}
-
       <nav className="sidebar-nav">
         {sections.map((section) => {
-          const visibleLinks =
-            section.links.filter((link) =>
-              link.roles.includes(user?.role)
-            );
+          const visibleLinks = section.links.filter((link) =>
+            link.roles.includes(user?.role)
+          );
 
           if (!visibleLinks.length) {
             return null;
@@ -328,7 +302,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               key={section.title}
             >
               <div className="sidebar-section-title">
-                {section.title}
+                {t(`sidebar.sections.${section.title}`)}
               </div>
 
               {visibleLinks.map((link) => {
@@ -340,15 +314,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                     to={link.path}
                     onClick={onClose}
                     className={({ isActive }) =>
-                      `sidebar-link ${
-                        isActive ? "active" : ""
-                      }`
+                      `sidebar-link ${isActive ? "active" : ""}`
                     }
                   >
                     <Icon size={20} />
 
                     <span>
-                      {link.name}
+                      {t(`sidebar.links.${link.name}`)}
                     </span>
                   </NavLink>
                 );

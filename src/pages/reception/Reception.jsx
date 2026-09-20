@@ -1,17 +1,19 @@
 
 import { useState } from "react";
 import { useFormik } from "formik";
-import { useSnackbar } from "notistack";
-import {createVisit} from "../../services/visit.service";
+import { useTranslation } from "react-i18next";
+import { createVisit } from "../../services/visit.service";
 import { getPatients } from "../../services/patients.service";
 import { getSpecialties } from "../../services/specialty.service";
 import { getDoctors } from "../../services/doctor.service";
 import FormSearchSelect from "../../components/form/FormSearchSelect";
 import NewPatientForm from "../../components/newPatientForm/NewPatientForm";
 import { createVisitPayment } from "../../services/payment.service";
+import { showError, showSuccess } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const Reception = () => {
-  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const [patientOptions, setPatientOptions] = useState([]);
   const [specialtyOptions, setSpecialtyOptions] = useState([]);
@@ -27,8 +29,7 @@ const Reception = () => {
   const [registeredVisit, setRegisteredVisit] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentNotes, setPaymentNotes] = useState("");
-  const [paymentSubmitting, setPaymentSubmitting] =
-    useState(false);
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -48,36 +49,26 @@ const Reception = () => {
 
         if (!response.success) {
           throw new Error(
-            response.message || "Failed to create visit"
+            response.message || t("reception.createVisitFailed")
           );
         }
 
         const visit = response.visit;
 
         setRegisteredVisit(visit);
-        setPaymentAmount(
-          Number(visit.consultationFee || 0)
-        );
+        setPaymentAmount(Number(visit.consultationFee || 0));
         setPaymentNotes("");
 
-        enqueueSnackbar(
-          `Visit registered successfully - ${
+        showSuccess(
+          `${t("reception.visitRegisteredSuccessfully")} - ${
             visit.visitType === "first"
-              ? "First Visit"
-              : "Follow Up"
-          } - ${visit.consultationFee} EGP`,
-          {
-            variant: "success",
-          }
+              ? t("reception.firstVisit")
+              : t("reception.followUp")
+          } - ${visit.consultationFee} ${t("common.egp")}`
         );
       } catch (error) {
-        enqueueSnackbar(
-          error.response?.data?.message ||
-            error.message ||
-            "Failed to register visit",
-          {
-            variant: "error",
-          }
+        showError(
+          getApiErrorMessage(error, t("reception.registerVisitFailed"))
         );
       } finally {
         setSubmitting(false);
@@ -106,12 +97,8 @@ const Reception = () => {
         }))
       );
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          "Failed to search patients",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(error, t("reception.searchPatientsFailed"))
       );
     } finally {
       setPatientLoading(false);
@@ -137,12 +124,8 @@ const Reception = () => {
         }))
       );
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          "Failed to search specialties",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(error, t("reception.searchSpecialtiesFailed"))
       );
     } finally {
       setSpecialtyLoading(false);
@@ -171,12 +154,8 @@ const Reception = () => {
         }))
       );
     } catch (error) {
-      enqueueSnackbar(
-        error.response?.data?.message ||
-          "Failed to search doctors",
-        {
-          variant: "error",
-        }
+      showError(
+        getApiErrorMessage(error, t("reception.searchDoctorsFailed"))
       );
     } finally {
       setDoctorLoading(false);
@@ -198,100 +177,81 @@ const Reception = () => {
     };
 
     setPatientOptions([patientOption]);
-
     formik.setFieldValue("patient", patient._id);
-
     setShowNewPatient(false);
   };
 
-const handlePayment = async () => {
-  const amount = Number(paymentAmount || 0);
-  const totalAmount = Number(
-    registeredVisit?.consultationFee || 0
-  );
-
-  if (!amount || amount <= 0) {
-    enqueueSnackbar(
-      "Please enter a valid payment amount",
-      {
-        variant: "error",
-      }
-    );
-    return;
-  }
-
-  if (amount > totalAmount) {
-    enqueueSnackbar(
-      "Payment amount cannot exceed the consultation fee",
-      {
-        variant: "error",
-      }
-    );
-    return;
-  }
-
-  try {
-    setPaymentSubmitting(true);
-
-    const response = await createVisitPayment(
-      registeredVisit._id,
-      {
-        amount,
-        notes: paymentNotes.trim(),
-      }
+  const handlePayment = async () => {
+    const amount = Number(paymentAmount || 0);
+    const totalAmount = Number(
+      registeredVisit?.consultationFee || 0
     );
 
-    if (!response.success) {
-      throw new Error(
-        response.message ||
-          "Failed to create visit payment"
-      );
+    if (!amount || amount <= 0) {
+      showError(t("reception.invalidPaymentAmount"));
+      return;
     }
 
-    enqueueSnackbar(
-      `Payment completed successfully - ${amount} EGP`,
-      {
-        variant: "success",
+    if (amount > totalAmount) {
+      showError(t("reception.paymentExceedsFee"));
+      return;
+    }
+
+    try {
+      setPaymentSubmitting(true);
+
+      const response = await createVisitPayment(
+        registeredVisit._id,
+        {
+          amount,
+          notes: paymentNotes.trim(),
+        }
+      );
+
+      if (!response.success) {
+        throw new Error(
+          response.message || t("reception.createPaymentFailed")
+        );
       }
-    );
 
-    const paidAmount = Number(amount);
+      showSuccess(
+        `${t("reception.paymentCompletedSuccessfully")} - ${amount} ${t(
+          "common.egp"
+        )}`
+      );
 
-    const remainingAmount = Math.max(
-      totalAmount - paidAmount,
-      0
-    );
+      const paidAmount = Number(amount);
 
-    setRegisteredVisit((prev) => ({
-      ...prev,
-      paidAmount,
-      remainingAmount,
-      paymentStatus:
-        remainingAmount === 0
-          ? "paid"
-          : "partial",
-    }));
+      const remainingAmount = Math.max(
+        totalAmount - paidAmount,
+        0
+      );
 
-    setPaymentAmount(
-      remainingAmount > 0
-        ? remainingAmount
-        : ""
-    );
+      setRegisteredVisit((prev) => ({
+        ...prev,
+        paidAmount,
+        remainingAmount,
+        paymentStatus:
+          remainingAmount === 0
+            ? "paid"
+            : "partial",
+      }));
 
-    setPaymentNotes("");
-  } catch (error) {
-    enqueueSnackbar(
-      error.response?.data?.message ||
-        error.message ||
-        "Failed to create payment",
-      {
-        variant: "error",
-      }
-    );
-  } finally {
-    setPaymentSubmitting(false);
-  }
-};
+      setPaymentAmount(
+        remainingAmount > 0
+          ? remainingAmount
+          : ""
+      );
+
+      setPaymentNotes("");
+    } catch (error) {
+      showError(
+        getApiErrorMessage(error, t("reception.createPaymentFailed"))
+      );
+    } finally {
+      setPaymentSubmitting(false);
+    }
+  };
 
   const handleNewReception = () => {
     formik.resetForm();
@@ -326,9 +286,9 @@ const handlePayment = async () => {
   return (
     <div className="container-fluid py-4">
       <div className="mb-4">
-        <h3 className="mb-1">Reception</h3>
+        <h3 className="mb-1">{t("reception.title")}</h3>
         <p className="text-muted mb-0">
-          Register patient visit and collect payment
+          {t("reception.description")}
         </p>
       </div>
 
@@ -340,8 +300,8 @@ const handlePayment = async () => {
                 <FormSearchSelect
                   formik={formik}
                   name="patient"
-                  label="Patient"
-                  placeholder="Search patient by name, phone or national ID..."
+                  label={t("reception.patient")}
+                  placeholder={t("reception.patientPlaceholder")}
                   options={patientOptions}
                   serverSearch
                   onSearch={fetchPatients}
@@ -360,8 +320,8 @@ const handlePayment = async () => {
                   }
                 >
                   {showNewPatient
-                    ? "Cancel"
-                    : "+ New Patient"}
+                    ? t("common.cancel")
+                    : `+ ${t("reception.newPatient")}`}
                 </button>
               </div>
             </div>
@@ -380,8 +340,8 @@ const handlePayment = async () => {
                 <FormSearchSelect
                   formik={formik}
                   name="specialty"
-                  label="Specialty"
-                  placeholder="Search specialty..."
+                  label={t("reception.specialty")}
+                  placeholder={t("reception.specialtyPlaceholder")}
                   options={specialtyOptions}
                   serverSearch
                   onSearch={fetchSpecialties}
@@ -397,11 +357,11 @@ const handlePayment = async () => {
                 <FormSearchSelect
                   formik={formik}
                   name="doctor"
-                  label="Doctor"
+                  label={t("reception.doctor")}
                   placeholder={
                     formik.values.specialty
-                      ? "Search doctor..."
-                      : "Select specialty first"
+                      ? t("reception.doctorPlaceholder")
+                      : t("reception.selectSpecialtyFirst")
                   }
                   options={doctorOptions}
                   serverSearch
@@ -415,24 +375,22 @@ const handlePayment = async () => {
             </div>
 
             <div className="alert alert-info mt-3">
-              <strong>Consultation Fee</strong>
+              <strong>{t("reception.consultationFee")}</strong>
 
               <div className="small mt-1">
-                The visit type and consultation fee are
-                determined automatically by the server
-                based on the patient's visit history.
+                {t("reception.consultationFeeDescription")}
               </div>
 
               <div className="small mt-2">
                 <span className="fw-semibold">
-                  First Visit:
+                  {t("reception.firstVisit")}:
                 </span>{" "}
-                70 EGP
+                70 {t("common.egp")}
                 {" | "}
                 <span className="fw-semibold">
-                  Follow Up:
+                  {t("reception.followUp")}:
                 </span>{" "}
-                30 EGP
+                30 {t("common.egp")}
               </div>
             </div>
 
@@ -447,8 +405,8 @@ const handlePayment = async () => {
                 }
               >
                 {submitting
-                  ? "Registering..."
-                  : "Register Visit"}
+                  ? t("reception.registering")
+                  : t("reception.registerVisit")}
               </button>
             </div>
           </div>
@@ -461,11 +419,11 @@ const handlePayment = async () => {
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     <h5 className="mb-1">
-                      Visit Registered
+                      {t("reception.visitRegistered")}
                     </h5>
 
                     <small className="text-muted">
-                      Payment can be completed now
+                      {t("reception.paymentCanBeCompleted")}
                     </small>
                   </div>
 
@@ -480,11 +438,11 @@ const handlePayment = async () => {
                     }`}
                   >
                     {isPaid
-                      ? "Paid"
+                      ? t("reception.paid")
                       : registeredVisit.paymentStatus ===
                         "partial"
-                      ? "Partial"
-                      : "Unpaid"}
+                      ? t("reception.partial")
+                      : t("reception.unpaid")}
                   </span>
                 </div>
               </div>
@@ -494,14 +452,14 @@ const handlePayment = async () => {
                   <div className="col-md-6">
                     <div className="border rounded p-3 h-100">
                       <div className="text-muted small">
-                        Visit Type
+                        {t("reception.visitType")}
                       </div>
 
                       <div className="fw-semibold mt-1">
                         {registeredVisit.visitType ===
                         "first"
-                          ? "First Visit"
-                          : "Follow Up"}
+                          ? t("reception.firstVisit")
+                          : t("reception.followUp")}
                       </div>
                     </div>
                   </div>
@@ -509,11 +467,12 @@ const handlePayment = async () => {
                   <div className="col-md-6">
                     <div className="border rounded p-3 h-100">
                       <div className="text-muted small">
-                        Consultation Fee
+                        {t("reception.consultationFee")}
                       </div>
 
                       <div className="fw-semibold mt-1">
-                        {totalAmount.toFixed(2)} EGP
+                        {totalAmount.toFixed(2)}{" "}
+                        {t("common.egp")}
                       </div>
                     </div>
                   </div>
@@ -521,11 +480,12 @@ const handlePayment = async () => {
                   <div className="col-md-6">
                     <div className="border rounded p-3 h-100">
                       <div className="text-muted small">
-                        Paid
+                        {t("reception.paid")}
                       </div>
 
                       <div className="fw-semibold text-success mt-1">
-                        {paidAmount.toFixed(2)} EGP
+                        {paidAmount.toFixed(2)}{" "}
+                        {t("common.egp")}
                       </div>
                     </div>
                   </div>
@@ -533,11 +493,12 @@ const handlePayment = async () => {
                   <div className="col-md-6">
                     <div className="border rounded p-3 h-100">
                       <div className="text-muted small">
-                        Remaining
+                        {t("reception.remaining")}
                       </div>
 
                       <div className="fw-semibold text-danger mt-1">
-                        {remainingAmount.toFixed(2)} EGP
+                        {remainingAmount.toFixed(2)}{" "}
+                        {t("common.egp")}
                       </div>
                     </div>
                   </div>
@@ -551,14 +512,14 @@ const handlePayment = async () => {
               <div className="card border-0 shadow-sm">
                 <div className="card-header bg-white py-3">
                   <h5 className="mb-0">
-                    Collect Payment
+                    {t("reception.collectPayment")}
                   </h5>
                 </div>
 
                 <div className="card-body">
                   <div className="mb-3">
                     <label className="form-label">
-                      Payment Amount
+                      {t("reception.paymentAmount")}
                     </label>
 
                     <input
@@ -576,14 +537,15 @@ const handlePayment = async () => {
                     />
 
                     <div className="small text-muted mt-1">
-                      Remaining:{" "}
-                      {remainingAmount.toFixed(2)} EGP
+                      {t("reception.remaining")}:{" "}
+                      {remainingAmount.toFixed(2)}{" "}
+                      {t("common.egp")}
                     </div>
                   </div>
 
                   <div className="mb-3">
                     <label className="form-label">
-                      Notes
+                      {t("reception.notes")}
                     </label>
 
                     <textarea
@@ -595,7 +557,9 @@ const handlePayment = async () => {
                           e.target.value
                         )
                       }
-                      placeholder="Optional notes..."
+                      placeholder={t(
+                        "reception.notesPlaceholder"
+                      )}
                     />
                   </div>
 
@@ -606,10 +570,10 @@ const handlePayment = async () => {
                     disabled={paymentSubmitting}
                   >
                     {paymentSubmitting
-                      ? "Processing Payment..."
-                      : `Pay ${Number(
+                      ? t("reception.processingPayment")
+                      : `${t("reception.pay")} ${Number(
                           paymentAmount || 0
-                        ).toFixed(2)} EGP`}
+                        ).toFixed(2)} ${t("common.egp")}`}
                   </button>
                 </div>
               </div>
@@ -620,9 +584,11 @@ const handlePayment = async () => {
             <div className="col-12">
               <div className="alert alert-success d-flex justify-content-between align-items-center mb-0">
                 <div>
-                  <strong>Payment Completed</strong>
+                  <strong>
+                    {t("reception.paymentCompleted")}
+                  </strong>
                   <div className="small mt-1">
-                    The consultation has been fully paid.
+                    {t("reception.consultationFullyPaid")}
                   </div>
                 </div>
 
@@ -631,7 +597,7 @@ const handlePayment = async () => {
                   className="btn btn-outline-success"
                   onClick={handleNewReception}
                 >
-                  New Reception
+                  {t("reception.newReception")}
                 </button>
               </div>
             </div>

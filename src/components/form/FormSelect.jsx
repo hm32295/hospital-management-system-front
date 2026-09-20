@@ -1,13 +1,18 @@
+
+import { useTranslation } from "react-i18next";
+
 const FormSelect = ({
   formik,
   name,
   label,
   options = [],
-  placeholder = "Select...",
+  placeholder,
   required = false,
   disabled = false,
   className = "",
 }) => {
+  const { t } = useTranslation();
+
   const error =
     formik.touched[name] &&
     formik.errors[name];
@@ -41,7 +46,7 @@ const FormSelect = ({
         } ${className}`}
       >
         <option value="">
-          {placeholder}
+          {placeholder || t("common.select")}
         </option>
 
         {options.map((option) => (

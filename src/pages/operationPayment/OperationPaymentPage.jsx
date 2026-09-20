@@ -1,31 +1,37 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 import { getOperation } from "../../services/operations.service";
 import { getOperationPayments } from "../../services/operationPaymentsService";
 import OperationPaymentForm from "./OperationPaymentForm";
+import {
+  showError,
+} from "../../services/toast.service";
+import { getApiErrorMessage } from "../../services/apiError";
 
 const OperationPaymentPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [operation, setOperation] = useState(null);
   const [payments, setPayments] = useState([]);
-
   const [loading, setLoading] = useState(true);
-  const [paymentsLoading, setPaymentsLoading] =useState(true);
+  const [paymentsLoading, setPaymentsLoading] =
+    useState(true);
 
   const loadData = async () => {
     try {
       setLoading(true);
 
       const response = await getOperation(id);
-      
+
       if (!response?.success) {
         throw new Error(
           response?.message ||
-            "Failed to load operation"
+            t("operations.loadFailed")
         );
       }
 
@@ -36,10 +42,11 @@ const OperationPaymentPage = () => {
         error
       );
 
-      toast.error(
-        error?.response?.data?.message ||
-          error.message ||
-          "Failed to load operation"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.loadFailed")
+        )
       );
     } finally {
       setLoading(false);
@@ -50,25 +57,30 @@ const OperationPaymentPage = () => {
     try {
       setPaymentsLoading(true);
 
-      const response =await getOperationPayments(id);
+      const response =
+        await getOperationPayments(id);
 
       if (!response?.success) {
         throw new Error(
           response?.message ||
-            "Failed to load payments"
+            t("operations.loadPaymentsFailed")
         );
       }
-      setPayments(response?.payments || [] );
+
+      setPayments(
+        response?.payments || []
+      );
     } catch (error) {
       console.error(
         "GET OPERATION PAYMENTS ERROR:",
         error
       );
 
-      toast.error(
-        error?.response?.data?.message ||
-          error.message ||
-          "Failed to load payment history"
+      showError(
+        getApiErrorMessage(
+          error,
+          t("operations.loadPaymentsFailed")
+        )
       );
     } finally {
       setPaymentsLoading(false);
@@ -86,7 +98,9 @@ const OperationPaymentPage = () => {
     if (!date) return "-";
 
     return new Date(date).toLocaleDateString(
-      "en-GB"
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-GB"
     );
   };
 
@@ -94,12 +108,16 @@ const OperationPaymentPage = () => {
     if (!date) return "-";
 
     return new Date(date).toLocaleString(
-      "en-GB"
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-GB"
     );
   };
 
   const formatMoney = (value) => {
-    return `${Number(value || 0).toFixed(2)} EGP`;
+    return `${Number(value || 0).toFixed(2)} ${t(
+      "common.egp"
+    )}`;
   };
 
   if (loading) {
@@ -142,11 +160,14 @@ const OperationPaymentPage = () => {
       <div className="details-page">
         <div className="details-card">
           <div className="details-empty">
-            <h5>Operation Not Found</h5>
+            <h5>
+              {t("operations.operationNotFound")}
+            </h5>
 
             <p>
-              The requested operation could not
-              be found.
+              {t(
+                "operations.operationNotFoundDescription"
+              )}
             </p>
 
             <button
@@ -156,7 +177,7 @@ const OperationPaymentPage = () => {
                 navigate("/operations")
               }
             >
-              Back to Operations
+              {t("operations.backToOperations")}
             </button>
           </div>
         </div>
@@ -164,18 +185,22 @@ const OperationPaymentPage = () => {
     );
   }
 
-  const canPay = operation.status !== "cancelled" &&Number(operation.remainingAmount) > 0;
+  const canPay =
+    operation.status !== "cancelled" &&
+    Number(operation.remainingAmount) > 0;
 
   return (
     <div className="details-page">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 className="mb-1">
-            Operation Payment
+            {t("operations.operationPayment")}
           </h4>
 
           <p className="text-muted mb-0">
-            Manage payments for{" "}
+            {t(
+              "operations.managePaymentsFor"
+            )}{" "}
             <strong>
               {operation.operationName}
             </strong>
@@ -185,10 +210,14 @@ const OperationPaymentPage = () => {
         <button
           type="button"
           className="btn btn-outline-secondary d-flex align-items-center gap-2"
-          onClick={() => navigate( `/operations/${operation._id}`)}
+          onClick={() =>
+            navigate(
+              `/operations/${operation._id}`
+            )
+          }
         >
           <ArrowLeft size={17} />
-          Back to Operation
+          {t("operations.backToOperation")}
         </button>
       </div>
 
@@ -197,13 +226,15 @@ const OperationPaymentPage = () => {
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <h5 className="mb-3">
-                Operation Information
+                {t(
+                  "operations.operationInformation"
+                )}
               </h5>
 
               <div className="row g-3">
                 <div className="col-12 col-md-3">
                   <small className="text-muted d-block">
-                    Patient
+                    {t("operations.patient")}
                   </small>
 
                   <strong>
@@ -214,7 +245,7 @@ const OperationPaymentPage = () => {
 
                 <div className="col-12 col-md-3">
                   <small className="text-muted d-block">
-                    Doctor
+                    {t("operations.doctor")}
                   </small>
 
                   <strong>
@@ -225,7 +256,7 @@ const OperationPaymentPage = () => {
 
                 <div className="col-12 col-md-3">
                   <small className="text-muted d-block">
-                    Specialty
+                    {t("operations.specialty")}
                   </small>
 
                   <strong>
@@ -236,7 +267,7 @@ const OperationPaymentPage = () => {
 
                 <div className="col-12 col-md-3">
                   <small className="text-muted d-block">
-                    Operation Date
+                    {t("operations.operationDate")}
                   </small>
 
                   <strong>
@@ -263,8 +294,12 @@ const OperationPaymentPage = () => {
             <div className="alert alert-success mb-0">
               {operation.status ===
               "cancelled"
-                ? "This operation has been cancelled."
-                : "This operation has been fully paid."}
+                ? t(
+                    "operations.operationCancelled"
+                  )
+                : t(
+                    "operations.operationFullyPaid"
+                  )}
             </div>
           </div>
         )}
@@ -275,17 +310,23 @@ const OperationPaymentPage = () => {
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
                   <h5 className="mb-1">
-                    Payment History
+                    {t(
+                      "operations.paymentHistory"
+                    )}
                   </h5>
 
                   <p className="text-muted mb-0">
-                    All payments made for this
-                    operation
+                    {t(
+                      "operations.allPaymentsMade"
+                    )}
                   </p>
                 </div>
 
                 <span className="badge bg-primary">
-                  {payments.length} Payments
+                  {payments.length}{" "}
+                  {t(
+                    "operations.payments"
+                  )}
                 </span>
               </div>
 
@@ -294,11 +335,21 @@ const OperationPaymentPage = () => {
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Amount</th>
-                      <th>Received By</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                      <th>Notes</th>
+                      <th>
+                        {t("operations.amount")}
+                      </th>
+                      <th>
+                        {t("operations.receivedBy")}
+                      </th>
+                      <th>
+                        {t("operations.status")}
+                      </th>
+                      <th>
+                        {t("operations.date")}
+                      </th>
+                      <th>
+                        {t("operations.notes")}
+                      </th>
                     </tr>
                   </thead>
 
@@ -311,7 +362,7 @@ const OperationPaymentPage = () => {
                         >
                           <div className="spinner-border text-primary">
                             <span className="visually-hidden">
-                              Loading...
+                              {t("common.loading")}
                             </span>
                           </div>
                         </td>
@@ -323,7 +374,9 @@ const OperationPaymentPage = () => {
                           colSpan="6"
                           className="text-center text-muted py-4"
                         >
-                          No payments found
+                          {t(
+                            "operations.noPaymentsFound"
+                          )}
                         </td>
                       </tr>
                     ) : (
@@ -361,8 +414,18 @@ const OperationPaymentPage = () => {
                                     : "bg-danger"
                                 }`}
                               >
-                                {payment.status ||
-                                  "-"}
+                                {payment.status ===
+                                "completed"
+                                  ? t(
+                                      "operations.paymentStatuses.completed"
+                                    )
+                                  : payment.status ===
+                                    "cancelled"
+                                  ? t(
+                                      "operations.paymentStatuses.cancelled"
+                                    )
+                                  : payment.status ||
+                                    "-"}
                               </span>
                             </td>
 
@@ -393,7 +456,7 @@ const OperationPaymentPage = () => {
               <div className="row g-3">
                 <div className="col-12 col-md-4">
                   <small className="text-muted d-block">
-                    Total
+                    {t("operations.totalAmount")}
                   </small>
 
                   <h5 className="mb-0">
@@ -405,7 +468,7 @@ const OperationPaymentPage = () => {
 
                 <div className="col-12 col-md-4">
                   <small className="text-muted d-block">
-                    Paid
+                    {t("operations.paidAmount")}
                   </small>
 
                   <h5 className="mb-0 text-success">
@@ -417,7 +480,9 @@ const OperationPaymentPage = () => {
 
                 <div className="col-12 col-md-4">
                   <small className="text-muted d-block">
-                    Remaining
+                    {t(
+                      "operations.remainingAmount"
+                    )}
                   </small>
 
                   <h5 className="mb-0 text-danger">

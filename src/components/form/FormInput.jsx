@@ -25,12 +25,8 @@ const FormInput = ({
   textarea = false,
   ...rest
 }) => {
-  const { value, onChange, onBlur } =
-    formik.getFieldProps(name);
-
-  const { error, touched } =
-    formik.getFieldMeta(name);
-
+  const { value, onChange, onBlur } = formik.getFieldProps(name);
+  const { error, touched } = formik.getFieldMeta(name);
   const hasError = touched && error;
 
   const isTextarea = textarea || type === "textarea";
@@ -51,11 +47,7 @@ const FormInput = ({
     }
 
     if (isCheckbox) {
-      formik.setFieldValue(
-        name,
-        e.target.checked
-      );
-
+      formik.setFieldValue(name, e.target.checked);
       return;
     }
 
@@ -64,9 +56,7 @@ const FormInput = ({
 
   if (isCheckbox) {
     return (
-      <div
-        className={`form-check mb-3 ${containerClassName}`}
-      >
+      <div className={`form-check mb-3 ${containerClassName}`}>
         <input
           id={name}
           name={name}
@@ -75,9 +65,7 @@ const FormInput = ({
           onChange={handleChange}
           onBlur={onBlur}
           disabled={disabled}
-          className={`form-check-input ${
-            hasError ? "is-invalid" : ""
-          } ${inputClassName}`}
+          className={`form-check-input ${hasError ? "is-invalid" : ""} ${inputClassName}`}
           {...rest}
         />
 
@@ -87,12 +75,7 @@ const FormInput = ({
             className={`form-check-label ${labelClassName}`}
           >
             {label}
-
-            {required && (
-              <span className="text-danger ms-1">
-                *
-              </span>
-            )}
+            {required && <span className="text-danger ms-1">*</span>}
           </label>
         )}
 
@@ -107,9 +90,7 @@ const FormInput = ({
 
   if (isRadio) {
     return (
-      <div
-        className={`form-check mb-3 ${containerClassName}`}
-      >
+      <div className={`form-check mb-3 ${containerClassName}`}>
         <input
           id={name}
           name={name}
@@ -119,9 +100,7 @@ const FormInput = ({
           onChange={handleChange}
           onBlur={onBlur}
           disabled={disabled}
-          className={`form-check-input ${
-            hasError ? "is-invalid" : ""
-          } ${inputClassName}`}
+          className={`form-check-input ${hasError ? "is-invalid" : ""} ${inputClassName}`}
           {...rest}
         />
 
@@ -131,12 +110,7 @@ const FormInput = ({
             className={`form-check-label ${labelClassName}`}
           >
             {label}
-
-            {required && (
-              <span className="text-danger ms-1">
-                *
-              </span>
-            )}
+            {required && <span className="text-danger ms-1">*</span>}
           </label>
         )}
 
@@ -151,21 +125,14 @@ const FormInput = ({
 
   if (isFile) {
     return (
-      <div
-        className={`mb-3 ${containerClassName}`}
-      >
+      <div className={`mb-3 ${containerClassName}`}>
         {label && (
           <label
             htmlFor={name}
             className={`form-label ${labelClassName}`}
           >
             {label}
-
-            {required && (
-              <span className="text-danger ms-1">
-                *
-              </span>
-            )}
+            {required && <span className="text-danger ms-1">*</span>}
           </label>
         )}
 
@@ -178,9 +145,7 @@ const FormInput = ({
           onChange={handleChange}
           onBlur={onBlur}
           disabled={disabled}
-          className={`form-control ${
-            hasError ? "is-invalid" : ""
-          } ${inputClassName}`}
+          className={`form-control ${hasError ? "is-invalid" : ""} ${inputClassName}`}
           {...rest}
         />
 
@@ -201,21 +166,14 @@ const FormInput = ({
 
   if (isTextarea) {
     return (
-      <div
-        className={`mb-3 ${containerClassName}`}
-      >
+      <div className={`mb-3 ${containerClassName}`}>
         {label && (
           <label
             htmlFor={name}
             className={`form-label ${labelClassName}`}
           >
             {label}
-
-            {required && (
-              <span className="text-danger ms-1">
-                *
-              </span>
-            )}
+            {required && <span className="text-danger ms-1">*</span>}
           </label>
         )}
 
@@ -229,9 +187,7 @@ const FormInput = ({
           onBlur={onBlur}
           disabled={disabled}
           readOnly={readOnly}
-          className={`form-control ${
-            hasError ? "is-invalid" : ""
-          } ${className} ${inputClassName}`}
+          className={`form-control ${hasError ? "is-invalid" : ""} ${className} ${inputClassName}`}
           {...rest}
         />
 
@@ -251,21 +207,14 @@ const FormInput = ({
   }
 
   return (
-    <div
-      className={`mb-3 ${containerClassName}`}
-    >
+    <div className={`mb-3 ${containerClassName}`}>
       {label && (
         <label
           htmlFor={name}
           className={`form-label ${labelClassName}`}
         >
           {label}
-
-          {required && (
-            <span className="text-danger ms-1">
-              *
-            </span>
-          )}
+          {required && <span className="text-danger ms-1">*</span>}
         </label>
       )}
 
@@ -283,9 +232,7 @@ const FormInput = ({
         min={min}
         max={max}
         step={step}
-        className={`form-control ${
-          hasError ? "is-invalid" : ""
-        } ${className} ${inputClassName}`}
+        className={`form-control ${hasError ? "is-invalid" : ""} ${className} ${inputClassName}`}
         {...rest}
       />
 

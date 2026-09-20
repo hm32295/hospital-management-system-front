@@ -8,6 +8,8 @@ import {
   Check,
 } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
+
 import "./adminDataPage.css";
 import Header from "../header/Header";
 import FormSearchSelect from "../form/FormSearchSelect";
@@ -26,10 +28,11 @@ const AdminDataPage = ({
   addLink,
   pagination,
   onPageChange,
-  emptyMessage = "No data found",
+  emptyMessage,
   summary = null,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleAction = (action, item, index) => {
     if (action.onClick) {
@@ -50,19 +53,14 @@ const AdminDataPage = ({
     switch (type) {
       case "show":
         return <Eye size={16} />;
-
       case "edit":
         return <Pencil size={16} />;
-
       case "delete":
         return <Trash2 size={16} />;
-
       case "cancel":
         return <X size={16} />;
-
       case "confirm":
         return <Check size={16} />;
-
       default:
         return null;
     }
@@ -72,19 +70,14 @@ const AdminDataPage = ({
     switch (type) {
       case "show":
         return "btn-outline-primary";
-
       case "edit":
         return "btn-outline-warning";
-
       case "delete":
         return "btn-outline-danger";
-
       case "cancel":
         return "btn-outline-secondary";
-
       case "confirm":
         return "btn-outline-success";
-
       default:
         return "btn-outline-secondary";
     }
@@ -178,7 +171,7 @@ const AdminDataPage = ({
                     value={filter.value}
                     placeholder={
                       filter.placeholder ||
-                      "Search..."
+                      t("common.search")
                     }
                     disabled={filter.disabled}
                     isClearable={
@@ -274,7 +267,7 @@ const AdminDataPage = ({
             className="btn btn-primary d-flex text-capitalize align-items-center mt-2 justify-content-center gap-2"
             onClick={() => filtering?.()}
           >
-            Filtering
+            {t("common.filter")}
           </button>
         </div>
       )}
@@ -288,23 +281,21 @@ const AdminDataPage = ({
                   #
                 </th>
 
-                {columns.map(
-                  (column, index) => (
-                    <th
-                      className="text-center text-capitalize"
-                      key={`${index}${column.key}`}
-                      style={{
-                        width: column.width,
-                      }}
-                    >
-                      {column.label}
-                    </th>
-                  )
-                )}
+                {columns.map((column, index) => (
+                  <th
+                    className="text-center text-capitalize"
+                    key={`${index}${column.key}`}
+                    style={{
+                      width: column.width,
+                    }}
+                  >
+                    {column.label}
+                  </th>
+                ))}
 
                 {actions.length > 0 && (
                   <th className="text-center text-capitalize">
-                    Actions
+                    {t("common.actions")}
                   </th>
                 )}
               </tr>
@@ -316,16 +307,14 @@ const AdminDataPage = ({
                   <td
                     colSpan={
                       columns.length +
-                      (actions.length
-                        ? 1
-                        : 0) +
+                      (actions.length ? 1 : 0) +
                       1
                     }
                     className="admin-data-state text-center"
                   >
                     <div className="spinner-border text-primary">
                       <span className="visually-hidden">
-                        Loading...
+                        {t("common.loading")}
                       </span>
                     </div>
                   </td>
@@ -335,14 +324,12 @@ const AdminDataPage = ({
                   <td
                     colSpan={
                       columns.length +
-                      (actions.length
-                        ? 1
-                        : 0) +
+                      (actions.length ? 1 : 0) +
                       1
                     }
                     className="admin-data-state text-center"
                   >
-                    {emptyMessage}
+                    {emptyMessage || t("common.noData")}
                   </td>
                 </tr>
               ) : (
@@ -356,31 +343,26 @@ const AdminDataPage = ({
                   >
                     <td className="text-center">
                       {(pagination?.page
-                        ? (pagination.page -
-                            1) *
-                            pagination.limit
+                        ? (pagination.page - 1) *
+                          pagination.limit
                         : 0) +
                         index +
                         1}
                     </td>
 
-                    {columns.map(
-                      (column, i) => (
-                        <td
-                          key={`${i}${column.key}`}
-                          className="text-center"
-                        >
-                          {column.render
-                            ? column.render(
-                                item,
-                                index
-                              )
-                            : item[
-                                column.key
-                              ] ?? "-"}
-                        </td>
-                      )
-                    )}
+                    {columns.map((column, i) => (
+                      <td
+                        key={`${i}${column.key}`}
+                        className="text-center"
+                      >
+                        {column.render
+                          ? column.render(
+                              item,
+                              index
+                            )
+                          : item[column.key] ?? "-"}
+                      </td>
+                    ))}
 
                     {actions.length > 0 && (
                       <td>
@@ -453,69 +435,66 @@ const AdminDataPage = ({
         </div>
       </div>
 
-      {pagination &&
-        pagination.total > 0 && (
-          <div className="admin-data-pagination">
-            <div className="text-muted">
-              Showing{" "}
-              <strong>
-                {(pagination.page - 1) *
-                    pagination.limit +
-                  1}
-              </strong>{" "}
-              -{" "}
-              <strong>
-                {Math.min(
-                  pagination.page *
-                    pagination.limit,
-                  pagination.total
-                )}
-              </strong>{" "}
-              of{" "}
-              <strong>
-                {pagination.total}
-              </strong>
-            </div>
-
-            <div className="d-flex gap-2">
-              <button
-                type="button"
-                className="btn btn-outline-secondary btn-sm"
-                disabled={
-                  pagination.page === 1
-                }
-                onClick={() =>
-                  onPageChange?.(
-                    pagination.page - 1
-                  )
-                }
-              >
-                Previous
-              </button>
-
-              <span className="pagination-page">
-                {pagination.page}
-              </span>
-
-              <button
-                type="button"
-                className="btn btn-outline-secondary btn-sm"
-                disabled={
-                  pagination.page *
-                    pagination.limit >=
-                  pagination.total
-                }
-                onClick={() =>
-                  onPageChange?.(
-                    pagination.page + 1
-                  )
-                }
-              >
-                Next
-              </button>
-            </div>
+      {pagination && pagination.total > 0 && (
+        <div className="admin-data-pagination">
+          <div className="text-muted">
+            {t("common.showing")}{" "}
+            <strong>
+              {(pagination.page - 1) *
+                pagination.limit +
+                1}
+            </strong>{" "}
+            -{" "}
+            <strong>
+              {Math.min(
+                pagination.page *
+                  pagination.limit,
+                pagination.total
+              )}
+            </strong>{" "}
+            {t("common.of")}{" "}
+            <strong>
+              {pagination.total}
+            </strong>
           </div>
-        )}
+
+          <div className="d-flex gap-2">
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              disabled={pagination.page === 1}
+              onClick={() =>
+                onPageChange?.(
+                  pagination.page - 1
+                )
+              }
+            >
+              {t("common.previous")}
+            </button>
+
+            <span className="pagination-page">
+              {pagination.page}
+            </span>
+
+            <button
+              type="button"
+              className="btn btn-outline-secondary btn-sm"
+              disabled={
+                pagination.page *
+                  pagination.limit >=
+                pagination.total
+              }
+              onClick={() =>
+                onPageChange?.(
+                  pagination.page + 1
+                )
+              }
+            >
+              {t("common.next")}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

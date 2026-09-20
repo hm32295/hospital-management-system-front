@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import {
   Barcode,
@@ -8,10 +9,14 @@ import {
 import {
   BrowserMultiFormatReader,
 } from "@zxing/browser";
-
+import { useTranslation } from "react-i18next";
+import { showError } from "../../services/toast.service";
+import { getApiErrorMessage } from "../../utils/apiError";
 import "./barcodeScanner.css";
 
 const BarcodeScanner = ({ onScan, onClose }) => {
+  const { t } = useTranslation();
+
   const [value, setValue] = useState("");
   const [showCamera, setShowCamera] = useState(false);
   const [cameraLoading, setCameraLoading] = useState(false);
@@ -31,42 +36,30 @@ const BarcodeScanner = ({ onScan, onClose }) => {
     }
   }, [showCamera]);
 
-    const stopCamera = () => {
+  const stopCamera = () => {
     try {
       if (controlsRef.current) {
         controlsRef.current.stop();
-
         controlsRef.current = null;
       }
 
       if (readerRef.current) {
         readerRef.current.reset();
-
         readerRef.current = null;
       }
 
-      const video =
-        document.getElementById(
-          "medicine-camera-reader"
-        );
+      const video = document.getElementById("medicine-camera-reader");
 
       if (video?.srcObject) {
-        const tracks =
-          video.srcObject.getTracks();
-
-        tracks.forEach((track) =>
-          track.stop()
-        );
-
+        const tracks = video.srcObject.getTracks();
+        tracks.forEach((track) => track.stop());
         video.srcObject = null;
       }
     } catch (error) {
-      console.error(
-        "Stop camera error:",
-        error
-      );
+      console.error("Stop camera error:", error);
     }
   };
+
   useEffect(() => {
     if (!showCamera) return;
 
@@ -77,88 +70,65 @@ const BarcodeScanner = ({ onScan, onClose }) => {
         setError("");
         setCameraLoading(true);
 
-        await new Promise((resolve) =>
-          setTimeout(resolve, 200)
-        );
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
         if (cancelled) return;
 
-        const videoElement =
-          document.getElementById(
-            "medicine-camera-reader"
-          );
+        const videoElement = document.getElementById("medicine-camera-reader");
 
         if (!videoElement) {
-          throw new Error(
-            "Camera element not found"
-          );
+          throw new Error("Camera element not found");
         }
 
-        const reader =
-          new BrowserMultiFormatReader();
-
+        const reader = new BrowserMultiFormatReader();
         readerRef.current = reader;
 
-        const devices =
-          await BrowserMultiFormatReader.listVideoInputDevices();
+        const devices = await BrowserMultiFormatReader.listVideoInputDevices();
 
         if (!devices.length) {
-          throw new Error(
-            "No camera found"
-          );
+          throw new Error("No camera found");
         }
 
-        // Prefer back camera
-        const backCamera =
-          devices.find((device) =>
-            /back|rear|environment/i.test(
-              device.label
-            )
-          );
+        const backCamera = devices.find((device) =>
+          /back|rear|environment/i.test(device.label)
+        );
 
-        const deviceId =
-          backCamera?.deviceId ||
-          devices[0].deviceId;
+        const deviceId = backCamera?.deviceId || devices[0].deviceId;
 
-        controlsRef.current =
-          await reader.decodeFromVideoDevice(
-            deviceId,
-            videoElement,
-            (result) => {
-              if (cancelled) return;
+        controlsRef.current = await reader.decodeFromVideoDevice(
+          deviceId,
+          videoElement,
+          (result) => {
+            if (cancelled) return;
 
-              if (result) {
-                const decodedText =
-                  result.getText();
+            if (result) {
+              const decodedText = result.getText();
 
-                console.log(
-                  "Camera scan:",
-                  decodedText
-                );
+              console.log("Camera scan:", decodedText);
 
-                onScan(decodedText);
+              onScan(decodedText);
 
-                stopCamera();
-              }
-
+              stopCamera();
             }
-          );
+          }
+        );
 
         if (!cancelled) {
           setCameraLoading(false);
         }
       } catch (error) {
-        console.error(
-          "Camera error:",
-          error
-        );
+        console.error("Camera error:", error);
 
         if (!cancelled) {
           setCameraLoading(false);
 
-          setError(
-            "Unable to access camera. Please check camera permissions."
+          const message = getApiErrorMessage(
+            error,
+            t("barcodeScanner.cameraError")
           );
+
+          setError(t("barcodeScanner.cameraError"));
+          showError(message);
 
           setShowCamera(false);
         }
@@ -169,21 +139,18 @@ const BarcodeScanner = ({ onScan, onClose }) => {
 
     return () => {
       cancelled = true;
-
       stopCamera();
     };
   }, [showCamera]);
 
-
   const handleSubmit = (e) => {
-    
     e.preventDefault();
-    
-    const barcodeValue =value.trim();
+
+    const barcodeValue = value.trim();
 
     if (!barcodeValue) return;
 
-    console.log( "Physical scanner:", barcodeValue  );
+    console.log("Physical scanner:", barcodeValue);
 
     onScan(barcodeValue);
 
@@ -198,64 +165,64 @@ const BarcodeScanner = ({ onScan, onClose }) => {
     setError("");
     setShowCamera(true);
   };
+
   const handleCloseCamera = () => {
     stopCamera();
-
     setShowCamera(false);
   };
 
   const handleOpenImage = () => {
     setError("");
-
     fileInputRef.current?.click();
-    
   };
 
   const handleImageSelect = async (e) => {
     const file = e.target.files?.[0];
-
 
     if (!file) return;
 
     setError("");
     setImageLoading(true);
 
+    const imageUrl = URL.createObjectURL(file);
+
     try {
       const reader = new BrowserMultiFormatReader();
-      
       readerRef.current = reader;
-      
-      
-      const result = await reader.decodeFromImageUrl(URL.createObjectURL(file));
-      
+
+      const result = await reader.decodeFromImageUrl(imageUrl);
+
       if (!result) {
         throw new Error("No barcode or QR code found");
       }
-      const decodedText =result.getText();
 
-      console.log( "Image scan:", decodedText);
+      const decodedText = result.getText();
+
+      console.log("Image scan:", decodedText);
 
       onScan(decodedText);
 
       setError("");
     } catch (error) {
-      console.error(
-        "Image scan error:",
-        error
+      console.error("Image scan error:", error);
+
+      const message = getApiErrorMessage(
+        error,
+        t("barcodeScanner.imageError")
       );
 
-      setError(
-        "No QR code or barcode was found in this image. Please use a clear image."
-      );
+      setError(t("barcodeScanner.imageError"));
+      showError(message);
     } finally {
-      setImageLoading(false);
+      URL.revokeObjectURL(imageUrl);
 
+      setImageLoading(false);
       readerRef.current = null;
 
-      // Allow same image again
       e.target.value = "";
     }
   };
+
   const handleClose = () => {
     stopCamera();
 
@@ -263,20 +230,20 @@ const BarcodeScanner = ({ onScan, onClose }) => {
       onClose();
     }
   };
+
   return (
     <div className="barcode-scanner">
-
       <div className="barcode-scanner-header">
-
         <div className="barcode-scanner-title">
           <div className="barcode-scanner-icon">
             <Barcode size={22} />
           </div>
-          <div>
-            <h5> Scan Medicine </h5>
-            <span> Scan barcode or QR code </span>
-          </div>
 
+          <div>
+            <h5>{t("barcodeScanner.title")}</h5>
+
+            <span>{t("barcodeScanner.subtitle")}</span>
+          </div>
         </div>
 
         {(onClose || showCamera) && (
@@ -288,15 +255,15 @@ const BarcodeScanner = ({ onScan, onClose }) => {
                 ? handleCloseCamera
                 : handleClose
             }
+            aria-label={t("common.close")}
           >
             <X size={20} />
           </button>
         )}
-
       </div>
+
       {showCamera && (
         <div className="barcode-camera-container">
-
           <video
             id="medicine-camera-reader"
             className="barcode-camera-reader"
@@ -307,7 +274,7 @@ const BarcodeScanner = ({ onScan, onClose }) => {
 
           {cameraLoading && (
             <div className="barcode-camera-loading">
-              Starting camera...
+              {t("barcodeScanner.startingCamera")}
             </div>
           )}
 
@@ -317,36 +284,32 @@ const BarcodeScanner = ({ onScan, onClose }) => {
             onClick={handleCloseCamera}
           >
             <X size={18} />
-            Stop Camera
+            {t("barcodeScanner.stopCamera")}
           </button>
-
         </div>
       )}
+
       {!showCamera && (
         <>
-          <form className="barcode-scanner-form" onSubmit={handleSubmit}>
+          <form
+            className="barcode-scanner-form"
+            onSubmit={handleSubmit}
+          >
             <div className="barcode-scanner-input-wrapper">
               <Barcode size={20} />
+
               <input
                 ref={inputRef}
                 type="text"
                 value={value}
-                onChange={(e) =>
-                  setValue(
-                    e.target.value
-                  )
-                }
-                placeholder="Scan barcode..."
+                onChange={(e) => setValue(e.target.value)}
+                placeholder={t("barcodeScanner.placeholder")}
                 autoComplete="off"
               />
-
             </div>
-
           </form>
+
           <div className="barcode-scanner-actions">
-
-            {/* CAMERA */}
-
             <button
               type="button"
               className="barcode-scanner-action"
@@ -354,12 +317,8 @@ const BarcodeScanner = ({ onScan, onClose }) => {
             >
               <Camera size={19} />
 
-              <span>
-                Camera
-              </span>
+              <span>{t("barcodeScanner.camera")}</span>
             </button>
-
-            {/* IMAGE */}
 
             <button
               type="button"
@@ -371,12 +330,12 @@ const BarcodeScanner = ({ onScan, onClose }) => {
 
               <span>
                 {imageLoading
-                  ? "Reading..."
-                  : "Image"}
+                  ? t("barcodeScanner.reading")
+                  : t("barcodeScanner.image")}
               </span>
             </button>
-
           </div>
+
           <input
             ref={fileInputRef}
             type="file"
@@ -386,12 +345,12 @@ const BarcodeScanner = ({ onScan, onClose }) => {
           />
         </>
       )}
+
       {error && (
         <div className="barcode-scanner-error">
           {error}
         </div>
       )}
-
     </div>
   );
 };
