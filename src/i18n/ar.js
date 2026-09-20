@@ -1,6 +1,7 @@
 export const ar = {
     translation: {
     common: {
+      typeContent:"إضافة",
         refresh: "تحديث",
             loading: "جاري التحميل...", 
             select: "اختر...",
@@ -224,6 +225,7 @@ export const ar = {
 
         },
     patients: {
+      typeContent:"إضافة",
   title: "المرضى",
   subtitle: "إدارة المرضى وحساباتهم",
   patient: "المريض",

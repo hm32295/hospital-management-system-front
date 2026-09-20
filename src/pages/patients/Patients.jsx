@@ -251,6 +251,7 @@ const Patients = () => {
       title={t("patients.title")}
       subtitle={t("patients.subtitle")}
       type="Add"
+      typeContent ={t('patients.typeContent')}
       addLink="/patients/add"
       loading={loading}
       data={patients}

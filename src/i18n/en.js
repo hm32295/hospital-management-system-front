@@ -3,6 +3,7 @@
  export const en=  {
     translation: {
      common: {
+       typeContent:"Add",
           refresh: "refresh",
         loading: "Loading...",
             save: "Save",
@@ -230,6 +231,7 @@
 
         },
      patients: {
+       typeContent:"Add",
         nameRequired: "Patient name is required",
   addPatient: "Add Patient",
   addPatientDescription: "Create a new patient",

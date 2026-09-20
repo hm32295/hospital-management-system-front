@@ -179,14 +179,18 @@ const Medicines = () => {
     {
       key: "name",
       label: t("medicines.medicine"),
+      render: (medicine)=> medicine.name.split("",15).join("")
+      
     },
     {
       key: "genericName",
       label: t("medicines.genericName"),
+      render: (medicine)=> medicine.genericName.split("",15).join("")
     },
     {
       key: "manufacturer",
       label: t("medicines.manufacturer"),
+      render: (medicines)=> medicines.manufacturer.split("",15).join("")
     },
     {
       key: "category",
@@ -241,6 +245,7 @@ const Medicines = () => {
       filters={filters}
       columns={columns}
       type="add"
+      typeContent={t('common.typeContent')}
       addLink="/add-medicine"
       data={medicines}
       onFilter={handleFilter}

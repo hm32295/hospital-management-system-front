@@ -9,7 +9,7 @@ import { showError, showSuccess } from "../../services/toast.service";
 import { getApiErrorMessage } from "../../services/apiError";
 
 const Batches = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filtersState, setFiltersState] = useState(null);
@@ -32,8 +32,7 @@ const Batches = () => {
   };
 
   const fetchBatches = async () => {
-    const params = filtersState
-      ? {
+    const params = filtersState? {
           page: pagination.page,
           limit: pagination.limit,
           ...filtersState,
@@ -47,6 +46,8 @@ const Batches = () => {
 
     try {
       const response = await getBatches(params);
+
+console.log(response.batches);
 
       setBatches(response.batches);
       setPagination((prev) => ({

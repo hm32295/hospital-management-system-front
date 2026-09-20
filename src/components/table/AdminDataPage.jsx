@@ -25,6 +25,7 @@ const AdminDataPage = ({
   filtering,
   actions = [],
   type,
+  typeContent,
   addLink,
   pagination,
   onPageChange,
@@ -88,7 +89,7 @@ const AdminDataPage = ({
       <Header
         title={title}
         description={subtitle}
-        buttonContent={`${type} ${title?.replace(/s$/, "")}`}
+        buttonContent={typeContent ||` ${title?.replace(/s$/, "")}`}
         buttonLink={addLink}
       />
 
