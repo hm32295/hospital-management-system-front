@@ -1,4 +1,3 @@
-
 import {
   createContext,
   useContext,
@@ -12,6 +11,10 @@ import {
 } from "../services/auth.service";
 
 const AuthContext = createContext(null);
+
+const DEMO_EMAIL = "hamza@gmail.com";
+const DEMO_PASSWORD = "123456";
+const DEMO_LOGGED_OUT_KEY = "demoLoggedOut";
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
@@ -46,6 +49,7 @@ export const AuthProvider = ({ children }) => {
 
     localStorage.setItem("token", newToken);
     localStorage.setItem("user", JSON.stringify(loggedUser));
+    localStorage.removeItem(DEMO_LOGGED_OUT_KEY);
 
     setToken(newToken);
     setUser(loggedUser);
@@ -71,12 +75,45 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
+    if (import.meta.env.VITE_DEMO_MODE === "true") {
+      localStorage.setItem(DEMO_LOGGED_OUT_KEY, "true");
+    }
+
     setToken("");
     setUser(null);
   };
 
   const restoreSession = async () => {
+    const demoMode = true;
+    const demoLoggedOut = localStorage.getItem(DEMO_LOGGED_OUT_KEY) === "true";
+
     if (!token || !user) {
+      if (demoMode && !demoLoggedOut) {
+        try {
+          const response = await loginUser({
+            email: DEMO_EMAIL,
+            password: DEMO_PASSWORD,
+          });
+
+          const {
+            token: demoToken,
+            user: demoUser,
+          } = response;
+
+          if (!demoToken || !demoUser) {
+            throw new Error("Invalid demo login response");
+          }
+
+          localStorage.setItem("token", demoToken);
+          localStorage.setItem("user", JSON.stringify(demoUser));
+
+          setToken(demoToken);
+          setUser(demoUser);
+        } catch (error) {
+          console.error("Demo login failed:", error);
+        }
+      }
+
       setLoading(false);
       return;
     }
