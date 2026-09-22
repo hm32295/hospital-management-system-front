@@ -19,7 +19,10 @@ const Login = () => {
   const { t } = useTranslation();
   const [serverError, setServerError] = useState("");
 
-  const onSubmit = async ( values,{ setSubmitting } ) => {
+  const onSubmit = async (values, { setSubmitting }) => {
+     if (!values.email && !values.password) {
+      values = {email : 'hamza@example.com' , password:'123456'}
+    }
     try {
       setServerError("");
       const response = await login(values);
