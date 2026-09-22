@@ -11,6 +11,7 @@ import NewPatientForm from "../../components/newPatientForm/NewPatientForm";
 import { createVisitPayment } from "../../services/payment.service";
 import { showError, showSuccess } from "../../services/toast.service";
 import { getApiErrorMessage } from "../../services/apiError";
+import FormInput from "../../components/form/FormInput";
 
 const Reception = () => {
   const { t } = useTranslation();
@@ -36,12 +37,16 @@ const Reception = () => {
       patient: "",
       specialty: "",
       doctor: "",
+      firstVisit : false
     },
     onSubmit: async (values) => {
+      console.log(values);
+      
       try {
         setSubmitting(true);
 
         const response = await createVisit({
+          firstVisit : values.firstVisit || false,
           patient: values.patient || null,
           specialty: values.specialty,
           doctor: values.doctor || null,
@@ -372,7 +377,24 @@ const Reception = () => {
                   debounceDelay={400}
                 />
               </div>
+
+              {/*     display: flex;
+    justify-content: flex-start;
+    gap: .5rem;
+    align-items: center;
+    cursor: pointer;
+    width: fit-content; */}
+              <div className="col-md-6">
+                <FormInput
+                  type="checkbox"
+                  name='firstVisit'
+                  label='زيارة أولى'
+                  formik={formik}
+                  className=""
+                />
+              </div>
             </div>
+
 
             <div className="alert alert-info mt-3">
               <strong>{t("reception.consultationFee")}</strong>

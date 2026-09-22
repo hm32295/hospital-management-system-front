@@ -56,7 +56,7 @@ const FormInput = ({
 
   if (isCheckbox) {
     return (
-      <div className={`form-check mb-3 ${containerClassName}`}>
+      <div className={`form-check mb-3 form-check-form-input${containerClassName}`}>
         <input
           id={name}
           name={name}
