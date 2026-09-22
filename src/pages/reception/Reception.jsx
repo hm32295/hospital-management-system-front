@@ -388,7 +388,7 @@ const Reception = () => {
                 <FormInput
                   type="checkbox"
                   name='firstVisit'
-                  label='زيارة أولى'
+                  label={t('reception.firstVisit')}
                   formik={formik}
                   className=""
                 />
